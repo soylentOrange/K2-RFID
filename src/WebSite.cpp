@@ -305,13 +305,13 @@ void WebSite::_webSiteCallback() {
 // serve the logo (for webserial)
 #ifdef MYCILA_WEBSERIAL_SUPPORT_APP
   _webServer->on("/logo_webserial", HTTP_GET, [](AsyncWebServerRequest* request) {
-              LOGD(TAG, "Serve thingy logo...");
+              // LOGD(TAG, "Serve webserial logo...");
               auto* response = request->beginResponse(200,
                                                       "image/svg+xml",
                                                       logo_webserial_start,
                                                       logo_webserial_end - logo_webserial_start);
               response->addHeader("Content-Encoding", "gzip");
-              // response->addHeader("Cache-Control", "public, max-age=900");
+              response->addHeader("Cache-Control", "public, max-age=900");
               request->send(response);
             })
     .setFilter([](__unused AsyncWebServerRequest* request) {
