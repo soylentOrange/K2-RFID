@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/icon_96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="K2rfid Web Logger" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/logger.webmanifest" />
+  <link rel="stylesheet" type="text/css" href="/toastify.css">
+  <title>K2 RFID Web Logger</title>
+  <style type="text/css">
+    div {
+      display: block;
+    }
+
+    a {
+      margin-top: 0.75rem;
+      text-decoration: none;
+    }
+
+    *,
+    ::after,
+    ::before {
+      -webkit-box-sizing: inherit;
+      box-sizing: inherit;
+    }
+
+    p {
+      margin: 0 0 1rem;
+    }
+
+    body {
+      overscroll-behavior: none;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans Mono', 'SF Mono', 'SFMono-Regular' ui-monospace, monospace;
+      color: black;
+      -webkit-text-size-adjust: none;
+    }
+
+    html {
+      height: -webkit-fill-available;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .w-full {
+      width: 100%;
+    }
+
+    .grid {
+      display: grid;
+    }
+
+    .gap-2 {
+      gap: 0.5rem;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .justify-items-end {
+      justify-items: end;
+    }
+
+    .rounded {
+      border-radius: 0.5rem;
+    }
+
+    .section {
+      box-sizing: border-box;
+      background-color: white;
+    }
+
+    h5 {
+      font-size: 12px;
+      color: gray;
+      margin: 0 auto 0 auto;
+      padding: 0;
+      font-family: Tahoma, Verdana, sans-serif;
+      font-weight: normal;
+      white-space: pre;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      height: 100%;
+    }
+
+    .main .pannel {
+      position: relative;
+      border: #fff;
+      border-style: solid;
+      border-width: 0.5rem;
+      border-radius: 1rem;
+      background-color: #fff;
+      width: calc(100% - 2rem);
+      height: calc(100% - 2rem);
+      font-size: medium;
+      margin-top: 0.75rem;
+      box-shadow:
+        0 2px 6px 0 rgba(0, 0, 0, 0.1),
+        0 4px 10px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .pannel button {
+      cursor: pointer;
+      padding: 8px 10px 8px;
+      font-size: medium;
+      outline-style: none;
+      border: 0px;
+      color: #fff;
+      background-color: #36454F;
+      -webkit-touch-callout: none;
+    }
+
+    .pannel #record {
+      min-height: 3.25rem;
+      padding: 0.5rem;
+      resize: vertical;
+      overscroll-behavior: none;
+    }
+
+    #control-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
+
+    .footer {
+      padding: 0.25rem;
+      background-color: white;
+    }
+
+    /* disable buttons on small screens */
+    @media screen and (max-device-width: 576px) {
+      #control-button {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="section main text-center">
+    <h1 id="title" style="display: none">K2rfid Web Logger</h1>
+    <a>
+      <img id="logo" src="/logo_webserial" onerror="removeLogo()" height="75" width="250" />
+    </a>
+    <h5 id="help_text">Not connected</h5>
+    <div id="control-buttons" class="pannel shadow grid gap-2">
+      <div id="control-button">
+        <button class="rounded shadow" onclick="downloadRecord()">
+          <svg viewBox="0 0 20 20" focusable="false" data-icon="load" width="1em" height="1em" fill="currentColor"
+            aria-hidden="true">
+            <path
+              d="M9.001 2a4 4 0 0 0-3.999 4.102 1 1 0 0 1-.75.992A3.002 3.002 0 0 0 5.001 13h1a1 1 0 1 1 0 2h-1a5 5 0 0 1-1.97-9.596 6 6 0 0 1 11.169-2.4A6 6 0 0 1 14.001 15a1 1 0 1 1 0-2 4 4 0 1 0-.328-7.987 1 1 0 0 1-.999-.6A4 4 0 0 0 9.001 2m1 6a1 1 0 0 1 1 1v7.586l.293-.293a1 1 0 0 1 1.414 1.414l-2 2a1 1 0 0 1-1.414 0l-2-2a1 1 0 1 1 1.414-1.414l.293.293V9a1 1 0 0 1 1-1" />
+          </svg>
+        </button>
+        <button class="rounded shadow" onclick="terminalClean()">
+          <svg viewBox="0 0 24 24" focusable="false" data-icon="delete" width="1em" height="1em" fill="currentColor"
+            aria-hidden="true">
+            <path
+              d="M7 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h4a1 1 0 1 1 0 2h-1.069l-.867 12.142A2 2 0 0 1 17.069 22H6.93a2 2 0 0 1-1.995-1.858L4.07 8H3a1 1 0 0 1 0-2h4zm2 2h6V4H9zM6.074 8l.857 12H17.07l.857-12zM10 10a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1m4 0a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1" />
+          </svg>
+        </button>
+        <button class="rounded shadow" onclick="toggleFlowLock()">
+          <svg viewBox="0 0 16 20" focusable="false" data-icon="lock" id="lock_icon" width="1em" height="1em" fill="currentColor"
+            aria-hidden="true">
+            <path id="btn_lock" d=" ">
+            </path>
+          </svg>
+        </button>
+        <button class="rounded shadow" onclick="toggleTimestamp()">
+          <svg viewBox="0 0 20 20" focusable="false" data-icon="clock-circle" id="clock_icon" width="1em" height="1em"
+            fill="currentColor" aria-hidden="true">
+            <path id="btn_clock" d=" ">
+            </path>
+          </svg>
+        </button>
+      </div>
+      <textarea class="w-full rounded" title="record" id="record" rows="10" cols="30" disabled></textarea>
+    </div>
+    <div class="footer"></div>
+  </div>
+</body>
+<script>
+  let gateway = `ws://${window.location.host + window.location.pathname}ws`
+  let websocket
+  let textArea = document.getElementById("record")
+  let enableFlowLock = false
+  let enableTimestamp = false
+  let pingTimeout
+  let connectTimeout
+  const help_text = document.getElementById("help_text")
+
+  const locked_path = "M8 2c1.648 0 3 1.352 3 3v3H5V5c0-1.648 1.352-3 3-3m5 6V5c0-2.752-2.248-5-5-5S3 2.248 3 5v3H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2ZM2 10h12v8H2Z"
+  const unlocked_path = "M8 2C6.352 2 5 3.352 5 5v3h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1V5c0-2.752 2.248-5 5-5s5 2.248 5 5a1 1 0 1 1-2 0c0-1.648-1.352-3-3-3m-6 8v8h12v-8z"
+  const clock_path = "M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16M0 10C0 4.477 4.477 0 10 0s10 4.477 10 10-4.477 10-10 10S0 15.523 0 10m10-6a1 1 0 0 1 1 1v4.586l2.707 2.707a1 1 0 0 1-1.414 1.414l-3-3A1 1 0 0 1 9 10V5a1 1 0 0 1 1-1"
+  const unclock_path = "M9.301.024A10 10 0 0 0 6.58.603a1 1 0 0 0-.598 1.28v.001a1 1 0 0 0 1.282.597 8 8 0 0 1 5.472 0 1 1 0 0 0 1.282-.597A1 1 0 0 0 13.42.603 10 10 0 0 0 9.301.024M10 4a1 1 0 0 0-1 1v5a1 1 0 0 0 .293.707l3 3a1 1 0 0 0 1.414-1.414L11 9.586V4.999a1 1 0 0 0-1-1M1.5 5.922a1 1 0 0 0-.896.657 10 10 0 0 0 0 6.84 1 1 0 0 0 1.28.598h.001a1 1 0 0 0 .597-1.282 8 8 0 0 1 0-5.472 1 1 0 0 0-.597-1.282 1 1 0 0 0-.386-.059m17.001 0a1 1 0 0 0-.385.059h-.001a1 1 0 0 0-.597 1.282 8 8 0 0 1 0 5.472 1 1 0 0 0 .597 1.282 1 1 0 0 0 1.281-.598 10 10 0 0 0 0-6.84 1 1 0 0 0-.895-.657M6.877 17.457a1 1 0 0 0-.896.657 1 1 0 0 0 .598 1.281 10 10 0 0 0 6.84 0 1 1 0 0 0 .598-1.28v-.001a1 1 0 0 0-1.282-.597 8 8 0 0 1-5.472 0 1 1 0 0 0-.386-.06"
+  const success_svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path fill="#0D0D0D" d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12m14.664-3.247a1 1 0 0 1 .083 1.411l-5.333 6a1 1 0 0 1-1.495 0l-2.666-3a1 1 0 0 1 1.494-1.328l1.92 2.159 4.586-5.16a1 1 0 0 1 1.411-.082" style="fill:#16c79a;fill-opacity:1"/></svg>'
+  const error_svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path fill="#0D0D0D" d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12m5.793-4.207a1 1 0 0 1 1.414 0L12 10.586l2.793-2.793a1 1 0 1 1 1.414 1.414L13.414 12l2.793 2.793a1 1 0 0 1-1.414 1.414L12 13.414l-2.793 2.793a1 1 0 0 1-1.414-1.414L10.586 12 7.793 9.207a1 1 0 0 1 0-1.414" style="fill:#ec4646;fill-opacity:1"/></svg>'
+  const lock_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="533.333" height="666.667" fill="none" viewBox="0 0 16 20"><path fill="#0d0d0d" d="M8 2c1.648 0 3 1.352 3 3v3H5V5c0-1.648 1.352-3 3-3m5 6V5c0-2.752-2.248-5-5-5S3 2.248 3 5v3H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2ZM2 10h12v8H2Z"/></svg>'
+  const clock_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path stroke="#0d0d0d" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l2.5 1.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></svg>'
+
+  function removeLogo() {
+    document.getElementById("logo").remove()
+    document.getElementById("title").style.display = "block"
+  }
+
+  function initWebPage() {
+    setInterval(() => {
+      if (!pingTimeout && websocket.readyState == WebSocket.OPEN) {
+        pingTimeout = setTimeout(() => {
+          Toastify({
+            text: `Connection lost
+            Reconnecting...`,
+            duration: 3000,
+            avatar: "data:image/svg+xml;base64," + btoa(error_svg)
+          }).showToast();
+          websocket.close()
+          initWebSocket()
+        }, 5000)
+        websocket.send("ping")
+      }
+    }, 10000)
+
+    document.getElementById('btn_lock').setAttribute("d", unlocked_path)
+    document.getElementById('btn_clock').setAttribute("d", unclock_path)
+    initWebSocket()
+
+    // adjust number of rows to fill screen
+    let pannel_rows = (10 * (document.body.offsetHeight - document.getElementById("logo").offsetHeight - 5 * 16)) / (textArea.offsetHeight - 13)
+    //let pannel_rows = (10 * (document.body.offsetHeight - 75 - 4.5 * 16)) / (textArea.offsetHeight - 13)
+    document.getElementById("record").rows = pannel_rows
+  }
+
+  function initWebSocket() {
+    clearTimeout(connectTimeout)
+    clearTimeout(pingTimeout)
+    pingTimeout = false
+    connectTimeout = setTimeout(() => {
+      websocket.close()
+      initWebSocket()
+    }, 3000)
+    help_text.innerHTML = "Connecting..."
+    websocket = new WebSocket(gateway)
+    websocket.onopen = onOpen
+    websocket.onclose = onClose
+    websocket.onmessage = onMessage
+    websocket.onerror = onError
+  }
+
+  function onOpen(event) {
+    clearTimeout(connectTimeout)
+    help_text.innerHTML = " "
+    Toastify({
+      text: `Connected
+      Start logging...`,
+      duration: 3000,
+      avatar: "data:image/svg+xml;base64," + btoa(success_svg)
+    }).showToast();
+  }
+
+  function onError(e) {
+    console.log("[WebSerial] Error!", e)
+    websocket.close()
+  }
+
+  function onClose(e) {
+    console.log("[WebSerial] Connection closed.", e)
+  }
+
+  function onMessage(event) {
+    if (event.data == "pong") {
+      clearTimeout(pingTimeout)
+      pingTimeout = false
+    } else {
+      terminalWrite(event.data)
+    }
+  }
+
+  function terminalWrite(raw) {
+    if (enableTimestamp) {
+      let now = new Date()
+      raw = "[" + now.toLocaleTimeString() + "] " + raw + "\n"
+    }
+    textArea.value += raw + "\n"
+    if (!enableFlowLock) {
+      textArea.scrollTop = textArea.scrollHeight
+    }
+  }
+
+  function terminalClean() {
+    textArea.value = ""
+    textArea.scrollTop = textArea.scrollHeight
+  }
+
+  // toggle flowLock and icon
+  function toggleFlowLock() {
+    if (enableFlowLock) {
+      enableFlowLock = false
+      document.getElementById('btn_lock').setAttribute("d", unlocked_path)
+      Toastify({
+        text: `Auto-scrolling:
+        enabled...`,
+        duration: 3000,
+        avatar: "data:image/svg+xml;base64," + btoa(lock_svg.replace("path fill=\"#0d0d0d\"", "path fill=\"#16c79a\""))
+      }).showToast();
+    } else {
+      enableFlowLock = true
+      document.getElementById('btn_lock').setAttribute("d", locked_path)
+      Toastify({
+        text: `Auto-scrolling:
+        disabled...`,
+        duration: 3000,
+        avatar: "data:image/svg+xml;base64," + btoa(lock_svg)
+      }).showToast();
+    }
+  }
+
+  // toggle timestamp printing and icon
+  function toggleTimestamp() {
+    if (enableTimestamp) {
+      enableTimestamp = false
+      document.getElementById('btn_clock').setAttribute("d", unclock_path)
+      Toastify({
+        text: `Time-stamp printing:
+        disabled...`,
+        duration: 3000,
+        avatar: "data:image/svg+xml;base64," + btoa(clock_svg)
+      }).showToast();
+    } else {
+      enableTimestamp = true
+      document.getElementById('btn_clock').setAttribute("d", clock_path)
+      Toastify({
+        text: `Time-stamp printing:
+        enabled...`,
+        duration: 3000,
+        avatar: "data:image/svg+xml;base64," + btoa(clock_svg.replace("path stroke=\"#0d0d0d\"", "path stroke=\"#16c79a\""))
+      }).showToast();
+    }
+  }
+
+  function downloader(data, type, name) {
+    let blob = new Blob([data], { type });
+    let url = window.URL.createObjectURL(blob);
+    downloadURI(url, name);
+    window.URL.revokeObjectURL(url);
+  }
+
+  function downloadURI(uri, name) {
+    let link = document.createElement("a");
+    link.download = name;
+    link.href = uri;
+    link.click();
+  }
+
+  function downloadRecord() {
+    let data = textArea.value
+    let type = "application/txt", name = "record.txt";
+    downloader(data, type, name)
+  }
+
+  window.addEventListener(
+    "DOMContentLoaded",
+    function () {
+      initWebPage()
+    },
+    false,
+  )
+</script>
+<script type="text/javascript" src="/toastify.js"></script>
+
+</html>

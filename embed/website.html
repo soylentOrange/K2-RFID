@@ -1,0 +1,1438 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/icon_96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="K2 RFID Tag Programmer" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" type="text/css" href="/toastify.css" />
+  <title>K2 RFID Tag Programmer</title>
+  <style type="text/css">
+    html {
+      height: -webkit-fill-available;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: white;
+      text-align: center;
+      align-items: center;
+      font-family: Tahoma, Verdana, sans-serif;
+      color: black;
+      font-weight: normal;
+      -webkit-text-size-adjust: none;
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .full-screen {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    .content {
+      flex-grow: 1;
+      padding: 16px;
+      overflow: none;
+      overscroll-behavior: none;
+      position: static;
+    }
+
+    .ui_main {
+      display: flex;
+      flex-grow: 1;
+    }
+
+    .centered {
+      justify-content: center;
+      align-items: center;
+    }
+
+    .ui_footer {
+      display: block;
+      flex-grow: 0;
+    }
+
+    .shadow_container {
+      width: 80%;
+      margin: 0 auto 12px auto;
+      max-width: 400px;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow:
+        0 2px 6px 0 rgba(0, 0, 0, 0.1),
+        0 4px 10px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      margin: 12px auto 0 auto;
+      height: 75px;
+      width: 250px;
+    }
+
+    .header {
+      height: 115px;
+      flex-shrink: 0;
+      width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 400px;
+    }
+
+    h1 {
+      font-size: 24px;
+      display: none;
+      margin: 35px auto 26px auto;
+      white-space: pre;
+    }
+
+    h5 {
+      font-size: 12px;
+      color: gray;
+      margin: 0px auto 12px auto;
+      font-weight: normal;
+      white-space: pre;
+    }
+
+    hr {
+      color: #36454F;
+      width: 100%;
+      margin: 10px auto 15px auto;
+    }
+
+    h2 {
+      margin: auto auto 15px auto;
+      width: 100%;
+      border-bottom: 1px solid #36454F;
+      line-height: 0.1em;
+    }
+
+    h2 span {
+      font-size: 14px;
+      color: #36454F;
+      font-weight: normal;
+      white-space: pre;
+      background: #fff;
+      padding: 0 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      cursor: pointer;
+      margin: 8px auto 0 auto;
+      font-size: 16px;
+      border-radius: 5px;
+      background: #36454F;
+      color: white;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    button.last {
+      margin: 8px auto auto auto;
+    }
+
+    .default_disabled {
+      display: none;
+    }
+
+    .footer {
+      height: 8px;
+      flex-shrink: 0;
+      white-space: pre;
+    }
+
+    .materialColorContainer {
+      display: block;
+      aspect-ratio: 1;
+      width: 80%;
+      min-width: 50px;
+      min-height: 50px;
+      max-width: calc(100dvh - 550px) !important;
+      max-height: calc(100dvh - 550px) !important;
+      margin: auto auto 0 auto;
+    }
+
+    input[type="color" i] {
+      border-radius: 50%;
+      inline-size: 100%;
+      block-size: 100%;
+      padding: 3px;
+      border-width: 1px;
+      border-style: solid;
+      border-color: rgb(153, 153, 153);
+      cursor: pointer;
+      margin: auto auto 0 auto;
+    }
+
+    input[type="color" i]::-webkit-color-swatch-wrapper {
+      padding: 1px;
+    }
+
+    input[type="color" i]::-webkit-color-swatch {
+      border-radius: 50%;
+    }
+
+    input[type="color" i]::-moz-color-swatch {
+      border-radius: 50%;
+    }
+
+    .materialColorText {
+      margin: 12px auto auto auto;
+      font-weight: bold;
+      font-size: 16px;
+      color: #36454F;
+    }
+
+    .materialWeightText {
+      margin: 0 auto 8px auto;
+      font-weight: bold;
+      font-size: 16px;
+      color: #36454F;
+    }
+
+    .weightContainer {
+      width: 100%;
+      display: flex;
+      margin: 0 auto 0 auto;
+    }
+
+    .materialContainer {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      margin: 0 auto 0 auto;
+    }
+
+    select.materialSelect {
+      width: 100%;
+      margin: 0;
+      font-size: 16px;
+      color: #36454F;
+    }
+
+    .materialContainer>div {
+      width: 47%;
+      margin: 8px auto 8px auto;
+    }
+
+    .materialContainer>div:first-of-type {
+      margin-left: 0;
+      margin-right: auto;
+    }
+
+    .materialContainer>div:last-of-type {
+      margin-right: 0;
+      margin-left: auto;
+    }
+
+    .buttonContainer {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      margin: 0 auto auto auto;
+    }
+
+    .buttonContainer button {
+      margin: 8px auto 14px auto;
+      width: 47%;
+      padding: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 5px;
+      background: #36454F;
+      color: white;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .buttonContainer button:first-of-type {
+      margin: 8px auto 14px 0;
+    }
+
+    .buttonContainer button:last-of-type {
+      margin: 8px 0 14px auto;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #36454F;
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #36454F;
+      cursor: pointer;
+    }
+
+    .result_text {
+      width: 100%;
+      font-size: 16px;
+      color: #36454F;
+      margin: 15px auto auto auto;
+      white-space: pre-line;
+    }
+
+    .info_text_container {
+      display: inline-flex;
+      flex-direction: row;
+    }
+
+    /* hide name of board on small screens */
+    @media only screen and (max-height: 760px) {
+      .not_important {
+        display: none;
+      }
+    }
+
+    /* hide section heading on even smaller screens */
+    @media only screen and (max-height: 700px) {
+      .mildly_important {
+        display: none;
+      }
+
+      .info_text_value {
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
+
+      .info_text_name {
+        margin-top: 4px;
+        margin-bottom: 4px;
+      }
+    }
+
+    /* hide name of build on even smaller screens */
+    @media only screen and (max-height: 660px) {
+      .rather_important {
+        display: none;
+      }
+    }
+
+    .info_text_name {
+      width: 39%;
+      margin-left: 0;
+      text-align: left;
+      color: #36454F;
+    }
+
+    .info_text_value {
+      width: 60%;
+      margin-right: 0;
+      text-align: right;
+      color: gray;
+    }
+
+    div.not_important.info_text_container {
+      margin-bottom: 8px;
+    }
+
+    .loader_badge {
+      margin: 20dvh auto 15px auto;
+      width: 72px;
+      height: 72px;
+    }
+
+    .loader_badge>svg {
+      width: 72px;
+      height: 72px;
+    }
+
+    .loader {
+      border: 6px solid lightgray;
+      border-radius: 50%;
+      border-top: 6px solid #36454F;
+      width: 46px;
+      height: 46px;
+      -webkit-animation: spin 1s linear infinite;
+      animation: spin 1s linear infinite;
+      cursor: wait;
+      margin: 7px;
+    }
+
+    @-webkit-keyframes spin {
+      0% {
+        -webkit-transform: rotate(0deg);
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    h4 {
+      font-size: 16px;
+      color: #36454F;
+      margin: auto auto 12px auto;
+      font-weight: normal;
+      width: calc(100% - 55px);
+      text-align: left;
+    }
+
+    .mode_switch_container {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      margin: 0 auto 8px auto;
+    }
+
+    .mode_switch_last_container {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      margin: 0 auto auto auto;
+    }
+
+    .toggle_switch_container {
+      width: 51px;
+      height: 26px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .toggle_switch_checkbox {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle_switch_switch {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background-color: gray;
+      border-radius: 13px;
+      transition: all 0.2s ease-out;
+      cursor: pointer;
+    }
+
+    .toggle_switch_slider {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      left: calc(50% - 20px / 2 - 12px);
+      top: calc(50% - 20px / 2);
+      border-radius: 50%;
+      background: white;
+      transition: all 0.2s ease-out;
+      cursor: pointer;
+    }
+
+    .toggle_switch_checkbox:checked+.toggle_switch_switch .toggle_switch_slider {
+      left: calc(50% - 20px / 2 + 12px);
+      top: calc(50% - 20px / 2);
+    }
+
+    .toggle_switch_checkbox:checked+.toggle_switch_switch {
+      background-color: #36454F;
+    }
+
+    .toggle_switch_checkbox:disabled+.toggle_switch_switch {
+      background-color: lightgray;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="full-screen">
+    <div class="header">
+      <a href="/">
+        <h1 id="title">K2 RFID Tag Programmer</h1>
+        <img id="logo" src="/thingy_logo" alt="Logo" class="logo"
+          onerror="document.getElementById('logo').remove();document.getElementById('title').style.display = 'block';" />
+      </a>
+      <h5 id="help_text">Not connected</h5>
+    </div>
+    <div class="content shadow_container">
+      <div id="ui_main" class="ui_main">
+        <div class="materialColorContainer">
+          <input id="materialColorPicker" name="materialColorPicker" type="color" value="#000000" list="commonColors" />
+          <datalist id="commonColors">
+            <option value="#000000" /> <!-- black -->
+            <option value="#FFFFFF" /> <!-- white -->
+            <option value="#0A2989" /> <!-- creality blue -->
+            <option value="#C12E1F" /> <!-- creality red -->
+          </datalist>
+        </div>
+        <div id="materialColorText" class="materialColorText">#000000</div>
+        <h2><span>Material Weight</span></h2>
+        <div class="weightContainer">
+          <div id="materialWeightText" class="materialWeightText">1000 g</div>
+          <input type="range" min="50" max="1000" value="1000" class="slider" id="materialWeightSlider" step="50">
+        </div>
+        <h2><span>Material Type</span></h2>
+        <div class="materialContainer">
+          <div id="brand">
+            <select name="materialBrand" id="materialBrand" class="materialSelect">
+              <option value="Generic">Generic</option>
+              <option value="Creality">Creality</option>
+            </select>
+          </div>
+          <div id="types">
+            <select name="materialType" id="materialType" class="materialSelect">
+              <option value="PLA">00001</option>
+            </select>
+          </div>
+        </div>
+        <h2><span>Write Spool Data</span></h2>
+        <div class="buttonContainer">
+          <button id="resetMaterial" disabled>Reset</button>
+          <button id="transferMaterial" disabled>Apply</button>
+        </div>
+      </div>
+      <div id="ui_settings" class="ui_main default_disabled">
+        <h2 class="not_important"><span class="not_important">Annoyance</span></h2>
+        <div class="mode_switch_last_container" id="mode_switch_container_beeper">
+          <h4 id="label_beeper">Beep on tag r/w</h4>
+          <div class="toggle_switch_container">
+            <input type="checkbox" class="toggle_switch_checkbox" id="toggle_switch_checkbox_beeper" />
+            <label class="toggle_switch_switch" for="toggle_switch_checkbox_beeper">
+              <span class="toggle_switch_slider"></span>
+            </label>
+          </div>
+        </div>
+        <h2><span>Programmer Settings</span></h2>
+        <div class="mode_switch_container" id="mode_switch_container_rewrite">
+          <h4 id="label_rewrite">Write only empty tags</h4>
+          <div class="toggle_switch_container">
+            <input type="checkbox" class="toggle_switch_checkbox" id="toggle_switch_checkbox_rewrite" />
+            <label class="toggle_switch_switch" for="toggle_switch_checkbox_rewrite">
+              <span class="toggle_switch_slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="mode_switch_last_container" id="mode_switch_container_clone">
+          <h4 id="label_clone">Clone serial number</h4>
+          <div class="toggle_switch_container">
+            <input type="checkbox" class="toggle_switch_checkbox" id="toggle_switch_checkbox_clone" />
+            <label class="toggle_switch_switch" for="toggle_switch_checkbox_clone">
+              <span class="toggle_switch_slider"></span>
+            </label>
+          </div>
+        </div>
+        <h2><span>Material Database</span></h2>
+        <button id="button_updateDb" class="last">Update Database</button>
+        <h2><span>Thingy Control</span></h2>
+        <button id="restart_button">Restart Thingy</button>
+        <button id="clear_wifi_button">Reset WiFi credentials</button>
+        <button id="safeboot_button" class="last">Enter SafeBoot</button>
+        <h2 class="mildly_important"><span class="mildly_important">Thingy Info</span></h2>
+        <div id="info_texts" class="info_texts">
+          <div class="info_text_container not_important">
+            <div class="info_text_name">Board Name:</div>
+            <div class="info_text_value" id="info_text_board">Unknown</div>
+          </div>
+          <div class="info_text_container rather_important">
+            <div class="info_text_name">Thingy Build:</div>
+            <div class="info_text_value" id="info_text_build">Unknown</div>
+          </div>
+        </div>
+      </div>
+      <div id="ui_result" class="ui_main centered default_disabled">
+        <div class="loader_badge default_disabled" id="result_loader_svg"> </div>
+        <div class="loader_badge default_disabled" id="result_loader_animation">
+          <div class="loader"></div>
+        </div>
+        <div class="result_text" id="result_text">OK!</div>
+      </div>
+      <div id="ui_footer" class="ui_footer">
+        <hr />
+        <button id="button_main" class="default_disabled">&lt&lt Main</button>
+        <button id="button_settings">Settings &gt&gt</button>
+      </div>
+    </div>
+    <div class="footer"></div>
+  </div>
+</body>
+
+<script type="text/javascript">
+  // pre-defined svg
+  const success_svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path fill="#0D0D0D" d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12m14.664-3.247a1 1 0 0 1 .083 1.411l-5.333 6a1 1 0 0 1-1.495 0l-2.666-3a1 1 0 0 1 1.494-1.328l1.92 2.159 4.586-5.16a1 1 0 0 1 1.411-.082" style="fill:#16c79a;fill-opacity:1"/></svg>'
+  const error_svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path fill="#0D0D0D" d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12m5.793-4.207a1 1 0 0 1 1.414 0L12 10.586l2.793-2.793a1 1 0 1 1 1.414 1.414L13.414 12l2.793 2.793a1 1 0 0 1-1.414 1.414L12 13.414l-2.793 2.793a1 1 0 0 1-1.414-1.414L10.586 12 7.793 9.207a1 1 0 0 1 0-1.414" style="fill:#ec4646;fill-opacity:1"/></svg>'
+  const tag_svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3m-8 0a5 5 0 0 0-5-5m9 5a9 9 0 0 0-9-9m0 8.5c0-.276.237-.51.48-.378.167.092.306.23.398.398.132.243-.102.48-.378.48v0a.5.5 0 0 1-.5-.5"/></svg>'
+  const spool_svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" style="fill:#000000;fill-opacity:1;stroke:#0d0d0d;stroke-width:2.00001;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"/></svg>'
+
+  // common ui elements
+  const help_text = document.getElementById("help_text")
+  const ui_footer = document.getElementById("ui_footer")
+
+  // ui elements - main view
+  const button_settings = document.getElementById("button_settings")
+  const ui_main = document.getElementById("ui_main")
+  const materialColorPicker = document.getElementById("materialColorPicker")
+  const materialColorText = document.getElementById("materialColorText")
+  const materialWeightSlider = document.getElementById("materialWeightSlider")
+  const materialWeightText = document.getElementById("materialWeightText")
+  const materialBrand = document.getElementById("materialBrand")
+  const materialType = document.getElementById("materialType")
+  const resetMaterial = document.getElementById("resetMaterial")
+  const transferMaterial = document.getElementById("transferMaterial")
+
+  // ui elements - settings view
+  const ui_settings = document.getElementById("ui_settings")
+  const button_main = document.getElementById("button_main")
+  const restart_button = document.getElementById("restart_button")
+  const safeboot_button = document.getElementById("safeboot_button")
+  const clear_wifi_button = document.getElementById("clear_wifi_button")
+  const info_text_board = document.getElementById("info_text_board")
+  const info_text_build = document.getElementById("info_text_build")
+  const beeper_checkbox = document.getElementById("toggle_switch_checkbox_beeper")
+  const write_empty_checkbox = document.getElementById("toggle_switch_checkbox_rewrite")
+  const clone_checkbox = document.getElementById("toggle_switch_checkbox_clone")
+  const button_updateDb = document.getElementById("button_updateDb")
+
+  // ui elements - doing something with thingy
+  const ui_result = document.getElementById("ui_result")
+  const result_loader = document.getElementById("result_loader_animation")
+  const result_text = document.getElementById("result_text")
+  const result_loader_svg = document.getElementById("result_loader_svg")
+
+  // flags
+  let writeTags = false
+  let writeEmptyTags = true
+  let beepOnRW = false
+  let beepAvailable = true
+  let cloneSerial = false
+
+  // some shorthand consts
+  const gateway = `ws://${window.location.host}/ws`
+  const DISCONNECTED_CLIENT_ID = -1
+  const isStandalaone = window.matchMedia('(display-mode: standalone)').matches
+
+  // business
+  let websocket
+  let clientID = DISCONNECTED_CLIENT_ID
+  let hostIP
+  let pingTimeout
+  let connectTimeout
+  let crealityFilaments = [{ id: "01001", name: "Hyper PLA" }]
+  let crealityFilamentsIDs = ["01001"]
+  let genericFilaments = [{ id: "00001", name: "PLA" }]
+  let genericFilamentsIDs = ["00001"]
+  let dbVersion;
+  let matDb;
+  let paramStr;
+  let spoolMaterial = {
+    brand: "Generic",
+    type: "00001",
+    weight: 1000,
+    color: "#000000",
+  }
+
+  // initialize the website
+  // - set up UI
+  // - initialize the websock connection
+  // - get database from thingy
+  async function initWebsite() {
+
+    // set intervall for websock heartbeat
+    setInterval(() => {
+      if (!pingTimeout && websocket.readyState == WebSocket.OPEN) {
+        pingTimeout = setTimeout(() => {
+          Toastify({
+            text: "Connection lost\nReconnecting...",
+            duration: 3000,
+            avatar: "data:image/svg+xml;base64," + btoa(error_svg)
+          }).showToast();
+          setInputsDisabled(true)
+          websocket.close()
+          initWebSocket()
+        }, 5000)
+        websocket.send("ping")
+      }
+    }, 10000)
+
+    // show board name and build version
+    info_text_board.innerHTML = await getInfo("/boardname")
+    info_text_build.innerHTML = await getInfo("/appversion")
+
+    // register button handlers...
+
+    // show main view (default)
+    button_main.addEventListener("click", () => {
+      showMain()
+    })
+
+    // show the second page
+    button_settings.addEventListener("click", () => {
+      showSettings()
+    })
+
+    // Event handler for color picker
+    materialColorPicker.addEventListener("change", (event) => {
+      materialColorText.innerText = `${event.target.value}`.toUpperCase()
+      spoolMaterial.color = `${event.target.value}`.toUpperCase()
+    })
+
+    // Event handler for material weight range
+    materialWeightSlider.addEventListener("input", (event) => {
+      materialWeightText.innerText = `${event.target.value} g`
+      spoolMaterial.weight = event.target.value
+    })
+
+    // Event handler for material vendor
+    materialBrand.addEventListener("change", (event) => {
+      change_types()
+    })
+
+    materialType.addEventListener("change", (event) => {
+      spoolMaterial.type = event.target.value
+    })
+
+    // show default material
+    resetSpoolMaterial()
+    // reset material to default (Generic, PLA, black) and disarm
+    resetMaterial.addEventListener("click", (event) => {
+      resetSpoolMaterial()
+    })
+
+    // transfer selected material and arm
+    transferMaterial.addEventListener("click", (event) => {
+      armProgrammer()
+    })
+
+    // restart thingy by HTTP_POST'ing 
+    restart_button.addEventListener("click", () => {
+      doSomethingWithThingy("/api/system/restart")
+    })
+
+    // restart thingy into SafeBoot-mode by HTTP_POST'ing
+    safeboot_button.addEventListener("click", () => {
+      doSomethingWithThingy("/api/system/safeboot")
+    })
+
+    // clear Wifi-credentials (stored by ESPConnect) and restart
+    clear_wifi_button.addEventListener("click", () => {
+      doSomethingWithThingy("/api/system/clearwifi")
+    })
+
+    // set initial label state for beeper
+    beeper_checkbox.checked = beepOnRW
+    // event listener for beep setting
+    beeper_checkbox.addEventListener("change", function () {
+      beepOnRW = beeper_checkbox.checked
+      sendConfig()
+    })
+
+    // set initial label state for rewriting tags
+    write_empty_checkbox.checked = writeEmptyTags
+    // event listener for rewriting tags
+    write_empty_checkbox.addEventListener("change", function () {
+      writeEmptyTags = write_empty_checkbox.checked
+      if (writeTags) {
+        armProgrammer()
+      } else {
+        disarmProgrammer()
+      }
+    })
+
+    // set initial label state for cloning serial on read
+    clone_checkbox.checked = cloneSerial
+    // event listener for autoread
+    clone_checkbox.addEventListener("change", function () {
+      cloneSerial = clone_checkbox.checked
+      sendConfig()
+    })
+
+    // Database update button
+    button_updateDb.addEventListener("click", async () => {
+      showResultContainer()
+      result_text.innerHTML = "Processing..."
+      help_text.innerHTML = " "
+
+      // try to find a printer on the local network
+      let confirmedPrinterHost
+      result_text.innerHTML = `Trying to find K2Plus on the local network...`
+      try {
+        confirmedPrinterHost = await findK2Plus(hostIP)
+        console.log(`found printer: ${confirmedPrinterHost}`)
+        result_text.innerHTML = `Found K2Plus (at: ${confirmedPrinterHost})...`
+      } catch (error) {
+        console.log("No printer found")
+        result_text.innerHTML = "Found no K2Plus on the local network..."
+        result_loader.style.display = "none"
+        result_loader_svg.style.display = "flex"
+        result_loader_svg.innerHTML = error_svg
+        confirmedPrinterHost = undefined
+      }
+
+      // try to download the material database from the printer
+      try {
+        await uploadDbfromPrinter(confirmedPrinterHost)
+        result_loader.style.display = "none"
+        result_loader_svg.style.display = "flex"
+        result_loader_svg.innerHTML = success_svg
+        result_text.innerHTML += `\n\nFetched and uploaded database...`
+      } catch (error) {
+        console.log(error.message)
+        result_loader.style.display = "none"
+        result_loader_svg.style.display = "flex"
+        result_loader_svg.innerHTML = error_svg
+        result_text.innerHTML = `Unable to process database...\n\n${error.message}`
+      } finally {
+        // display the settings page after some timeout
+        window.setTimeout(() => {
+          if (writeTags) {
+            help_text.innerText = `Waiting to ${writeEmptyTags ? "W" : "(Re-)W"}rite...`
+          } else {
+            help_text.innerText = "Waiting to read..."
+          }
+
+          showSettings()
+        }, 5000)
+      }
+    })
+
+    // initialize websock connection
+    initWebSocket()
+  }
+
+  // set material from json
+  function cacheSpoolMaterial(spoolJSON) {
+    spoolMaterial = {
+      brand: `${crealityFilamentsIDs.includes(spoolJSON.type) ? "Creality" : "Generic"}`,
+      type: spoolJSON.type,
+      weight: spoolJSON.weight,
+      color: spoolJSON.color,
+      serial: spoolJSON.serial
+    }
+    showSpoolMaterial()
+  }
+
+  // initialize websock connection to thingy
+  function initWebSocket() {
+    clientID = DISCONNECTED_CLIENT_ID
+    clearTimeout(connectTimeout)
+    clearTimeout(pingTimeout)
+    pingTimeout = false
+    connectTimeout = setTimeout(() => {
+      websocket.close()
+      initWebSocket()
+    }, 3000)
+    help_text.innerHTML = "Connecting..."
+    websocket = new WebSocket(gateway)
+    websocket.onopen = onOpen
+    websocket.onclose = onClose
+    websocket.onmessage = onMessage
+    websocket.onerror = onError
+  }
+
+  // websock connection opened callback
+  function onOpen(event) {
+    clearTimeout(connectTimeout)
+    setInputsDisabled(false)
+    if (writeTags) {
+      help_text.innerText = `Waiting to ${writeEmptyTags ? "W" : "(Re-)W"}rite...`
+    } else {
+      help_text.innerText = "Waiting to read..."
+    }
+  }
+
+  // websock connection error callback
+  function onError(e) {
+    console.log("Connection Error!", e)
+    websocket.close()
+    clientID = DISCONNECTED_CLIENT_ID
+    setInputsDisabled(true)
+  }
+
+  // websock connection closed callback
+  function onClose(e) {
+    console.log("Connection closed.", e)
+  }
+
+  // websock connection message received callback
+  function onMessage(event) {
+    if (event.data == "pong") {
+      clearTimeout(pingTimeout)
+      pingTimeout = false
+    } else {
+      var msg = JSON.parse(event.data)
+
+      switch (msg.type) {
+        // first message: ping back the client id and config
+        case "initial_config":
+          // this is our id...
+          clientID = msg.id
+          msg.origin = DISCONNECTED_CLIENT_ID
+          hostIP = msg.host
+          onWsNewDb(msg)
+          onWsConfig(msg)
+          onWsSpooldata(msg)
+          onWsArming(msg)
+          break
+
+        case "arm_state":
+          onWsSpooldata(msg)
+          onWsArming(msg)
+          break
+
+        case "update_config":
+          onWsConfig(msg)
+          break
+
+        case "new_db":
+          onWsNewDb(msg)
+          break
+
+        // an empty tag was identified by the reader
+        case "read_tag":
+          let uidString = `${msg.uid}`.toUpperCase()
+          Toastify({
+            text:
+              `Found empty tag
+              uid: ${uidString}`,
+            duration: 3000,
+            avatar: "data:image/svg+xml;base64," + btoa(tag_svg)
+          }).showToast()
+          break
+
+        // a spool was identified by the reader
+        case "read_spool":
+          Toastify({
+            text:
+              `Found spool
+              serial: ${msg.spooldata.serial.toString(6).padStart(6, '0')}
+              color: ${msg.spooldata.color}`,
+            duration: 5000,
+            avatar: "data:image/svg+xml;base64," + btoa(spool_svg.replace("fill:#000000", "fill:" + msg.spooldata.color)),
+            onClick: function () { cacheSpoolMaterial(msg.spooldata); disarmProgrammer(); }
+          }).showToast()
+          break
+
+        // a spool was written by the reader
+        case "write_spool":
+          Toastify({
+            text:
+              `Writing Spool
+              ${msg.result ? "Successful" : "Failed"}`,
+            duration: 3000,
+            avatar: "data:image/svg+xml;base64," + btoa(msg.result ? success_svg : error_svg)
+          }).showToast()
+          break
+      }
+    }
+  }
+
+  // got configuration via websock
+  function onWsConfig(configJSON) {
+    if (configJSON.origin != clientID) {
+      beepOnRW = configJSON.beepOnRW
+      beeper_checkbox.checked = beepOnRW
+      beepAvailable = configJSON.beepAvailable
+      if (!beepAvailable) {
+        beeper_checkbox.disabled = true
+      }
+      cloneSerial = configJSON.cloneSerial
+      clone_checkbox.checked = cloneSerial
+    }
+  }
+
+  // got spooldata configuration via websock
+  function onWsSpooldata(spooldataJSON) {
+    if (spooldataJSON.origin != clientID) {
+      if (spooldataJSON.spooldata != null) {
+        cacheSpoolMaterial(spooldataJSON.spooldata)
+        showSpoolMaterial()
+
+        if (spooldataJSON.origin != DISCONNECTED_CLIENT_ID) {
+          Toastify({
+            text:
+              `Spooldata updated
+            color: ${spooldataJSON.spooldata.color}`,
+            duration: 3000,
+            avatar: "data:image/svg+xml;base64," + btoa(spool_svg.replace("fill:#000000", "fill:" + spooldataJSON.spooldata.color)),
+          }).showToast();
+        }
+      }
+    }
+  }
+
+  // a new db is available
+  function onWsNewDb(msg) {
+    getThingyDb()
+  }
+
+  // got arming response via websock
+  function onWsArming(armingJSON) {
+    let toast_text_content = ""
+    let help_text_content = ""
+
+    // make a toast when the arming state was changed or on initial connection (in case the programmer is already armed)
+    let do_notification = (writeTags != armingJSON.writeTags) || ((armingJSON.origin == DISCONNECTED_CLIENT_ID) && armingJSON.writeTags)
+
+    if (!armingJSON.writeTags) {
+      help_text_content = "Waiting to read..."
+      toast_text_content = "Disarmed\n" + help_text_content
+    }
+    else {
+      help_text_content = `Waiting to ${armingJSON.writeEmptyTags ? "W" : "(Re-)W"}rite...`
+      toast_text_content = "Armed\n" + help_text_content
+    }
+
+    if ((writeEmptyTags != armingJSON.writeEmptyTags) || (writeTags != armingJSON.writeTags)) {
+      help_text.innerText = help_text_content
+    }
+
+    if (writeEmptyTags != armingJSON.writeEmptyTags) {
+      writeEmptyTags = armingJSON.writeEmptyTags
+      write_empty_checkbox.checked = writeEmptyTags
+    }
+
+    if (writeTags != armingJSON.writeTags) {
+      writeTags = armingJSON.writeTags
+    }
+
+    if (do_notification)
+      Toastify({
+        text: toast_text_content,
+        duration: 3000,
+        avatar: "data:image/svg+xml;base64," + btoa(tag_svg)
+      }).showToast();
+  }
+
+  // gzip a byte array
+  function compress(byteArray) {
+    const cs = new CompressionStream('gzip')
+    const writer = cs.writable.getWriter()
+    writer.write(byteArray)
+    writer.close()
+    return new Response(cs.readable).arrayBuffer()
+  }
+
+  // check for ipv4 address and spilt into four parts
+  function splitIpAddress(ip) {
+    const parts = ip.split(/[.:]/);
+    if (parts.length === 4) {
+      for (const part of parts) {
+        const num = parseInt(part);
+        if (isNaN(num) || num < 0 || num > 255) {
+          throw new Error("Invalid ip part")
+        }
+      }
+      return parts;
+    } else {
+      throw new Error("Invalid ip")
+    }
+  }
+
+  // fetch and parse info from printer
+  async function isK2Plus(ip) {
+    try {
+      const response = await fetch(`http://${ip}/info`)
+      if (!response.ok) {
+        throw new Error("fetch error")
+      }
+
+      const deviceInfo = await response.json()
+      if (typeof (deviceInfo["model"]) == undefined) {
+        throw new Error("unexpected data")
+      }
+
+      if (deviceInfo["model"] != "F008") {
+        throw new Error("wrong printer")
+      }
+
+      console.log(`success at ${ip}`)
+      return ip
+    } catch (error) {
+      throw new Error(`${error} at ${ip}`)
+    }
+  }
+
+  // try to find a printer on the local network
+  async function findK2Plus(ip) {
+    let ip_parts = splitIpAddress(ip)
+    let ip_subnet = `${ip_parts[0]}.${ip_parts[1]}.${ip_parts[2]}.`
+    let nodes = []
+    for (let i = 2; i <= 254; i++)
+      nodes.push(ip_subnet + `${i}`)
+
+    try {
+      const requests = nodes.map((node) => isK2Plus(node))
+      const printer = await Promise.any(requests)
+      return printer
+    } catch (error) {
+      throw new Error("None found")
+    }
+  }
+
+  // download, compress and upload material database
+  async function uploadDbfromPrinter(ip) {
+    if (typeof ip == undefined) {
+      throw new Error("No K2Plus found...")
+    }
+
+    try {
+      // download the database from printer
+      const downloadResponse = await fetch(`http://${ip}/downloads/defData/material_database.json`)
+      if (!downloadResponse.ok) {
+        throw new Error("Error while downloading...")
+      }
+      const printerDb = await downloadResponse.text()
+
+      // Compress database
+      const textEncoder = new TextEncoder()
+      let encodedDb = textEncoder.encode(printerDb)
+      let compressedDb = await compress(encodedDb)
+
+      // Prepare upload
+      let formData = new FormData();
+      const bytes = new Uint8Array(compressedDb)
+      const blob = new Blob([bytes], { type: 'application/octet-stream' })
+      console.log("blob.size: " + blob.size)
+      formData.append('dbfile', blob, 'material_database.json.gz')
+      const uploadResponse = await fetch('/material_database.json', {
+        method: "POST",
+        body: formData
+      })
+
+      // check for error
+      if (!uploadResponse.ok) {
+        throw new Error(`Error while uploading (status: ${uploadResponse.status})...`)
+      }
+
+      const uploadResult = await uploadResponse.text()
+      console.log("uploadResult: " + uploadResult)
+      if (uploadResult != "OK") {
+        throw new Error(`Error while uploading (response: ${uploadResult})...`)
+      }
+    } catch (error) {
+      console.log(error)
+      throw new Error("Error while processing...")
+    }
+  }
+
+  // get (and parse) material database from thingy
+  async function getThingyDb() {
+    // be optimistic
+    let toast_text = "Material Database\n"
+    let avatar_icon = "data:image/svg+xml;base64," + btoa(success_svg)
+
+    try {
+      const response = await fetch("/material_database.json")
+      if (!response.ok) {
+        throw new Error("fetch error")
+      }
+
+      matDb = await response.json()
+      if (typeof (matDb["kvParam"]) == undefined) {
+        throw new Error("corrupted")
+      }
+
+      dbVersion = matDb.result.version;
+      crealityFilaments = []
+      crealityFilamentsIDs = []
+      genericFilamentsIDs = []
+      genericFilaments = []
+
+      // assemble the option lists for generic and creality
+      for (let i in matDb.result.list) {
+        if (matDb.result.list[i].base.brand == "Creality") {
+          crealityFilaments.push({ id: matDb.result.list[i].base.id, name: matDb.result.list[i].base.name })
+          crealityFilamentsIDs.push(matDb.result.list[i].base.id)
+        }
+        else {
+          genericFilaments.push({ id: matDb.result.list[i].base.id, name: matDb.result.list[i].base.name.replace("Generic ", "") })
+          genericFilamentsIDs.push(matDb.result.list[i].base.id)
+        }
+      }
+
+      toast_text += "loaded from thingy"
+      change_types()
+    } catch (error) {
+      toast_text += error
+      avatar_icon = "data:image/svg+xml;base64," + btoa(error_svg)
+    } finally {
+      Toastify({
+        text: toast_text,
+        duration: 3000,
+        avatar: avatar_icon
+      }).showToast();
+    }
+  }
+
+  // update UI from cached material
+  function showSpoolMaterial() {
+    materialColorPicker.value = spoolMaterial.color
+    materialColorText.innerText = spoolMaterial.color
+    materialWeightSlider.value = spoolMaterial.weight
+    materialWeightText.innerText = `${spoolMaterial.weight} g`
+    materialBrand.value = spoolMaterial.brand
+    change_types(spoolMaterial.type)
+  }
+
+  // reset to default and disarm
+  function resetSpoolMaterial() {
+    cacheSpoolMaterial({
+      brand: "Generic",
+      type: "00001",
+      weight: 1000,
+      color: "#000000",
+    })
+    showSpoolMaterial()
+    disarmProgrammer()
+  }
+
+  // send config to thingy
+  function sendConfig() {
+    if (clientID != DISCONNECTED_CLIENT_ID) {
+      websocket.send(JSON.stringify({
+        type: "update_config",
+        beepOnRW: beepOnRW,
+        cloneSerial: cloneSerial
+      }))
+    }
+  }
+
+  // send arming-command to thingy
+  function armProgrammer() {
+    if (clientID != DISCONNECTED_CLIENT_ID) {
+      writeTags = true
+      help_text.innerText = `Waiting to ${writeEmptyTags ? "W" : "(Re-)W"}rite...`
+      let spoolMaterialTX = spoolMaterial
+      if (!cloneSerial)
+        spoolMaterialTX.serial = null
+      websocket.send(JSON.stringify({
+        type: "arm_state",
+        writeTags: true,
+        writeEmptyTags: writeEmptyTags,
+        spooldata: spoolMaterialTX
+      }))
+    }
+  }
+
+  // send disarming-command to thingy
+  function disarmProgrammer() {
+    if (clientID != DISCONNECTED_CLIENT_ID) {
+      writeTags = false
+      help_text.innerText = "Waiting to read..."
+      websocket.send(JSON.stringify({
+        type: "arm_state",
+        writeTags: false,
+        writeEmptyTags: writeEmptyTags
+      }))
+    }
+  }
+
+  // change the option of select field based on vendor
+  function change_types(setId) {
+    // clear the options
+    while (materialType.options.length > 0) {
+      materialType.options.remove(0)
+    }
+
+    // Update the option
+    let filamentlist = materialBrand.value == "Creality" ? crealityFilaments : genericFilaments
+    let idlist = materialBrand.value == "Creality" ? crealityFilamentsIDs : genericFilamentsIDs
+    for (let i in filamentlist) {
+      materialType.options.add(new Option(text = filamentlist[i].name, value = filamentlist[i].id))
+    }
+
+    if (setId == undefined) {
+      // and just select the first entry
+      materialType.value = filamentlist[0].id
+      materialType.selectedIndex = 0
+    } else { // try to find the requested material in the list
+      let index = idlist.findIndex((element) => element == setId)
+      if (index == -1) { // failed, just use the first entry
+        materialType.value = filamentlist[0].id
+        materialType.selectedIndex = 0
+      } else { // set value and selectedIndex
+        materialType.value = setId
+        materialType.selectedIndex = idlist.findIndex((element) => element == setId)
+      }
+    }
+
+    // set brand
+    spoolMaterial.brand = materialBrand.value
+  }
+
+  // get info strings from thingy
+  async function getInfo(info_url) {
+    try {
+      const response = await fetch(info_url)
+      if (!response.ok) {
+        throw new Error(`Response status: ${response.status}`)
+      }
+
+      const info_text = await response.text()
+      return info_text
+    } catch (error) {
+      return "Unknown"
+    }
+  }
+
+  // refresh after delay
+  // will actually load either this website, the SafeBoot-website, or ESPConnect-portal...
+  // ...depending on the type of restart that was performed before
+  function refreshHome(timeout) {
+    window.setTimeout(function () {
+      window.open("/", "_self")
+    }, timeout)
+  }
+
+  // catch-all function to do restarting
+  // depending on the url passed, it will restart, restart into SafeBoot-mode, or clear the WiFi-credentials
+  async function doSomethingWithThingy(url, body = "", contentType = "text/plain") {
+    showResultContainer()
+    result_text.innerHTML = "Processing..."
+    help_text.innerHTML = " "
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": contentType,
+        },
+        body: body,
+      })
+      if (!response.ok) {
+        throw new Error(`Failed! ${response.status}`)
+      }
+
+      result_loader.style.display = "none"
+      result_loader_svg.style.display = "flex"
+      result_loader_svg.innerHTML = success_svg
+      result_text.innerHTML = await response.text()
+    } catch (error) {
+      result_loader.style.display = "none"
+      result_loader_svg.style.display = "flex"
+      result_loader_svg.innerHTML = error_svg
+      result_text.innerHTML = error.message
+    } finally {
+      refreshHome(7500)
+    }
+  }
+
+  // dis-/en-able buttons, mode switches...
+  function setInputsDisabled(disabled) {
+    resetMaterial.disabled = disabled
+    transferMaterial.disabled = disabled
+    if (beepAvailable)
+      beeper_checkbox.disabled = disabled
+    else
+      beeper_checkbox.disabled = true
+    clone_checkbox.disabled = disabled
+    write_empty_checkbox.disabled = disabled
+    restart_button.disabled = disabled
+    safeboot_button.disabled = disabled
+    clear_wifi_button.disabled = disabled
+    button_updateDb.disabled = disabled
+  }
+
+  // show the main-view and hide everything else
+  function showMain() {
+    ui_main.style.display = "flex"
+    button_settings.style.display = "block"
+
+    button_main.style.display = "none"
+    ui_settings.style.display = "none"
+
+    ui_footer.style.display = "block"
+
+    ui_result.style.display = "none"
+  }
+
+  // show the settings-view
+  function showSettings() {
+    ui_main.style.display = "none"
+    button_settings.style.display = "none"
+
+    button_main.style.display = "block"
+    ui_settings.style.display = "flex"
+
+    ui_footer.style.display = "block"
+
+    ui_result.style.display = "none"
+  }
+
+  // hide everything except for a view of the current progress...
+  // ...and finally the result of some operation (i.e. the different restarts)
+  function showResultContainer() {
+    ui_main.style.display = "none"
+    button_settings.style.display = "none"
+
+    button_main.style.display = "none"
+    ui_settings.style.display = "none"
+
+    ui_result.style.display = "flex"
+    result_loader_svg.style.display = "none"
+    result_loader.style.display = "flex"
+
+    help_text.innerHTML = " "
+    ui_footer.style.display = "none"
+  }
+
+  window.addEventListener("DOMContentLoaded", event => {
+    initWebsite()
+  })
+</script>
+<script type="text/javascript" src="/toastify.js"></script>
+
+</html>

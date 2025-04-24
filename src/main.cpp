@@ -1,106 +1,63 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 /*
  * Copyright (C) 2025 Robert Wendlandt
  */
 
-#include <MycilaESPConnect.h>
-#include <MycilaSystem.h>
+#include <Preferences.h>
+#include <TaskScheduler.h>
+#include <thingy.h>
 
-AsyncWebServer server(80);
-Mycila::ESPConnect espConnect(server);
+#define TAG "K2RFID"
 
-String getEspID() {
-  uint32_t chipId = 0;
-  for (int i = 0; i < 17; i += 8) {
-    chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
-  }
-  String espId = String(chipId, HEX);
-  espId.toUpperCase();
-  return espId;
-}
+// Create the WebServer, ESPConnect, Task-Scheduler,... here
+AsyncWebServer webServer(HTTP_PORT);
+Scheduler scheduler;
+ESPNetwork espNetwork(webServer);
+EventHandler eventHandler(espNetwork);
+WebServerAPI webServerAPI(webServer);
+WebSite webSite(webServer);
+SPIClass rfidSpi(HSPI);
+RFID rfid(rfidSpi);
+
+// Allow logging for K2RFID-app via serial
+#if defined(MYCILA_LOGGER_SUPPORT_APP)
+Mycila::Logger* serialLogger = nullptr;
+#endif
+
+// Allow logging for K2RFID-app via webserial
+#if defined(MYCILA_WEBSERIAL_SUPPORT_APP)
+WebSerial webSerial;
+Mycila::Logger* webLogger = nullptr;
+#endif
 
 void setup() {
+#ifdef MYCILA_LOGGER_SUPPORT_APP
   // Start Serial or USB-CDC
-#if !ARDUINO_USB_CDC_ON_BOOT
+  #if !ARDUINO_USB_CDC_ON_BOOT
   Serial.begin(MONITOR_SPEED);
   // Only wait for serial interface to be set up when not using USB-CDC
   while (!Serial)
     continue;
-#else
+  #else
   // USB-CDC doesn't need a baud rate
   Serial.begin();
 
-// Note: Enabling Debug via USB-CDC is handled via framework
+  // Note: Enabling Debug via USB-CDC is handled via framework
+  #endif
+
+  serialLogger = new Mycila::Logger();
+  serialLogger->forwardTo(&Serial);
+  serialLogger->setLevel(ARDUHAL_LOG_LEVEL_DEBUG);
 #endif
 
-  // this is possible to serve a logo
-  // server.on("/logo", HTTP_GET, [&](AsyncWebServerRequest* request) {
-  //   AsyncWebServerResponse* response = request->beginResponse(200, "image/png");
-  //   response->addHeader("Content-Encoding", "gzip");
-  //   response->addHeader("Cache-Control", "public, max-age=900");
-  //   request->send(response);
-  // });
+  // Add ESPConnect-Task to Scheduler
+  espNetwork.begin(&scheduler);
 
-  // clear persisted config
-  server.on("/clear", HTTP_GET, [&](AsyncWebServerRequest* request) {
-    Serial.println("Clearing configuration...");
-    espConnect.clearConfiguration();
-    request->send(200);
-    ESP.restart();
-  });
-
-  server.on("/restart", HTTP_GET, [&](AsyncWebServerRequest* request) {
-    Serial.println("Restarting...");
-    request->send(200);
-    ESP.restart();
-  });
-
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
-    request->send(200, "text/html", "<form method='POST' action='/safeboot' enctype='multipart/form-data'><input type='submit' value='Restart in SafeBoot mode'></form>");
-  });
-
-  server.on("/safeboot", HTTP_POST, [](AsyncWebServerRequest* request) {
-    request->send(200, "text/plain", "Restarting in SafeBoot mode... Look for an Access Point named: SafeBoot-" + getEspID());
-    Mycila::System::restartFactory("safeboot");
-  });
-
-  // network state listener is required here in async mode
-  espConnect.listen([](__unused Mycila::ESPConnect::State previous, Mycila::ESPConnect::State state) {
-    JsonDocument doc;
-    espConnect.toJson(doc.to<JsonObject>());
-    serializeJson(doc, Serial);
-    Serial.println();
-
-    switch (state) {
-      case Mycila::ESPConnect::State::NETWORK_CONNECTED:
-      case Mycila::ESPConnect::State::AP_STARTED:
-        // serve your home page here
-        server.on("/", HTTP_GET, [&](AsyncWebServerRequest* request) {
-                return request->send(200, "text/plain", "Hello World!");
-              })
-          .setFilter([](__unused AsyncWebServerRequest* request) { return espConnect.getState() != Mycila::ESPConnect::State::PORTAL_STARTED; });
-        server.begin();
-        break;
-
-      case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
-        server.end();
-        break;
-
-      default:
-        break;
-    }
-  });
-
-  espConnect.setAutoRestart(true);
-  espConnect.setBlocking(false);
-
-  Serial.println("====> Trying to connect to saved WiFi or will start portal in the background...");
-
-  espConnect.begin(APP_NAME, CAPTIVE_PORTAL_SSID);
-
-  Serial.println("====> setup() completed...");
+  // Add EventHandler to Scheduler
+  // Will also spawn the WebServerAPI, WebSite, and RFID (when ESPConnect says so...)
+  eventHandler.begin(&scheduler);
 }
 
 void loop() {
-  espConnect.loop();
+  scheduler.execute();
 }
