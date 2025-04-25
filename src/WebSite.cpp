@@ -33,10 +33,14 @@ extern const uint8_t icon_192_start[] asm("_binary__pio_embed_icon_192_png_gz_st
 extern const uint8_t icon_192_end[] asm("_binary__pio_embed_icon_192_png_gz_end");
 extern const uint8_t icon_512_start[] asm("_binary__pio_embed_icon_512_png_gz_start");
 extern const uint8_t icon_512_end[] asm("_binary__pio_embed_icon_512_png_gz_end");
+extern const uint8_t icon_mask_start[] asm("_binary__pio_embed_icon_mask_png_gz_start");
+extern const uint8_t icon_mask_end[] asm("_binary__pio_embed_icon_mask_png_gz_end");
 extern const uint8_t toastify_js_start[] asm("_binary__pio_embed_toastify_min_js_gz_start");
 extern const uint8_t toastify_js_end[] asm("_binary__pio_embed_toastify_min_js_gz_end");
 extern const uint8_t toastify_css_start[] asm("_binary__pio_embed_toastify_css_gz_start");
 extern const uint8_t toastify_css_end[] asm("_binary__pio_embed_toastify_css_gz_end");
+extern const uint8_t iospwasplash_js_start[] asm("_binary__pio_embed_iospwasplash_min_js_gz_start");
+extern const uint8_t iospwasplash_js_end[] asm("_binary__pio_embed_iospwasplash_min_js_gz_end");
 
 // include logo for webserial
 #ifdef MYCILA_WEBSERIAL_SUPPORT_APP
@@ -452,6 +456,21 @@ void WebSite::_webSiteCallback() {
       return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
     });
 
+  // serve manifest.png maskable 512x512
+  _webServer->on("/icon_mask.png", HTTP_GET, [](AsyncWebServerRequest* request) {
+              // LOGD(TAG, "Serve icon_mask.png...");
+              auto* response = request->beginResponse(200,
+                                                      "image/png",
+                                                      icon_mask_start,
+                                                      icon_mask_end - icon_mask_start);
+              response->addHeader("Content-Encoding", "gzip");
+              response->addHeader("Cache-Control", "public, max-age=900");
+              request->send(response);
+            })
+    .setFilter([](__unused AsyncWebServerRequest* request) {
+      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
+    });
+
   // serve boardname info
   _webServer->on("/boardname", HTTP_GET, [](AsyncWebServerRequest* request) {
               // LOGD(TAG, "Serve boardname");
@@ -493,6 +512,21 @@ void WebSite::_webSiteCallback() {
                                                       "text/javascript",
                                                       toastify_js_start,
                                                       toastify_js_end - toastify_js_start);
+              response->addHeader("Content-Encoding", "gzip");
+              response->addHeader("Cache-Control", "public, max-age=900");
+              request->send(response);
+            })
+    .setFilter([](__unused AsyncWebServerRequest* request) {
+      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
+    });
+
+  // serve iospwasplash.js here
+  _webServer->on("/iospwasplash.js", HTTP_GET, [&](AsyncWebServerRequest* request) {
+              // LOGD(TAG, "Serve iospwasplash.js...");
+              auto* response = request->beginResponse(200,
+                                                      "text/javascript",
+                                                      iospwasplash_js_start,
+                                                      iospwasplash_js_end - iospwasplash_js_start);
               response->addHeader("Content-Encoding", "gzip");
               response->addHeader("Cache-Control", "public, max-age=900");
               request->send(response);

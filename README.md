@@ -37,3 +37,7 @@ For further explanations and also a detailled video, go to: [DnG-Crafts/K2-RFID]
 * The favicon was prepared according (loosely) the guide [How to Favicon in 2025](https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs). 
 
 * Creating svgs with Inkscape leaves a lot of clutter in the file, [svgo](https://github.com/svg/svgo) helps.
+
+* The Toast notifications are made with [Toastify](https://github.com/apvarun/toastify-js).
+
+* Splashcreens for iOS are auto-generated with [iosPWASplash](https://github.com/avadhesh18/iosPWASplash).

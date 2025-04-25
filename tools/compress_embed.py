@@ -15,7 +15,9 @@ for filename in ['logo_captive.svg',
                  'icon_96.png',
                  'icon_192.png',
                  'icon_512.png',
-                 'toastify.min.js']:
+                 'icon_mask.png',
+                 'toastify.min.js',
+                 'iospwasplash.min.js']:
     skip = False
     if os.path.isfile('.pio/embed/' + filename + '.timestamp'):
         with open('.pio/embed/' + filename + '.timestamp', 'r', -1, 'utf-8') as timestampFile:

@@ -11,10 +11,13 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="K2 RFID Tag Programmer" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="stylesheet" type="text/css" href="/toastify.css" />
   <title>K2 RFID Tag Programmer</title>
+  <script type="text/javascript" src="/toastify.js"></script>
+  <script type="text/javascript" src="/iospwasplash.js"></script>
   <style type="text/css">
     html {
       height: -webkit-fill-available;
@@ -1429,10 +1432,13 @@
     ui_footer.style.display = "none"
   }
 
+  // generate Splash Screens for iOS
+  iosPWASplash('icon_512.png')
+
+  // initialize Website
   window.addEventListener("DOMContentLoaded", event => {
     initWebsite()
   })
 </script>
-<script type="text/javascript" src="/toastify.js"></script>
 
 </html>
