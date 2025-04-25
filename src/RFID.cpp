@@ -85,6 +85,7 @@ void RFID::_rfidReadCallback() {
       _newTagInProximity = true;
       if (tag._encrypted) {
         LOGI(TAG, "encrypted tag (%s) found...", static_cast<std::string>(tag.getUid()).c_str());
+        //webSerial.printf("[%s] encrypted tag (%s) found...", TAG, static_cast<std::string>(tag.getUid()).c_str());
       } else {
         LOGI(TAG, "un-encrypted tag (%s) found...", static_cast<std::string>(tag.getUid()).c_str());
       }

@@ -17,6 +17,8 @@ extern const uint8_t logo_thingy_start[] asm("_binary__pio_embed_logo_thingy_svg
 extern const uint8_t logo_thingy_end[] asm("_binary__pio_embed_logo_thingy_svg_gz_end");
 extern const uint8_t touchicon_start[] asm("_binary__pio_embed_apple_touch_icon_png_gz_start");
 extern const uint8_t touchicon_end[] asm("_binary__pio_embed_apple_touch_icon_png_gz_end");
+extern const uint8_t touchicon_precomposed_start[] asm("_binary__pio_embed_apple_touch_icon_precomposed_png_gz_start");
+extern const uint8_t touchicon_precomposed_end[] asm("_binary__pio_embed_apple_touch_icon_precomposed_png_gz_end");
 extern const uint8_t favicon_svg_start[] asm("_binary__pio_embed_favicon_svg_gz_start");
 extern const uint8_t favicon_svg_end[] asm("_binary__pio_embed_favicon_svg_gz_end");
 extern const uint8_t favicon_ico_start[] asm("_binary__pio_embed_favicon_ico_gz_start");
@@ -360,6 +362,21 @@ void WebSite::_webSiteCallback() {
                                                       "image/png",
                                                       touchicon_start,
                                                       touchicon_end - touchicon_start);
+              response->addHeader("Content-Encoding", "gzip");
+              response->addHeader("Cache-Control", "public, max-age=900");
+              request->send(response);
+            })
+    .setFilter([](__unused AsyncWebServerRequest* request) {
+      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
+    });
+
+  // serve the apple-touch-icon-precomposed
+  _webServer->on("/apple-touch-icon-precomposed.png", HTTP_GET, [](AsyncWebServerRequest* request) {
+              // LOGD(TAG, "Serve apple-touch-icon-precomposed.png...");
+              auto* response = request->beginResponse(200,
+                                                      "image/png",
+                                                      touchicon_precomposed_start,
+                                                      touchicon_precomposed_end - touchicon_precomposed_start);
               response->addHeader("Content-Encoding", "gzip");
               response->addHeader("Cache-Control", "public, max-age=900");
               request->send(response);
