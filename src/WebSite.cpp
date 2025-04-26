@@ -12,43 +12,9 @@
 
 #define TAG "WebSite"
 
-// gzipped assets
-extern const uint8_t logo_thingy_start[] asm("_binary__pio_embed_logo_thingy_svg_gz_start");
-extern const uint8_t logo_thingy_end[] asm("_binary__pio_embed_logo_thingy_svg_gz_end");
-extern const uint8_t touchicon_start[] asm("_binary__pio_embed_apple_touch_icon_png_gz_start");
-extern const uint8_t touchicon_end[] asm("_binary__pio_embed_apple_touch_icon_png_gz_end");
-extern const uint8_t touchicon_precomposed_start[] asm("_binary__pio_embed_apple_touch_icon_precomposed_png_gz_start");
-extern const uint8_t touchicon_precomposed_end[] asm("_binary__pio_embed_apple_touch_icon_precomposed_png_gz_end");
-extern const uint8_t favicon_svg_start[] asm("_binary__pio_embed_favicon_svg_gz_start");
-extern const uint8_t favicon_svg_end[] asm("_binary__pio_embed_favicon_svg_gz_end");
-extern const uint8_t favicon_ico_start[] asm("_binary__pio_embed_favicon_ico_gz_start");
-extern const uint8_t favicon_ico_end[] asm("_binary__pio_embed_favicon_ico_gz_end");
+// gzipped website
 extern const uint8_t thingy_html_start[] asm("_binary__pio_embed_website_html_gz_start");
 extern const uint8_t thingy_html_end[] asm("_binary__pio_embed_website_html_gz_end");
-extern const uint8_t site_manifest_start[] asm("_binary_embed_site_webmanifest_start");
-extern const uint8_t site_manifest_end[] asm("_binary_embed_site_webmanifest_end");
-extern const uint8_t logger_manifest_start[] asm("_binary_embed_logger_webmanifest_start");
-extern const uint8_t logger_manifest_end[] asm("_binary_embed_logger_webmanifest_end");
-extern const uint8_t icon_96_start[] asm("_binary__pio_embed_icon_96_png_gz_start");
-extern const uint8_t icon_96_end[] asm("_binary__pio_embed_icon_96_png_gz_end");
-extern const uint8_t icon_192_start[] asm("_binary__pio_embed_icon_192_png_gz_start");
-extern const uint8_t icon_192_end[] asm("_binary__pio_embed_icon_192_png_gz_end");
-extern const uint8_t icon_512_start[] asm("_binary__pio_embed_icon_512_png_gz_start");
-extern const uint8_t icon_512_end[] asm("_binary__pio_embed_icon_512_png_gz_end");
-extern const uint8_t icon_mask_start[] asm("_binary__pio_embed_icon_mask_png_gz_start");
-extern const uint8_t icon_mask_end[] asm("_binary__pio_embed_icon_mask_png_gz_end");
-extern const uint8_t toastify_js_start[] asm("_binary__pio_embed_toastify_min_js_gz_start");
-extern const uint8_t toastify_js_end[] asm("_binary__pio_embed_toastify_min_js_gz_end");
-extern const uint8_t toastify_css_start[] asm("_binary__pio_embed_toastify_css_gz_start");
-extern const uint8_t toastify_css_end[] asm("_binary__pio_embed_toastify_css_gz_end");
-extern const uint8_t iospwasplash_js_start[] asm("_binary__pio_embed_iospwasplash_min_js_gz_start");
-extern const uint8_t iospwasplash_js_end[] asm("_binary__pio_embed_iospwasplash_min_js_gz_end");
-
-// include logo for webserial
-#ifdef MYCILA_WEBSERIAL_SUPPORT_APP
-extern const uint8_t logo_webserial_start[] asm("_binary__pio_embed_logo_webserial_svg_gz_start");
-extern const uint8_t logo_webserial_end[] asm("_binary__pio_embed_logo_webserial_svg_gz_end");
-#endif
 
 // constants from build process
 extern const char* __COMPILED_BUILD_BOARD__;
@@ -65,7 +31,6 @@ void WebSite::begin(Scheduler* scheduler) {
 }
 
 void WebSite::end() {
-  LittleFS.end();
   _spooldataCallback = nullptr;
   _sr.setWaiting();
 
@@ -104,14 +69,6 @@ void WebSite::_webSiteCallback() {
   webLogger->setLevel(ARDUHAL_LOG_LEVEL_INFO);
   webLogger->forwardTo(&webSerial);
 #endif
-
-  // Start Filesystem
-  if (!LittleFS.begin(false)) {
-    LOGE(TAG, "An Error has occurred while mounting LittleFS!");
-  } else {
-    LOGD(TAG, "LittleFS mounted!");
-    _fsMounted = true;
-  }
 
   // create websock handler
   _ws = new AsyncWebSocket("/ws");
@@ -248,10 +205,6 @@ void WebSite::_webSiteCallback() {
 
   _webServer->addHandler(_ws);
 
-  // Handle getting database from File System (will auto-magically serve the gzipped file)
-  _webServer->serveStatic("/material_database.json", LittleFS, "/material_database.json")
-    .setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
-
   // Handle posting database
   _webServer->on(
     "/material_database.json",
@@ -308,186 +261,6 @@ void WebSite::_webSiteCallback() {
       }
     });
 
-// serve the logo (for webserial)
-#ifdef MYCILA_WEBSERIAL_SUPPORT_APP
-  _webServer->on("/logo_webserial", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve webserial logo...");
-              auto* response = request->beginResponse(200,
-                                                      "image/svg+xml",
-                                                      logo_webserial_start,
-                                                      logo_webserial_end - logo_webserial_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-#endif
-
-  // serve the logo (for main page)
-  _webServer->on("/thingy_logo", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve thingy logo...");
-              auto* response = request->beginResponse(200,
-                                                      "image/svg+xml",
-                                                      logo_thingy_start,
-                                                      logo_thingy_end - logo_thingy_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve the logo (for main page)
-  _webServer->on("/favicon.svg", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve favicon.svg...");
-              auto* response = request->beginResponse(200,
-                                                      "image/svg+xml",
-                                                      favicon_svg_start,
-                                                      favicon_svg_end - favicon_svg_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve the apple-touch-icon
-  _webServer->on("/apple-touch-icon.png", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve apple-touch-icon.png...");
-              auto* response = request->beginResponse(200,
-                                                      "image/png",
-                                                      touchicon_start,
-                                                      touchicon_end - touchicon_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve the apple-touch-icon-precomposed
-  _webServer->on("/apple-touch-icon-precomposed.png", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve apple-touch-icon-precomposed.png...");
-              auto* response = request->beginResponse(200,
-                                                      "image/png",
-                                                      touchicon_precomposed_start,
-                                                      touchicon_precomposed_end - touchicon_precomposed_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve the desktop size icon
-  _webServer->on("/icon_96.png", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve icon_96.png...");
-              auto* response = request->beginResponse(200,
-                                                      "image/png",
-                                                      icon_96_start,
-                                                      icon_96_end - icon_96_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve the favicon.ico
-  _webServer->on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve favicon.ico...");
-              auto* response = request->beginResponse(200,
-                                                      "image/x-icon",
-                                                      favicon_ico_start,
-                                                      favicon_ico_end - favicon_ico_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve the site manifest
-  _webServer->on("/site.webmanifest", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve site.manifest...");
-              auto* response = request->beginResponse(200,
-                                                      "application/manifest+json",
-                                                      site_manifest_start,
-                                                      site_manifest_end - site_manifest_start);
-              // response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve the site manifest
-  _webServer->on("/logger.webmanifest", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve logger.manifest...");
-              auto* response = request->beginResponse(200,
-                                                      "application/manifest+json",
-                                                      logger_manifest_start,
-                                                      logger_manifest_end - logger_manifest_start);
-              // response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve manifest.png 192x192
-  _webServer->on("/icon_192.png", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve icon_192.png...");
-              auto* response = request->beginResponse(200,
-                                                      "image/png",
-                                                      icon_192_start,
-                                                      icon_192_end - icon_192_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve manifest.png 512x512
-  _webServer->on("/icon_512.png", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve icon_512.png...");
-              auto* response = request->beginResponse(200,
-                                                      "image/png",
-                                                      icon_512_start,
-                                                      icon_512_end - icon_512_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve manifest.png maskable 512x512
-  _webServer->on("/icon_mask.png", HTTP_GET, [](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve icon_mask.png...");
-              auto* response = request->beginResponse(200,
-                                                      "image/png",
-                                                      icon_mask_start,
-                                                      icon_mask_end - icon_mask_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
   // serve boardname info
   _webServer->on("/boardname", HTTP_GET, [](AsyncWebServerRequest* request) {
               // LOGD(TAG, "Serve boardname");
@@ -502,50 +275,6 @@ void WebSite::_webSiteCallback() {
   _webServer->on("/appversion", HTTP_GET, [](AsyncWebServerRequest* request) {
               // LOGD(TAG, "Serve appversion");
               auto* response = request->beginResponse(200, "text/plain", APP_VERSION);
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve toastify.css here
-  _webServer->on("/toastify.css", HTTP_GET, [&](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve toastify.css...");
-              auto* response = request->beginResponse(200,
-                                                      "text/css",
-                                                      toastify_css_start,
-                                                      toastify_css_end - toastify_css_start);
-              response->addHeader("Content-Encoding", "gzip");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve toastify.js here
-  _webServer->on("/toastify.js", HTTP_GET, [&](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve toastify.js...");
-              auto* response = request->beginResponse(200,
-                                                      "text/javascript",
-                                                      toastify_js_start,
-                                                      toastify_js_end - toastify_js_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
-
-  // serve iospwasplash.js here
-  _webServer->on("/iospwasplash.js", HTTP_GET, [&](AsyncWebServerRequest* request) {
-              // LOGD(TAG, "Serve iospwasplash.js...");
-              auto* response = request->beginResponse(200,
-                                                      "text/javascript",
-                                                      iospwasplash_js_start,
-                                                      iospwasplash_js_end - iospwasplash_js_start);
-              response->addHeader("Content-Encoding", "gzip");
-              response->addHeader("Cache-Control", "public, max-age=900");
               request->send(response);
             })
     .setFilter([](__unused AsyncWebServerRequest* request) {

@@ -9,11 +9,12 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="K2rfid Web Logger" />
+  <!-- <meta name="apple-mobile-web-app-title" content="K2rfid Web Logger" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="/logger.webmanifest" />
+  <link rel="manifest" href="/logger.webmanifest" /> -->
   <link rel="stylesheet" type="text/css" href="/toastify.css">
+  <script type="text/javascript" src="/toastify.min.js"></script>
   <title>K2 RFID Web Logger</title>
   <style type="text/css">
     div {
@@ -161,7 +162,7 @@
   <div class="section main text-center">
     <h1 id="title" style="display: none">K2rfid Web Logger</h1>
     <a>
-      <img id="logo" src="/logo_webserial" onerror="removeLogo()" height="75" width="250" />
+      <img id="logo" src="/logo_webserial.svg" onerror="removeLogo()" height="75" width="250" />
     </a>
     <h5 id="help_text">Not connected</h5>
     <div id="control-buttons" class="pannel shadow grid gap-2">
@@ -386,6 +387,5 @@
     false,
   )
 </script>
-<script type="text/javascript" src="/toastify.js"></script>
 
 </html>

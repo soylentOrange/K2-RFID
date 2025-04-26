@@ -12,6 +12,7 @@ class WebServerAPI {
     explicit WebServerAPI(AsyncWebServer& webServer) : _webServer(&webServer) { _sr.setWaiting(); }
     void begin(Scheduler* scheduler);
     void end();
+    bool isFSMounted() { return _fsMounted; }
     StatusRequest* getStatusRequest();
 
   private:
@@ -19,4 +20,5 @@ class WebServerAPI {
     StatusRequest _sr;
     Scheduler* _scheduler = nullptr;
     AsyncWebServer* _webServer;
+    bool _fsMounted = false;
 };
