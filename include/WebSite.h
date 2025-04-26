@@ -31,7 +31,6 @@ class WebSite {
     SpooldataCallback _spooldataCallback = nullptr;
     void _tagReadCallback(CFSTag tag);
     void _tagWriteCallback(bool success);
-    bool _fsMounted = false;
     static void _denyUpload(AsyncWebServerRequest* request, __unused String filename, __unused size_t index, __unused uint8_t* data, __unused size_t len, __unused bool final) { // don't accept file uploads
       request->send(400);
     }

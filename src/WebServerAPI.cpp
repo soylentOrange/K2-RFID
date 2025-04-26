@@ -9,9 +9,9 @@
 
 #define TAG "WebServer"
 
-// gzipped assets
-extern const uint8_t logo_start[] asm("_binary__pio_embed_logo_captive_svg_gz_start");
-extern const uint8_t logo_end[] asm("_binary__pio_embed_logo_captive_svg_gz_end");
+// // gzipped assets
+// extern const uint8_t logo_start[] asm("_binary__pio_embed_logo_captive_svg_gz_start");
+// extern const uint8_t logo_end[] asm("_binary__pio_embed_logo_captive_svg_gz_end");
 
 void WebServerAPI::begin(Scheduler* scheduler) {
   // Just to be sure that the static webserver is not running anymore before being started (again)
@@ -28,6 +28,7 @@ void WebServerAPI::begin(Scheduler* scheduler) {
 
 void WebServerAPI::end() {
   LOGD(TAG, "Disabling WebServerAPI-Task...");
+  LittleFS.end();
   _sr.setWaiting();
   _webServer->end();
   LOGD(TAG, "...done!");
@@ -37,16 +38,21 @@ void WebServerAPI::end() {
 void WebServerAPI::_webServerCallback() {
   LOGD(TAG, "Starting WebServerAPI...");
 
-  // serve the logo (for captive portal)
-  _webServer->on("/logo", HTTP_GET, [&](AsyncWebServerRequest* request) {
-              LOGD(TAG, "Serve captive logo...");
-              auto* response = request->beginResponse(200, "image/svg+xml", logo_start, logo_end - logo_start);
-              response->addHeader("Content-Encoding", "gzip");
-              request->send(response);
-            })
-    .setFilter([](__unused AsyncWebServerRequest* request) {
-      return eventHandler.getNetworkState() == Mycila::ESPConnect::State::PORTAL_STARTED;
-    });
+  // Start Filesystem
+  if (!LittleFS.begin(false)) {
+    LOGE(TAG, "An Error has occurred while mounting LittleFS!");
+  } else {
+    LOGD(TAG, "LittleFS mounted!");
+    _fsMounted = true;
+  }
+
+  // Handle getting files from File System (will auto-magically serve the gzipped files)
+  _webServer->serveStatic("/", LittleFS, "/")
+    .setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
+
+  // serve logo for espConnect
+  _webServer->serveStatic("/logo", LittleFS, "/logo_captive.svg")
+    .setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
 
   // clear persisted wifi config
   _webServer->on("/api/system/clearwifi", HTTP_POST, [&](AsyncWebServerRequest* request) {

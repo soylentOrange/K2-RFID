@@ -6,17 +6,18 @@ import subprocess
 Import("env") # pyright: ignore [reportUndefinedVariable]
 
 os.makedirs(".pio/embed", exist_ok=True)
+html_files = [f for f in os.listdir('assets/embed_html/') if f.endswith('.html')]
 
-for filename in ['website.html', 'webserial.html']:
+for filename in html_files:
     skip = False
     # comment out next four lines to always rebuild
     if os.path.isfile('.pio/embed/' + filename + '.timestamp'):
         with open('.pio/embed/' + filename + '.timestamp', 'r', -1, 'utf-8') as timestampFile:
-            if os.path.getmtime('embed/' + filename) == float(timestampFile.readline()):
+            if os.path.getmtime('assets/embed_html/' + filename) == float(timestampFile.readline()):
                 skip = True
 
     if skip:
-        sys.stderr.write(f"compress_website.py: {filename}.gz already available\n")
+        sys.stderr.write(f"compress_embed_html.py: {filename}.gz already available\n")
         continue
 
     # use html-minifier-terser to reduce size of html/js/css
@@ -38,7 +39,7 @@ for filename in ['website.html', 'webserial.html']:
             "--remove-tag-whitespace",
             "--collapse-whitespace",
             "--conservative-collapse",
-            f"embed/{filename}",
+            f"assets/embed_html/{filename}",
             "-o",
             f".pio/embed/{filename}",
         ]
@@ -59,7 +60,7 @@ for filename in ['website.html', 'webserial.html']:
     #         "--remove-tag-whitespace",
     #         "--collapse-whitespace",
     #         "--conservative-collapse",
-    #         f"embed/{filename}",
+    #         f"assets/embed_html/{filename}",
     #         "-o",
     #         f".pio/embed/{filename}",
     #     ]
@@ -69,7 +70,7 @@ for filename in ['website.html', 'webserial.html']:
     with open(".pio/embed/" + filename, "rb") as inputFile:
         with gzip.open(".pio/embed/" + filename + ".gz", "wb") as outputFile:
             sys.stderr.write(
-                f"compress_website.py: gzip '.pio/embed/{filename}' to '.pio/embed/{filename}.gz'\n"
+                f"compress_embed_html.py: gzip '.pio/embed/{filename}' to '.pio/embed/{filename}.gz'\n"
             )
             outputFile.writelines(inputFile)
 
@@ -78,4 +79,4 @@ for filename in ['website.html', 'webserial.html']:
 
     # remember timestamp of last change
     with open('.pio/embed/' + filename + '.timestamp', 'w', -1, 'utf-8') as timestampFile:
-        timestampFile.write(str(os.path.getmtime('embed/' + filename)))
+        timestampFile.write(str(os.path.getmtime('assets/embed_html/' + filename)))
