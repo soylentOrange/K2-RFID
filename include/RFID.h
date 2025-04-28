@@ -49,5 +49,5 @@ class RFID {
     bool _writeEnabled = false;
     bool _overwriteEnabled = false;
     bool _beep = false;
-    void _doBeep();
+    void _doBeep(uint32_t freq = 1000);
 };

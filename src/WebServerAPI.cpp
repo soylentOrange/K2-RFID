@@ -62,6 +62,7 @@ void WebServerAPI::_webServerCallback() {
     auto* response = request->beginResponse(200, "text/plain", "WiFi credentials are gone! Restarting now...");
     request->send(response);
     Mycila::System::restart(1000);
+    led.setMode(LED::LEDMode::WAITING_CAPTIVE);
   });
 
   // do restart
@@ -70,6 +71,7 @@ void WebServerAPI::_webServerCallback() {
     auto* response = request->beginResponse(200, "text/plain", "Restarting now...");
     request->send(response);
     Mycila::System::restart(1000);
+    led.setMode(LED::LEDMode::WAITING_WIFI);
   });
 
   // reboot esp into SafeBoot
@@ -78,6 +80,7 @@ void WebServerAPI::_webServerCallback() {
     if (Mycila::System::restartFactory("safeboot", 1000)) {
       auto* response = request->beginResponse(200, "text/plain", "Restarting into SafeBoot now...");
       request->send(response);
+      led.setMode(LED::LEDMode::NONE);
     } else {
       LOGW(TAG, "SafeBoot partition not found");
       auto* response = request->beginResponse(502, "text/plain", "SafeBoot partition not found!");

@@ -66,10 +66,10 @@ void RFID::_initNFCcallback() {
 }
 
 // beep when requested and possible
-void RFID::_doBeep() {
+void RFID::_doBeep(uint32_t freq) {
 #ifdef USE_BEEPER
   if (_beep)
-    tone(BEEPER_PIN, 1000, 100);
+    tone(BEEPER_PIN, freq, 100);
 #endif
 }
 
@@ -97,11 +97,15 @@ void RFID::_rfidReadCallback() {
           if (_writeEnabled) {
             LOGW(TAG, "writing empty tag...");
             bool write_result = tag.writeSpoolData(&_nfc, _spooldata);
+            led.setMode(LED::LEDMode::TAG_WRITTEN);
+            _doBeep(1500);
             // invoke callback
             if (_tagWriteCallback != nullptr) {
               _tagWriteCallback(write_result);
             }
           } else {
+            led.setMode(LED::LEDMode::TAG_READ);
+            _doBeep();
             // invoke event callback
             if (_tagReadCallback != nullptr) {
               _tagReadCallback(tag);
@@ -114,11 +118,18 @@ void RFID::_rfidReadCallback() {
           if (_writeEnabled && _overwriteEnabled) {
             LOGW(TAG, "re-writing tag...");
             bool overwrite_result = tag.writeSpoolData(&_nfc, _spooldata);
+            led.setMode(LED::LEDMode::TAG_REWRITTEN);
+            _doBeep(1500);
             // invoke event callback
             if (_tagWriteCallback != nullptr) {
               _tagWriteCallback(overwrite_result);
             }
           } else {
+            // Only signal when writing isn't enabled
+            if (!_writeEnabled) {
+              led.setMode(LED::LEDMode::TAG_READ);
+              _doBeep();
+            }
             // invoke event callback
             if (_tagReadCallback != nullptr) {
               _tagReadCallback(tag);
@@ -126,16 +137,20 @@ void RFID::_rfidReadCallback() {
           }
         }
       } else {
-        LOGW(TAG, "tag data corrupted...");
+        LOGW(TAG, "tag data corrupted or reader error...");
         // possibly write tag here
-        if (_writeEnabled) {
-          LOGW(TAG, "writing empty tag...");
+        if (_writeEnabled && _overwriteEnabled) {
+          LOGW(TAG, "writing corrupted tag...");
           bool write_result = tag.writeSpoolData(&_nfc, _spooldata);
+          led.setMode(LED::LEDMode::TAG_REWRITTEN);
+          _doBeep(1500);
           // invoke callback
           if (_tagWriteCallback != nullptr) {
             _tagWriteCallback(write_result);
           }
         } else {
+          led.setMode(LED::LEDMode::TAG_READ);
+          _doBeep();
           // invoke event callback
           if (_tagReadCallback != nullptr) {
             _tagReadCallback(tag);
@@ -165,12 +180,16 @@ void RFID::enableWriting(bool enable, bool overwrite) {
   _overwriteEnabled = overwrite;
 
   if (_writeEnabled && _overwriteEnabled) {
+    led.setMode(LED::LEDMode::ARMED_REWRITING);
     LOGI(TAG, "writing and re-writing enabled");
   } else if (_writeEnabled && !_overwriteEnabled) {
+    led.setMode(LED::LEDMode::ARMED_WRITING);
     LOGI(TAG, "writing (on empty tags) enabled");
   } else if (!_writeEnabled && _overwriteEnabled) {
+    led.setMode(LED::LEDMode::WAITING_READ);
     LOGI(TAG, "writing disabled (but overwrite is still set)");
   } else {
+    led.setMode(LED::LEDMode::WAITING_READ);
     LOGI(TAG, "writing disabled");
   }
 }

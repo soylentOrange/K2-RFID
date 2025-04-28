@@ -79,6 +79,7 @@ bool CFSTag::readSpoolData(Adafruit_PN532* nfc) {
   // return with error when reading didn't succeed
   if (result != 3) {
     LOGE(TAG, "RFID reader error");
+    _empty = false;
     return false;
   }
 
@@ -86,6 +87,7 @@ bool CFSTag::readSpoolData(Adafruit_PN532* nfc) {
   if (_encrypted) {
     if (!decrypt(encryptedData, plainData)) {
       LOGE(TAG, "decryption error");
+      _empty = false;
       return false;
     }
   } else {

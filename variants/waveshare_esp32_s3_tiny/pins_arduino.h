@@ -28,12 +28,6 @@ static const uint8_t MOSI = 35;  // FSPID
 static const uint8_t MISO = 34;  // FSPIQ
 static const uint8_t SCK = 33;   // FSPICLK
 
-//static const uint8_t XTAL_32K_N = 22;
-//static const uint8_t XTAL_32K_P = 21;
-
-//static const uint8_t SPIWP = 31;
-//static const uint8_t SPIHD = 30;
-
 // Mapping based on the ESP32S3 data sheet - alternate for OUTPUT
 static const uint8_t GPIO1 = 1;
 static const uint8_t GPIO2 = 2;

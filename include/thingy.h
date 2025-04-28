@@ -11,6 +11,7 @@
 #include <ESPNetworkTask.h>
 #include <EventHandler.h>
 #include <FS.h>
+#include <LED.h>
 #include <LittleFS.h>
 #include <MycilaESPConnect.h>
 #include <MycilaSystem.h>
@@ -19,18 +20,13 @@
 #include <WebServerAPI.h>
 #include <WebSite.h>
 
-// #ifdef RGB_BUILTIN
-// #include <FS.h>
-// #include <LittleFS.h>
-// #include <FastLED.h>
-// #endif
-
 // in main.cpp
 extern ESPNetwork espNetwork;
 extern EventHandler eventHandler;
 extern WebServerAPI webServerAPI;
 extern WebSite webSite;
 extern RFID rfid;
+extern LED led;
 
 // Allow serial logging for App
 #ifdef MYCILA_LOGGER_SUPPORT_APP

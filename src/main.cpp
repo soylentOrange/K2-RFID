@@ -18,6 +18,7 @@ WebServerAPI webServerAPI(webServer);
 WebSite webSite(webServer);
 SPIClass rfidSpi(HSPI);
 RFID rfid(rfidSpi);
+LED led;
 
 // Allow logging for K2RFID-app via serial
 #if defined(MYCILA_LOGGER_SUPPORT_APP)
@@ -49,6 +50,9 @@ void setup() {
   serialLogger->forwardTo(&Serial);
   serialLogger->setLevel(ARDUHAL_LOG_LEVEL_DEBUG);
 #endif
+
+  // Add LED-Task to Scheduler
+  led.begin(&scheduler);
 
   // Add ESPConnect-Task to Scheduler
   espNetwork.begin(&scheduler);

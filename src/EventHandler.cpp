@@ -41,6 +41,7 @@ void EventHandler::_networkStateCallback(Mycila::ESPConnect::State state) {
       webServerAPI.begin(_scheduler);
       webSite.begin(_scheduler);
       rfid.begin(_scheduler);
+      led.setMode(LED::LEDMode::WAITING_READ);
       break;
 
     case Mycila::ESPConnect::State::AP_STARTED:
@@ -50,6 +51,7 @@ void EventHandler::_networkStateCallback(Mycila::ESPConnect::State state) {
       webServerAPI.begin(_scheduler);
       webSite.begin(_scheduler);
       rfid.begin(_scheduler);
+      led.setMode(LED::LEDMode::WAITING_READ);
       break;
 
     case Mycila::ESPConnect::State::PORTAL_STARTED:
@@ -57,10 +59,12 @@ void EventHandler::_networkStateCallback(Mycila::ESPConnect::State state) {
       LOGI(TAG, "SSID: %s", _espNetwork->getESPConnect()->getAccessPointSSID().c_str());
       LOGI(TAG, "IPAddress: %s", _espNetwork->getESPConnect()->getIPAddress().toString().c_str());
       webServerAPI.begin(_scheduler);
+      led.setMode(LED::LEDMode::WAITING_CAPTIVE);
       break;
 
     case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
       LOGI(TAG, "--> Disconnected from network...");
+      led.setMode(LED::LEDMode::WAITING_WIFI);
       rfid.end();
       webSite.end();
       webServerAPI.end();
@@ -72,6 +76,7 @@ void EventHandler::_networkStateCallback(Mycila::ESPConnect::State state) {
       LOGD(TAG, "ap: %d", config.apMode);
       LOGD(TAG, "wifiSSID: %s", config.wifiSSID.c_str());
       LOGD(TAG, "wifiPassword: %s", config.wifiPassword.c_str());
+      led.setMode(LED::LEDMode::WAITING_WIFI);
       break;
     }
 
