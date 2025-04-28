@@ -110,6 +110,14 @@ On boards with an onboard mono-color LED:
 * Tag written:
   * flashing
 
+## Web logging
+
+Even though there is no button for it, if you open k2rfid.local/weblog, you'll see a logging window. For every tag being read it will show a hex and ascii dump of the data on the tag.
+
+<p align="center">
+    <img src="assets/doc/screenshot_weblog.jpeg" alt="screenshot weblog" style="width:75%; height:auto;" >
+</p>
+
 ## Acknowledgements
 
 * This project is based the project [DnG-Crafts/K2-RFID](https://github.com/DnG-Crafts/K2-RFID). I redesigned the website to my likings, and completely re-wrote the esp32 code. 
