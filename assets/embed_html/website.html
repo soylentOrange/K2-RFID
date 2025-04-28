@@ -1300,14 +1300,17 @@
     if (setId == undefined) {
       // and just select the first entry
       materialType.value = filamentlist[0].id
+      spoolMaterial.type = filamentlist[0].id
       materialType.selectedIndex = 0
     } else { // try to find the requested material in the list
       let index = idlist.findIndex((element) => element == setId)
       if (index == -1) { // failed, just use the first entry
         materialType.value = filamentlist[0].id
+        spoolMaterial.type = filamentlist[0].id
         materialType.selectedIndex = 0
       } else { // set value and selectedIndex
         materialType.value = setId
+        spoolMaterial.type = setId
         materialType.selectedIndex = idlist.findIndex((element) => element == setId)
       }
     }
