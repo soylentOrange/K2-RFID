@@ -30,6 +30,10 @@ Once you have programmed your esp32, connected it to the PN532 NFC/RFID board, a
 
 Just select the color by hitting the large color circle to select the color of choice (or select one the the known - at least known to me - standard colors), the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
 
+<p align="center">
+    <img src="assets/doc/Screenshot_UI.jpeg" alt="screenshot UI" style="width:50%; height:auto;" >
+</p>
+
 ### Copy/Clone Tag
 
 Once a tag is read, just click the toast notification and it will make the content (color, material, weight, and serial number - in case `clone serial number` is active in the settings) of the tag available for writing. Just hit the `Apply` button to arm the programmer.
@@ -41,6 +45,10 @@ By default, only empty tags are written. When you want to re-program tags, disab
 ### Future Materials
 
 As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus on your local network, download the material database and saves it onto the prgrammer. No warranty that future firmware updates might break this behaviour... 
+
+<p align="center">
+    <img src="assets/doc/Screenshot_Setting.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
+</p>
 
 ## Device Feedback
 
