@@ -127,6 +127,13 @@
       border-bottom: 1px solid #36454F;
       line-height: 0.1em;
     }
+    
+    h2.first {
+      margin: 15px auto 15px auto;
+      width: 100%;
+      border-bottom: 1px solid #36454F;
+      line-height: 0.1em;
+    }
 
     h2 span {
       font-size: 14px;
@@ -157,6 +164,14 @@
 
     button.last {
       margin: 8px auto auto auto;
+    }
+
+    .ui_footer>button {
+      display: block;
+    }
+
+    button.default_disabled {
+      display: none;
     }
 
     .default_disabled {
@@ -263,19 +278,6 @@
     .buttonContainer button {
       margin: 8px auto 14px auto;
       width: 47%;
-      padding: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      border-radius: 5px;
-      background: #36454F;
-      color: white;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
     }
 
     .buttonContainer button:first-of-type {
@@ -549,7 +551,7 @@
         </div>
       </div>
       <div id="ui_settings" class="ui_main default_disabled">
-        <h2 class="not_important"><span class="not_important">Annoyance</span></h2>
+        <h2 class="not_important first"><span class="not_important first">Annoyance</span></h2>
         <div class="mode_switch_last_container" id="mode_switch_container_beeper">
           <h4 id="label_beeper">Beep on tag r/w</h4>
           <div class="toggle_switch_container">
