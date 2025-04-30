@@ -20,6 +20,8 @@ class WebSite {
 
   private:
     void _webSiteCallback();
+    void _wsCleanupCallback();
+    Task* _wsCleanupTask = nullptr;
     Scheduler* _scheduler = nullptr;
     StatusRequest _sr;
     AsyncWebServer* _webServer;

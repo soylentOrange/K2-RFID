@@ -48,6 +48,7 @@ void WebServerAPI::_webServerCallback() {
 
   // Handle getting files from File System (will auto-magically serve the gzipped files)
   _webServer->serveStatic("/", LittleFS, "/")
+    .setCacheControl("max-age=600")
     .setFilter([&](__unused AsyncWebServerRequest* request) { return _fsMounted; });
 
   // serve logo for espConnect

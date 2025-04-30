@@ -12,6 +12,10 @@
 
 #define TAG "WebSite"
 
+#ifndef WSL_MAX_WS_CLIENTS
+  #define WSL_MAX_WS_CLIENTS DEFAULT_MAX_WS_CLIENTS
+#endif
+
 // gzipped website
 extern const uint8_t thingy_html_start[] asm("_binary__pio_embed_website_html_gz_start");
 extern const uint8_t thingy_html_end[] asm("_binary__pio_embed_website_html_gz_end");
@@ -33,6 +37,12 @@ void WebSite::begin(Scheduler* scheduler) {
 void WebSite::end() {
   _spooldataCallback = nullptr;
   _sr.setWaiting();
+
+  // end the cleanup task
+  if (_wsCleanupTask != nullptr) {
+    _wsCleanupTask->disable();
+    _wsCleanupTask = nullptr;
+  }
 
   // delete websock handler
   if (_ws != nullptr) {
@@ -76,7 +86,7 @@ void WebSite::_webSiteCallback() {
   _ws->onEvent([&](__unused AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, __unused size_t len) -> void {
     if (type == WS_EVT_CONNECT) {
       client->keepAlivePeriod(10);
-      client->setCloseClientOnQueueFull(true);
+      client->setCloseClientOnQueueFull(false);
 
       // send ID, config, spooldata, arming,...
       JsonDocument jsonMsg;
@@ -100,12 +110,17 @@ void WebSite::_webSiteCallback() {
         jsonMsg["spooldata"] = jsonSpool;
       }
 
+      // if (client->queueIsFull()) {
+      //   client->close();
+      //   LOGD(TAG, "Client %d wants to connect", client->id());
+      // } else {
       // send welcome message
       AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
       serializeJson(jsonMsg, buffer->get(), buffer->length());
       client->text(buffer);
       LOGD(TAG, "Client %d connected", client->id());
-      return;
+      //}
+      // return;
     } else if (type == WS_EVT_DISCONNECT) {
       LOGD(TAG, "Client %d disconnected", client->id());
     } else if (type == WS_EVT_ERROR) {
@@ -118,6 +133,7 @@ void WebSite::_webSiteCallback() {
         }
         // pong on client keep-alive message
         if (strcmp(reinterpret_cast<char*>(data), "ping") == 0) {
+          // LOGD(TAG, "Client %d pinged us", client->id());
           client->text("pong");
         } else { // some message is received
           JsonDocument jsonRXMsg;
@@ -300,6 +316,10 @@ void WebSite::_webSiteCallback() {
   rfid.listenTagRead([&](CFSTag tag) { _tagReadCallback(tag); });
   rfid.listenTagWrite([&](bool success) { _tagWriteCallback(success); });
 
+  // set up a task to client orphan websock-clients
+  Task* _wsCleanupTask = new Task(1000, TASK_FOREVER, [&] { _wsCleanupCallback(); }, _scheduler, false, NULL, NULL, true);
+  _wsCleanupTask->enable();
+
   _sr.signalComplete();
   LOGD(TAG, "...done!");
 }
@@ -317,7 +337,9 @@ void WebSite::_tagReadCallback(CFSTag tag) {
     jsonMsg["uid"] = static_cast<std::string>(tag.getUid()).c_str();
     AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
     serializeJson(jsonMsg, buffer->get(), buffer->length());
-    _ws->textAll(buffer);
+    if (_ws->count()) {
+      _ws->textAll(buffer);
+    }
   } else {
     SpoolData spooldata = tag.getSpooldata();
     JsonDocument jsonMsg;
@@ -326,7 +348,9 @@ void WebSite::_tagReadCallback(CFSTag tag) {
     jsonMsg["spooldata"] = static_cast<JsonDocument>(tag.getSpooldata());
     AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
     serializeJson(jsonMsg, buffer->get(), buffer->length());
-    _ws->textAll(buffer);
+    if (_ws->count()) {
+      _ws->textAll(buffer);
+    }
   }
 }
 
@@ -338,5 +362,11 @@ void WebSite::_tagWriteCallback(bool success) {
   jsonMsg["result"] = success;
   AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
   serializeJson(jsonMsg, buffer->get(), buffer->length());
-  _ws->textAll(buffer);
+  if (_ws->count()) {
+    _ws->textAll(buffer);
+  }
+}
+
+void WebSite::_wsCleanupCallback() {
+  _ws->cleanupClients(WSL_MAX_WS_CLIENTS);
 }
