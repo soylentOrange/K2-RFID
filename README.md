@@ -44,7 +44,7 @@ By default, only empty tags are written. When you want to re-program tags, disab
 
 ### Future Materials
 
-As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus on your local network, download the material database and saves it onto the prgrammer. No warranty that future firmware updates might break this behaviour... 
+As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus on your local network, download the material database and saves it onto the pro5grammer. No warranty that future firmware updates might break this behaviour... 
 
 <p align="center">
     <img src="assets/doc/screenshot_settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
@@ -115,7 +115,7 @@ On boards with an onboard mono-color LED:
 Even though there is no button for it, if you open k2rfid.local/weblog, you'll see a logging window. For every tag being read it will show a hex and ascii dump of the data on the tag.
 
 <p align="center">
-    <img src="assets/doc/screenshot_weblog.jpeg" alt="screenshot weblog" style="width:75%; height:auto;" >
+    <img src="assets/doc/screenshot_weblog.jpeg" alt="screenshot weblog" style="width:85%; height:auto;" >
 </p>
 
 ## Acknowledgements
