@@ -2,40 +2,25 @@
 /*
  * Copyright (C) 2023-2025 Mathieu Carbou, 2025 Robert Wendlandt
  */
-#include "MycilaWebSerial.h"
 
+#include <MycilaWebSerial.h>
 #include <assert.h>
 
 #include <string>
 
+// gzipped website
 extern const uint8_t webserial_html_start[] asm("_binary__pio_embed_webserial_html_gz_start");
 extern const uint8_t webserial_html_end[] asm("_binary__pio_embed_webserial_html_gz_end");
 
-void WebSerial::setAuthentication(const char* username, const char* password) {
-  _username = username;
-  _password = password;
-  _authenticate = !_username.empty() && !_password.empty();
-  if (_ws) {
-    _ws->setAuthentication(_username.c_str(), _password.c_str());
-  }
-}
-
-void WebSerial::begin(AsyncWebServer* server, const char* url) {
+void WebSerial::begin(AsyncWebServer* server, const char* url, Scheduler* scheduler) {
   _server = server;
+  _scheduler = scheduler;
 
   std::string backendUrl = url;
   backendUrl.append("ws");
   _ws = new AsyncWebSocket(backendUrl.c_str());
 
-  if (_authenticate) {
-    _ws->setAuthentication(_username.c_str(), _password.c_str());
-  }
-
   _server->on(url, HTTP_GET, [&](AsyncWebServerRequest* request) {
-    if (_authenticate) {
-      if (!request->authenticate(_username.c_str(), _password.c_str()))
-        return request->requestAuthentication();
-    }
     AsyncWebServerResponse* response = request->beginResponse(200, "text/html", webserial_html_start, webserial_html_end - webserial_html_start);
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
@@ -60,6 +45,25 @@ void WebSerial::begin(AsyncWebServer* server, const char* url) {
   });
 
   _server->addHandler(_ws);
+
+  // set up a task to cleanup orphan websock-clients
+  Task* _wsCleanupTask = new Task(1000, TASK_FOREVER, [&] { _wsCleanupCallback(); }, _scheduler, false, NULL, NULL, true);
+  _wsCleanupTask->enable();
+}
+
+void WebSerial::end() {
+  // end the cleanup task
+  if (_wsCleanupTask != nullptr) {
+    _wsCleanupTask->disable();
+    _wsCleanupTask = nullptr;
+  }
+
+  // delete websock handler
+  if (_ws != nullptr) {
+    _server->removeHandler(_ws);
+    delete _ws;
+    _ws = nullptr;
+  }
 }
 
 size_t WebSerial::write(uint8_t m) {
@@ -113,7 +117,7 @@ size_t WebSerial::write(const uint8_t* buffer, size_t size) {
 
 void WebSerial::_send(const uint8_t* buffer, size_t size) {
   if (_ws && size > 0) {
-    _ws->cleanupClients(WSL_MAX_WS_CLIENTS);
+    //_ws->cleanupClients(WSL_MAX_WS_CLIENTS);
     if (_ws->count()) {
       _ws->textAll((const char*)buffer, size);
     }
@@ -134,4 +138,8 @@ void WebSerial::setBuffer(size_t initialCapacity) {
   _initialBufferCapacity = initialCapacity;
   _buffer = std::string();
   _buffer.reserve(initialCapacity);
+}
+
+void WebSerial::_wsCleanupCallback() {
+  _ws->cleanupClients(WSL_MAX_WS_CLIENTS);
 }
