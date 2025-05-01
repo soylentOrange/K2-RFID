@@ -181,16 +181,12 @@ void RFID::enableWriting(bool enable, bool overwrite) {
 
   if (_writeEnabled && _overwriteEnabled) {
     led.setMode(LED::LEDMode::ARMED_REWRITING);
-    LOGI(TAG, "writing and re-writing enabled");
   } else if (_writeEnabled && !_overwriteEnabled) {
     led.setMode(LED::LEDMode::ARMED_WRITING);
-    LOGI(TAG, "writing (on empty tags) enabled");
   } else if (!_writeEnabled && _overwriteEnabled) {
     led.setMode(LED::LEDMode::WAITING_READ);
-    LOGI(TAG, "writing disabled (but overwrite is still set)");
   } else {
     led.setMode(LED::LEDMode::WAITING_READ);
-    LOGI(TAG, "writing disabled");
   }
 }
 

@@ -52,7 +52,7 @@ void WebSite::end() {
   }
 
 #ifdef MYCILA_WEBSERIAL_SUPPORT_APP
-  // delete webLogger
+  webSerial.end();
   delete webLogger;
 #endif
 }
@@ -73,7 +73,7 @@ void WebSite::_webSiteCallback() {
 
   // Allow web-logging for K2RFID-app via WebSerial
 #ifdef MYCILA_WEBSERIAL_SUPPORT_APP
-  webSerial.begin(_webServer, "/weblog");
+  webSerial.begin(_webServer, "/weblog", _scheduler);
   webSerial.setBuffer(100);
   webLogger = new Mycila::Logger();
   webLogger->setLevel(ARDUHAL_LOG_LEVEL_INFO);
@@ -179,6 +179,17 @@ void WebSite::_webSiteCallback() {
 
               // configure programmer
               rfid.enableWriting(write, !writeEmpty);
+
+              // log the new state
+              if (write && !writeEmpty) {
+                LOGI(TAG, "writing and re-writing enabled");
+              } else if (write && writeEmpty) {
+                LOGI(TAG, "writing (on empty tags) enabled");
+              } else if (!write && !writeEmpty) {
+                LOGI(TAG, "writing disabled (but overwrite is still set)");
+              } else if (!write && writeEmpty) {
+                LOGI(TAG, "writing disabled");
+              }
 
               // fill remaining fields of the response and send
               jsonMsg["writeTags"] = write;
@@ -316,7 +327,7 @@ void WebSite::_webSiteCallback() {
   rfid.listenTagRead([&](CFSTag tag) { _tagReadCallback(tag); });
   rfid.listenTagWrite([&](bool success) { _tagWriteCallback(success); });
 
-  // set up a task to client orphan websock-clients
+  // set up a task to cleanup orphan websock-clients
   Task* _wsCleanupTask = new Task(1000, TASK_FOREVER, [&] { _wsCleanupCallback(); }, _scheduler, false, NULL, NULL, true);
   _wsCleanupTask->enable();
 

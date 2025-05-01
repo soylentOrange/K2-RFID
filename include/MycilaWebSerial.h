@@ -2,15 +2,17 @@
 /*
  * Copyright (C) 2023-2025 Mathieu Carbou
  */
+
 #pragma once
 
 #if defined(ESP8266)
-#include "ESP8266WiFi.h"
+  #include "ESP8266WiFi.h"
 #elif defined(ESP32)
-#include "WiFi.h"
+  #include "WiFi.h"
 #endif
 
 #include <ESPAsyncWebServer.h>
+#include <TaskSchedulerDeclarations.h>
 #include <functional>
 #include <string>
 
@@ -20,7 +22,7 @@
 #define WSL_VERSION_REVISION 1
 
 #ifndef WSL_MAX_WS_CLIENTS
-#define WSL_MAX_WS_CLIENTS DEFAULT_MAX_WS_CLIENTS
+  #define WSL_MAX_WS_CLIENTS DEFAULT_MAX_WS_CLIENTS
 #endif
 
 // High performance mode:
@@ -34,8 +36,8 @@
 
 class WebSerial : public Print {
   public:
-    void begin(AsyncWebServer* server, const char* url = "/webserial");
-    void setAuthentication(const char* username, const char* password);
+    void begin(AsyncWebServer* server, const char* url = "/webserial", Scheduler* scheduler = nullptr);
+    void end();
     size_t write(uint8_t) override;
     size_t write(const uint8_t* buffer, size_t size) override;
 
@@ -61,18 +63,17 @@ class WebSerial : public Print {
     void send(AsyncWebSocketMessageBuffer* buffer) {
       if (!_ws || !buffer)
         return;
-      _ws->cleanupClients(WSL_MAX_WS_CLIENTS);
       if (_ws->count())
         _ws->textAll(buffer);
     }
 
   private:
+    void _wsCleanupCallback();
+    Task* _wsCleanupTask = nullptr;
+    Scheduler* _scheduler = nullptr;
     // Server
     AsyncWebServer* _server;
     AsyncWebSocket* _ws;
-    bool _authenticate = false;
-    std::string _username;
-    std::string _password;
     size_t _initialBufferCapacity = 0;
     std::string _buffer;
     void _send(const uint8_t* buffer, size_t size);
