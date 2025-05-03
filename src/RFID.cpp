@@ -28,6 +28,7 @@ void RFID::begin(Scheduler* scheduler) {
 
 void RFID::end() {
   LOGD(TAG, "Stopping RFID...");
+  _PN532Status = false;
   if (_rfidReadTask != nullptr) {
     _rfidReadTask->disable();
   }
@@ -62,6 +63,7 @@ void RFID::_initNFCcallback() {
     // start a task for continuously trying to find and read tags in proximity
     _rfidReadTask = new Task(250, TASK_FOREVER, [&] { _rfidReadCallback(); }, _scheduler, false, NULL, NULL, true);
     _rfidReadTask->enable();
+    _PN532Status = true;
   }
 }
 
@@ -98,7 +100,7 @@ void RFID::_rfidReadCallback() {
             LOGW(TAG, "writing empty tag...");
             bool write_result = tag.writeSpoolData(&_nfc, _spooldata);
             led.setMode(LED::LEDMode::TAG_WRITTEN);
-            _doBeep(1500);
+            _doBeep(2000);
             // invoke callback
             if (_tagWriteCallback != nullptr) {
               _tagWriteCallback(write_result);
@@ -119,7 +121,7 @@ void RFID::_rfidReadCallback() {
             LOGW(TAG, "re-writing tag...");
             bool overwrite_result = tag.writeSpoolData(&_nfc, _spooldata);
             led.setMode(LED::LEDMode::TAG_REWRITTEN);
-            _doBeep(1500);
+            _doBeep(2000);
             // invoke event callback
             if (_tagWriteCallback != nullptr) {
               _tagWriteCallback(overwrite_result);
@@ -143,7 +145,7 @@ void RFID::_rfidReadCallback() {
           LOGW(TAG, "writing corrupted tag...");
           bool write_result = tag.writeSpoolData(&_nfc, _spooldata);
           led.setMode(LED::LEDMode::TAG_REWRITTEN);
-          _doBeep(1500);
+          _doBeep(2000);
           // invoke callback
           if (_tagWriteCallback != nullptr) {
             _tagWriteCallback(write_result);

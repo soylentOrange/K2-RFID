@@ -29,6 +29,7 @@ class RFID {
     typedef std::function<void(bool success)> TagWriteCallback;
     void listenTagWrite(TagWriteCallback callback) { _tagWriteCallback = callback; }
     void enableBeep(bool enable);
+    bool getStatus() { return _PN532Status; }
 
   private:
     void _rfidReadCallback();
@@ -38,6 +39,7 @@ class RFID {
     Scheduler* _scheduler = nullptr;
     SPIClass* _spi;
     Adafruit_PN532 _nfc;
+    bool _PN532Status = false;
     bool _tagInProximity = false;
     bool _newTagInProximity = false;
     int32_t _retryCounter = RETRIES;
@@ -49,5 +51,5 @@ class RFID {
     bool _writeEnabled = false;
     bool _overwriteEnabled = false;
     bool _beep = false;
-    void _doBeep(uint32_t freq = 1000);
+    void _doBeep(uint32_t freq = 1500);
 };

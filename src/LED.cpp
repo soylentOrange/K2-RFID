@@ -14,10 +14,12 @@
 #define LED_BRIGHT_PULSE (120)
 #define LED_BRIGHT_FULL  (255)
 #define LEDC_FREQ        (4000)
+#define DEFAULT_SAT      240
+#define DEFAULT_VALUE    255
 
 // const char* fmtMemCk = "Free: %d MaxAlloc: %d PSFree: %d";
 // #define MEMCK LOGD(TAG, fmtMemCk, ESP.getFreeHeap(), ESP.getMaxAllocHeap(), ESP.getFreePsram())
-//RGB_BUILTIN_LED_COLOR_ORDER
+
 void LED::begin(Scheduler* scheduler) {
   // Task handling
   _scheduler = scheduler;
@@ -44,8 +46,6 @@ void LED::_ledInitCallback() {
   if (!_isRGB) {
     ledcAttach(_ledPin, LEDC_FREQ, LEDC_DUTY_RES);
     ledcWrite(_ledPin, 0);
-  } else {
-    LOGE(TAG, "Not implemented");
   }
 
   // set current mode to none
@@ -68,8 +68,13 @@ void LED::setMode(LEDMode mode) {
   _mode = mode;
   switch (_mode) {
     case LEDMode::WAITING_WIFI: {
-      ledcWrite(_ledPin, LED_BRIGHT_OFF);
-      // Set LED to blinking / blinking blue
+      if (!_isRGB) {
+        ledcWrite(_ledPin, LED_BRIGHT_OFF);
+      } else {
+        _ledState = 0;
+        rgbLedWrite(_ledPin, 0, 0, 0);
+      }
+      // Set LED to blinking / blinking white
       _ledTask = new Task(400, TASK_FOREVER, [&] {
         if (!_isRGB) {
           if (ledcRead(_ledPin) == LED_BRIGHT_DIM) {
@@ -78,13 +83,26 @@ void LED::setMode(LEDMode mode) {
             ledcWrite(_ledPin, LED_BRIGHT_DIM);
           }
         } else {
-            LOGE(TAG, "Not implemented");
+          CRGB led_color(CRGB::HTMLColorCode::Black);
+          if (!_ledState) {
+            led_color = CRGB(CHSV(HUE_BLUE, 0, LED_BRIGHT_DIM));
+            _adjustLed(&led_color, _colorAdjustment);
+            _ledState = 1;
+          } else {
+            _ledState = 0;
+          }
+          rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
         } }, _scheduler, false, NULL, NULL, true);
       _ledTask->enable();
     } break;
     case LEDMode::WAITING_CAPTIVE: {
-      ledcWrite(_ledPin, LED_BRIGHT_OFF);
-      // Set LED to fast blinking / fast blinking blue
+      if (!_isRGB) {
+        ledcWrite(_ledPin, LED_BRIGHT_OFF);
+      } else {
+        _ledState = 0;
+        rgbLedWrite(_ledPin, 0, 0, 0);
+      }
+      // Set LED to fast blinking / fast blinking white
       _ledTask = new Task(100, TASK_FOREVER, [&] {
         if (!_isRGB) {
           if (ledcRead(_ledPin) == LED_BRIGHT_DIM) {
@@ -93,7 +111,15 @@ void LED::setMode(LEDMode mode) {
             ledcWrite(_ledPin, LED_BRIGHT_DIM);
           }
         } else {
-            LOGE(TAG, "Not implemented");
+          CRGB led_color(CRGB::HTMLColorCode::Black);
+          if (!_ledState) {
+            led_color = CRGB(CHSV(HUE_BLUE, 0, LED_BRIGHT_DIM));
+            _adjustLed(&led_color, _colorAdjustment);
+            _ledState = 1;
+          } else {
+            _ledState = 0;
+          }
+          rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
         } }, _scheduler, false, NULL, NULL, true);
       _ledTask->enable();
     } break;
@@ -102,7 +128,9 @@ void LED::setMode(LEDMode mode) {
       if (!_isRGB) {
         ledcWrite(_ledPin, LED_BRIGHT_DIM);
       } else {
-        LOGE(TAG, "Not implemented");
+        CRGB led_color(CHSV(HUE_BLUE, DEFAULT_SAT, LED_BRIGHT_DIM));
+        _adjustLed(&led_color, _colorAdjustment);
+        rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
       }
     } break;
     case LEDMode::TAG_READ: {
@@ -113,35 +141,51 @@ void LED::setMode(LEDMode mode) {
       if (!_isRGB) {
         ledcWrite(_ledPin, LED_BRIGHT_FULL);
       } else {
-        LOGE(TAG, "Not implemented");
+        CRGB led_color(CHSV(HUE_BLUE, DEFAULT_SAT, LED_BRIGHT_FULL));
+        _adjustLed(&led_color, _colorAdjustment);
+        rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
       }
 
       // Start the task to reset to WAITING_READ
       resetTask->enableDelayed(250);
     } break;
     case LEDMode::ARMED_WRITING: {
-      ledcWrite(_ledPin, LED_BRIGHT_OFF);
-      // Set LED to breathing / breathing orange
+      if (!_isRGB) {
+        ledcWrite(_ledPin, LED_BRIGHT_OFF);
+      } else {
+        _ledState = 0;
+        rgbLedWrite(_ledPin, 0, 0, 0);
+      }
+      // Set LED to breathing / breathing green
       _ledTask = new Task(40, TASK_FOREVER, [&] {
+        // breathing from 0 to 100
+        uint8_t brightness = (exp(sin(millis() / 1000.0 * PI)) - 0.368) * 42.546;
         if (!_isRGB) {
-          // breathing from 0 to 100
-          uint8_t brightness = (exp(sin(millis() / 1000.0 * PI)) - 0.368) * 42.546;
           ledcWrite(_ledPin, brightness);
         } else {
-          LOGE(TAG, "Not implemented");
+          CRGB led_color(CHSV(HUE_GREEN, DEFAULT_SAT, brightness));
+          _adjustLed(&led_color, _colorAdjustment);
+          rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
         } }, _scheduler, false, NULL, NULL, true);
       _ledTask->enable();
     } break;
     case LEDMode::ARMED_REWRITING: {
-      ledcWrite(_ledPin, LED_BRIGHT_OFF);
+      if (!_isRGB) {
+        ledcWrite(_ledPin, LED_BRIGHT_OFF);
+      } else {
+        _ledState = 0;
+        rgbLedWrite(_ledPin, 0, 0, 0);
+      }
       // Set LED to fast breathing / breathing pulsing red
       _ledTask = new Task(40, TASK_FOREVER, [&] {
+        // breathing from 0 to 100
+        uint8_t brightness = (exp(sin(millis() / 500.0 * PI)) - 0.368) * 42.546;
         if (!_isRGB) {
-          // breathing from 0 to 100
-          uint8_t brightness = (exp(sin(millis() / 500.0 * PI)) - 0.368) * 42.546;
           ledcWrite(_ledPin, brightness);
         } else {
-          LOGE(TAG, "Not implemented");
+          CRGB led_color(CHSV(HUE_RED, DEFAULT_SAT, brightness));
+          _adjustLed(&led_color, _colorAdjustment);
+          rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
         } }, _scheduler, false, NULL, NULL, true);
       _ledTask->enable();
     } break;
@@ -153,7 +197,9 @@ void LED::setMode(LEDMode mode) {
       if (!_isRGB) {
         ledcWrite(_ledPin, LED_BRIGHT_FULL);
       } else {
-        LOGE(TAG, "Not implemented");
+        CRGB led_color(CHSV(HUE_GREEN, DEFAULT_SAT, LED_BRIGHT_FULL));
+        _adjustLed(&led_color, _colorAdjustment);
+        rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
       }
 
       // Start the task to reset to previous state
@@ -167,13 +213,19 @@ void LED::setMode(LEDMode mode) {
       if (!_isRGB) {
         ledcWrite(_ledPin, LED_BRIGHT_FULL);
       } else {
-        LOGE(TAG, "Not implemented");
+        CRGB led_color(CHSV(HUE_RED, DEFAULT_SAT, LED_BRIGHT_FULL));
+        _adjustLed(&led_color, _colorAdjustment);
+        rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
       }
 
       // Start the task to reset to previous state
       resetTask->enableDelayed(250);
     } break;
     default: // switch it off
-      ledcWrite(_ledPin, 0);
+      if (!_isRGB) {
+        ledcWrite(_ledPin, 0);
+      } else {
+        rgbLedWrite(_ledPin, 0, 0, 0);
+      }
   }
 }
