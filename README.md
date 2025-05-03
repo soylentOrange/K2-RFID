@@ -9,18 +9,17 @@ As the tagged spools from Creality come with an additional price and also to ret
 
 ## What do I need to make one?
 
-Apart from the source code of this project (and a computer running Platformio):
-- esp32 microcontroller (tested with a [Waveshare ESP32-S3-Tiny board](https://www.waveshare.com/wiki/ESP32-S3-Tiny))
+- esp32 microcontroller (tested with a [Wemos S2 mini board](https://www.wemos.cc/en/latest/s2/s2_mini.html))
 - PN532 NFC/RFID board
 - MIFARE classic 1k tags
-- housing (optionally)
-- battery, charger, switch, piezo disk (optionally)
-
-For minifying the html parts, you also need to install: 
-- [html-minifier-terser](https://github.com/terser/html-minifier-terser)
-  - `npm install html-minifier-terser -g`
-- [clean-css](https://github.com/clean-css/clean-css)
-  - `npm install clean-css-cli -g`
+- optionally
+  - housing
+  - WS2812b RGB LED (and ~1µF capacitor)
+  - piezo disk (and ~100 Ohm resistor)
+  - very optionally
+    - battery
+    - charger
+    - switch
 
 ## How to use it?
 
@@ -47,7 +46,7 @@ By default, only empty tags are written. When you want to re-program tags, disab
 As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus on your local network, download the material database and saves it onto the pro5grammer. No warranty that future firmware updates might break this behaviour... 
 
 <p align="center">
-    <img src="assets/doc/screenshot_settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
+    <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
 </p>
 
 ## Device Feedback
@@ -60,28 +59,28 @@ On boards with an onboard LED the current state and events are shown via the LED
 
 #### RGB_BUILTIN
 
-On boards with an onboard RGB-LED different colors are used: 
+On boards with an onboard RGB-LED or with an external WS2812b, different colors are used: 
 
-* Serving captive portal (connect to enter credentials):
-  * rapidly blinking blue
+- Serving captive portal (connect to enter credentials):
+  - rapidly blinking white
 
-* Waiting for network connection:
-  * blinking blue
+- Waiting for network connection:
+  - blinking white
 
-* Connected to WiFi (or in AP-mode) and waiting to read tags:
-  * dim solid white
+- Connected to WiFi (or in AP-mode) and waiting to read tags:
+  - dim solid blue
 
-* Tag read:
-  * flashing green
+- Tag read:
+  - flashing blue
 
-* Armed to write tags:
-  * breathing orange
+- Armed to write tags:
+  - breathing green
 
-* Armed to write and re-write tags:
-  * breathing red
+- Armed to write and re-write tags:
+  - breathing red
 
-* Tag written:
-  * flashing red/orange
+- Tag written:
+  - flashing red/green
 
 Note: just make sure that the RGB_BUILTIN_LED_COLOR_ORDER is set matching your board. Otherwise the colours will look strange.
 
@@ -89,26 +88,26 @@ Note: just make sure that the RGB_BUILTIN_LED_COLOR_ORDER is set matching your b
 
 On boards with an onboard mono-color LED: 
 
-* Serving captive portal (connect to enter credentials):
-  * blinking rapidly
+- Serving captive portal (connect to enter credentials):
+  - blinking rapidly
 
-* Waiting for network connection:
-  * blinking
+- Waiting for network connection:
+  - blinking
 
-* Connected to WiFi (or in AP-mode) and waiting to read tags:
-  * dim solid
+- Connected to WiFi (or in AP-mode) and waiting to read tags:
+  - dim solid
 
-* Tag read:
-  * flashing
+- Tag read:
+  - flashing
 
 * Armed to write tags:
   * breathing
 
-* Armed to write and re-write tags:
-  * breathing quickly
+- Armed to write and re-write tags:
+  - breathing quickly
 
-* Tag written:
-  * flashing
+- Tag written:
+  - flashing
 
 ## Web logging
 
@@ -117,6 +116,51 @@ Even though there is no button for it, if you open k2rfid.local/weblog, you'll s
 <p align="center">
     <img src="assets/doc/screenshot_weblog.jpeg" alt="screenshot weblog" style="width:85%; height:auto;" >
 </p>
+
+## Build instructions
+
+### Assembly
+
+Essentially required are only the ES32 and a PN532 board. For some audible feedback, I've added a 27mm pizo disc and a 100 Ohm resistor (on pin 16).
+
+Connect the PN532 board pins to:
+
+| PN532        | ESP           | 
+| ------------- |:-------------:| 
+| SCK      | 12 |
+| MOSI      | 11      | 
+| SS | 7     |    1 |
+| MISO | 9|
+
+Don't forget the ground line and connect PN532's VCC to the 3.3 V regulator output of the ESP board.
+
+
+<p align="center">
+    <img src="assets/doc/K2RFID_beeper.jpg" alt="beeper circuit" style="width:100%; height:auto;" >
+</p>
+
+#### Adding an external RGB-LED
+
+I found an old RGB LED-strip in my pile of junk. cutting one of the LEDs from the strip, it could just be added to the board (at pin 18, an additional buffer capacitor stabilizes the output of the 3.3V regulator on the S2 mini board).
+
+<p align="center">
+    <img src="assets/doc/K2RFID_LED.jpg" alt="led circuit" style="width:100%; height:auto;" >
+</p>
+
+### Flashing Firmware
+
+The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image, upload it to the board (using the usb port of your board) with: `esptool.py write_flash 0x0 ADJUST_TO_YOUR_PATH/firmware.factory.bin`. 
+
+Otherwise, you'll need to have [PlatformIO](https://platformio.org/platformio-ide) (and [esptool.py](https://github.com/espressif/esptool)).
+
+For minifying the html parts, you also need to have [Node.js](https://nodejs.org/).
+Install development dependencies: 
+- [html-minifier-terser](https://github.com/terser/html-minifier-terser)
+  - `npm install html-minifier-terser -g`
+- [clean-css](https://github.com/clean-css/clean-css)
+  - `npm install clean-css-cli -g`
+
+Then clone the repository, open it in [Visual Studio Code](https://code.visualstudio.com/), possibly adjust the `platformio.ini` to your likings and build it for your board. After a (successful) build, you can flash it using esptool (a hint on the command line is given after building).  
 
 ## Acknowledgements
 
