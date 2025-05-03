@@ -9,17 +9,21 @@ As the tagged spools from Creality come with an additional price and also to ret
 
 ## What do I need to make one?
 
-- esp32 microcontroller (tested with a [Wemos S2 mini board](https://www.wemos.cc/en/latest/s2/s2_mini.html))
+Essential components:
+- esp32 microcontroller board (tested with a [Wemos S2 mini board](https://www.wemos.cc/en/latest/s2/s2_mini.html))
 - PN532 NFC/RFID board
 - MIFARE classic 1k tags
-- optionally
-  - housing
-  - WS2812b RGB LED (and ~1µF capacitor)
-  - piezo disk (and ~100 Ohm resistor)
-  - very optionally
-    - battery
-    - charger
-    - switch
+
+Optionally:
+- housing (available on [Printables](https://www.printables.com/model/1284434-k2-rfid-box))
+- WS2812b RGB LED (and ~1µF capacitor)
+- piezo disk (and ~100 Ohm resistor)
+
+Very optionally:
+- battery
+- charger
+- switch
+- ...
 
 ## How to use it?
 
@@ -121,7 +125,7 @@ Even though there is no button for it, if you open k2rfid.local/weblog, you'll s
 
 ### Assembly
 
-Essentially required are only the ES32 and a PN532 board. For some audible feedback, I've added a 27mm pizo disc and a 100 Ohm resistor (on pin 16).
+Essentially required are only the ES32 and a PN532 board. For some audible feedback, I've added a 27 mm pizo disc and a 100 Ohm resistor (on pin 16).
 
 Connect the PN532 board pins to:
 
