@@ -26,6 +26,7 @@ class WebSite {
     StatusRequest _sr;
     AsyncWebServer* _webServer;
     AsyncWebSocket* _ws = nullptr;
+    uint32_t _disconnectTime;
 #ifdef USE_BEEPER
     bool _beepOnRW = false;
 #endif

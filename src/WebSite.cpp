@@ -103,6 +103,7 @@ void WebSite::_webSiteCallback() {
 #endif
       jsonMsg["writeTags"] = rfid.getWriteEnabled();
       jsonMsg["writeEmptyTags"] = !rfid.getOverwriteEnabled();
+      jsonMsg["PN532"] = rfid.getStatus();
 
       // append spooldata - from RFID - only when length is available
       JsonDocument jsonSpool = static_cast<JsonDocument>(rfid.getSpooldata());
@@ -110,17 +111,11 @@ void WebSite::_webSiteCallback() {
         jsonMsg["spooldata"] = jsonSpool;
       }
 
-      // if (client->queueIsFull()) {
-      //   client->close();
-      //   LOGD(TAG, "Client %d wants to connect", client->id());
-      // } else {
       // send welcome message
       AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
       serializeJson(jsonMsg, buffer->get(), buffer->length());
       client->text(buffer);
       LOGD(TAG, "Client %d connected", client->id());
-      //}
-      // return;
     } else if (type == WS_EVT_DISCONNECT) {
       LOGD(TAG, "Client %d disconnected", client->id());
     } else if (type == WS_EVT_ERROR) {
@@ -328,6 +323,7 @@ void WebSite::_webSiteCallback() {
   rfid.listenTagWrite([&](bool success) { _tagWriteCallback(success); });
 
   // set up a task to cleanup orphan websock-clients
+  _disconnectTime = millis();
   Task* _wsCleanupTask = new Task(1000, TASK_FOREVER, [&] { _wsCleanupCallback(); }, _scheduler, false, NULL, NULL, true);
   _wsCleanupTask->enable();
 

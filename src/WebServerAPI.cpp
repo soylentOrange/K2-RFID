@@ -9,10 +9,6 @@
 
 #define TAG "WebServer"
 
-// // gzipped assets
-// extern const uint8_t logo_start[] asm("_binary__pio_embed_logo_captive_svg_gz_start");
-// extern const uint8_t logo_end[] asm("_binary__pio_embed_logo_captive_svg_gz_end");
-
 void WebServerAPI::begin(Scheduler* scheduler) {
   // Just to be sure that the static webserver is not running anymore before being started (again)
   _webServer->end();

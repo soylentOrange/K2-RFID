@@ -21,7 +21,7 @@ void EventHandler::begin(Scheduler* scheduler) {
 }
 
 void EventHandler::end() {
-  LOGD(TAG, "Disabling EventHandler...");
+  LOGW(TAG, "Disabling EventHandler...");
   _espNetwork->getESPConnect()->listen(nullptr);
   _networkState = Mycila::ESPConnect::State::NETWORK_DISABLED;
 }

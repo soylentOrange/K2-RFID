@@ -995,6 +995,14 @@
       }
       cloneSerial = configJSON.cloneSerial
       clone_checkbox.checked = cloneSerial
+      // check that reader is available
+      if (!configJSON.PN532) {
+        showResultContainer()
+        result_text.innerHTML = "Reader not available!"
+        result_loader.style.display = "none"
+        result_loader_svg.style.display = "flex"
+        result_loader_svg.innerHTML = error_svg
+      }
     }
   }
 
