@@ -15,7 +15,7 @@ Essential components:
 - MIFARE classic 1k tags
 
 Optionally:
-- housing (available on [Printables](https://www.printables.com/model/1284434-k2-rfid-box))
+- housing (available on [Printables](https://www.printables.com/model/1284434-k2-rfid-box) or [CrealityCloud](https://www.crealitycloud.com/model-detail/68165e11f8576ee3f90c7d2b?source=61))
 - WS2812b RGB LED (and ~1µF capacitor)
 - piezo disk (and ~100 Ohm resistor)
 
