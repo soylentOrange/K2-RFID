@@ -138,6 +138,8 @@ Connect the PN532 board pins to:
 
 Don't forget the ground line and connect PN532's VCC to the 3.3 V regulator output of the ESP board.
 
+Note: The PN532 needs to be set to SPI-mode. On my board, there is a DIP switch that needed ajustment as it came in UART-mode. Look for the print on the PCB and adjust the switches accordingly (I needed to toggle SW2 to 1).
+
 
 <p align="center">
     <img src="assets/doc/K2RFID_beeper.jpg" alt="beeper circuit" style="width:100%; height:auto;" >
@@ -153,9 +155,13 @@ I found an old RGB LED-strip in my pile of junk. cutting one of the LEDs from th
 
 ### Flashing Firmware
 
-The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image, upload it to the board (using the usb port of your board) with: `esptool.py write_flash 0x0 ADJUST_TO_YOUR_PATH/firmware.factory.bin`. 
+The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool.py write_flash 0x0 ADJUST_TO_YOUR_PATH/firmware.factory.bin`. 
 
-Otherwise, you'll need to have [PlatformIO](https://platformio.org/platformio-ide) (and [esptool.py](https://github.com/espressif/esptool)).
+Note: When uploading to a factory fresh board, you might need to enable uploads by pressing both buttons, release the "0"-button first, then the "RST"-button (this sequence will enable the USB-CDC). 
+
+#### Rebuilding the Firmware before Upload
+
+If you want to rebuild the firmware yourself before uploading, you'll need to have [PlatformIO](https://platformio.org/platformio-ide) (and [esptool.py](https://github.com/espressif/esptool)).
 
 For minifying the html parts, you also need to have [Node.js](https://nodejs.org/).
 Install development dependencies: 
