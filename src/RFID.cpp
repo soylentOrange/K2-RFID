@@ -45,9 +45,19 @@ void RFID::_initNFCcallback() {
   _spi->begin(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
   _nfc.begin();
 
+  // slow down SPI frequency to 0.5MHz
+  _spi->setFrequency(500000);
+  _nfc.reset();
+  delay(PN532_TIMEOUT);
+  _nfc.wakeup();
+
   uint32_t versiondata = _nfc.getFirmwareVersion();
   if (!versiondata) {
     LOGE(TAG, "Didn't find PN53x board");
+
+    // Retry initialization
+    Task* initNFCTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _initNFCcallback(); }, _scheduler, false, NULL, NULL, true);
+    initNFCTask->enable();
   } else {
     // Got ok data, print it out!
     LOGD(TAG, "Found chip PN5%x", (versiondata >> 24) & 0xFF);

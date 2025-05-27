@@ -14,7 +14,7 @@ using std::runtime_error;
 // beware: will throw exception in case of failure
 CFSTag::CFSTag(Adafruit_PN532* nfc) {
   _uid = Uid();
-  bool success = nfc->readPassiveTargetID(PN532_MIFARE_ISO14443A, _uid.uidByte, &_uid.size, 30);
+  bool success = nfc->readPassiveTargetID(PN532_MIFARE_ISO14443A, _uid.uidByte, &_uid.size, PN532_TIMEOUT);
 
   // have we found a MIFARE classic tag?
   if (success && _uid.size == 4) {
@@ -30,9 +30,9 @@ CFSTag::CFSTag(Adafruit_PN532* nfc) {
     // retry authentification with standard key
     if (!_encrypted) {
       nfc->reset();
-      delay(10);
+      delay(PN532_TIMEOUT);
       nfc->wakeup();
-      success = nfc->readPassiveTargetID(PN532_MIFARE_ISO14443A, _uid.uidByte, &_uid.size, 30);
+      success = nfc->readPassiveTargetID(PN532_MIFARE_ISO14443A, _uid.uidByte, &_uid.size, PN532_TIMEOUT);
       if (success)
         unlocked = nfc->mifareclassic_AuthenticateBlock(_uid.uidByte, _uid.size, 7, 0, const_cast<uint8_t*>(std_key.keyByte));
     }
