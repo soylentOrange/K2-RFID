@@ -45,23 +45,23 @@ void RFID::_initNFCcallback() {
   _spi->begin(PN532_SCK, PN532_MISO, PN532_MOSI, PN532_SS);
   _nfc.begin();
 
-  // slow down SPI frequency to 0.5MHz
-  _spi->setFrequency(500000);
-  _nfc.reset();
-  delay(PN532_TIMEOUT);
-  _nfc.wakeup();
+  // set SPI frequency to 5MHz
+  //_spi->setFrequency(5000000);
+  // _nfc.reset();
+  // delay(PN532_INIT_TIMEOUT);
+  // _nfc.wakeup();
 
-  uint32_t versiondata = _nfc.getFirmwareVersion();
-  if (!versiondata) {
-    LOGE(TAG, "Didn't find PN53x board");
+  // uint32_t versiondata = _nfc.getFirmwareVersion();
+  // if (!versiondata) {
+  //   LOGE(TAG, "Didn't find PN53x board");
 
-    // Retry initialization
-    Task* initNFCTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _initNFCcallback(); }, _scheduler, false, NULL, NULL, true);
-    initNFCTask->enable();
-  } else {
-    // Got ok data, print it out!
-    LOGD(TAG, "Found chip PN5%x", (versiondata >> 24) & 0xFF);
-    LOGD(TAG, "Firmware ver. %d.%d", (versiondata >> 16) & 0xFF, (versiondata >> 8) & 0xFF);
+  //   // Retry initialization
+  //   Task* initNFCTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] { _initNFCcallback(); }, _scheduler, false, NULL, NULL, true);
+  //   initNFCTask->enable();
+  // } else {
+  //   // Got ok data, print it out!
+  //   LOGD(TAG, "Found chip PN5%x", (versiondata >> 24) & 0xFF);
+  //   LOGD(TAG, "Firmware ver. %d.%d", (versiondata >> 16) & 0xFF, (versiondata >> 8) & 0xFF);
     LOGD(TAG, "...done!");
 
     // get some preference for writing behaviour
@@ -74,7 +74,7 @@ void RFID::_initNFCcallback() {
     _rfidReadTask = new Task(250, TASK_FOREVER, [&] { _rfidReadCallback(); }, _scheduler, false, NULL, NULL, true);
     _rfidReadTask->enable();
     _PN532Status = true;
-  }
+  // }
 }
 
 // beep when requested and possible

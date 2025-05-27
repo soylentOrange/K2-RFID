@@ -30,7 +30,7 @@ CFSTag::CFSTag(Adafruit_PN532* nfc) {
     // retry authentification with standard key
     if (!_encrypted) {
       nfc->reset();
-      delay(PN532_TIMEOUT);
+      delay(PN532_INIT_TIMEOUT);
       nfc->wakeup();
       success = nfc->readPassiveTargetID(PN532_MIFARE_ISO14443A, _uid.uidByte, &_uid.size, PN532_TIMEOUT);
       if (success)
