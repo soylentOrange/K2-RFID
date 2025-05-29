@@ -15,8 +15,9 @@
 #define RETRIES 3
 
 class RFID {
+
   public:
-    explicit RFID(SPIClass& spi) : _spi(&spi), _nfc(Adafruit_PN532(PN532_SS, &spi)) {}
+    explicit RFID(SPIClass& spi) : _spi(&spi), _nfc(Adafruit_PN532(PN532_SS, &spi, PN532_SPI_FREQUENCY)) {}
     void begin(Scheduler* scheduler);
     void end();
     // enable writing onto tags
@@ -30,6 +31,19 @@ class RFID {
     void listenTagWrite(TagWriteCallback callback) { _tagWriteCallback = callback; }
     void enableBeep(bool enable);
     bool getStatus() { return _PN532Status; }
+    LED::LEDMode getStatus_as_LEDMode() {
+      if (_PN532Status) {
+        if (_writeEnabled && !_overwriteEnabled) {
+          return LED::LEDMode::ARMED_WRITING;
+        } else if (_writeEnabled && _overwriteEnabled) {
+          return LED::LEDMode::ARMED_REWRITING;
+        } else {
+          return LED::LEDMode::WAITING_READ;
+        }
+      } else {
+        return LED::LEDMode::ERROR;
+      }
+    }
 
   private:
     void _rfidReadCallback();
@@ -50,6 +64,7 @@ class RFID {
     TagWriteCallback _tagWriteCallback = nullptr;
     bool _writeEnabled = false;
     bool _overwriteEnabled = false;
+    uint32_t _writeError = 0;
     bool _beep = false;
     void _doBeep(uint32_t freq = 1500);
 };

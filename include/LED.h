@@ -25,7 +25,8 @@ class LED {
       ARMED_WRITING,
       ARMED_REWRITING,
       TAG_WRITTEN,
-      TAG_REWRITTEN
+      TAG_REWRITTEN,
+      ERROR
     };
 
 #if defined(RGB_EXTERNAL)

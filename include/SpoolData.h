@@ -47,6 +47,11 @@ struct SpoolData {
       return *this;
     }
 
+    // Equality operator
+    bool operator==(const SpoolData& rhs) {
+      return _spooldata == rhs._spooldata;
+    }
+
     // Constructor from JSON
     explicit SpoolData(const JsonDocument& spooldata) {
       std::string colorString(spooldata["color"].as<const char*>());
