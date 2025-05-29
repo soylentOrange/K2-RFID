@@ -38,36 +38,30 @@ void EventHandler::_networkStateCallback(Mycila::ESPConnect::State state) {
     case Mycila::ESPConnect::State::NETWORK_CONNECTED:
       LOGI(TAG, "--> Connected to network...");
       LOGI(TAG, "IPAddress: %s", _espNetwork->getESPConnect()->getIPAddress().toString().c_str());
-      webServerAPI.begin(_scheduler);
-      webSite.begin(_scheduler);
-      rfid.begin(_scheduler);
-      led.setMode(LED::LEDMode::WAITING_READ);
+      _srConnected.signalComplete();
+      led.setMode(rfid.getStatus_as_LEDMode());
       break;
 
     case Mycila::ESPConnect::State::AP_STARTED:
       LOGI(TAG, "--> Created AP...");
       LOGI(TAG, "SSID: %s", _espNetwork->getESPConnect()->getAccessPointSSID().c_str());
       LOGI(TAG, "IPAddress: %s", _espNetwork->getESPConnect()->getIPAddress().toString().c_str());
-      webServerAPI.begin(_scheduler);
-      webSite.begin(_scheduler);
-      rfid.begin(_scheduler);
-      led.setMode(LED::LEDMode::WAITING_READ);
+      _srConnected.signalComplete();
+      led.setMode(rfid.getStatus_as_LEDMode());
       break;
 
     case Mycila::ESPConnect::State::PORTAL_STARTED:
       LOGI(TAG, "--> Started Captive Portal...");
       LOGI(TAG, "SSID: %s", _espNetwork->getESPConnect()->getAccessPointSSID().c_str());
       LOGI(TAG, "IPAddress: %s", _espNetwork->getESPConnect()->getIPAddress().toString().c_str());
-      webServerAPI.begin(_scheduler);
+      _srConnected.setWaiting();
       led.setMode(LED::LEDMode::WAITING_CAPTIVE);
       break;
 
     case Mycila::ESPConnect::State::NETWORK_DISCONNECTED:
       LOGI(TAG, "--> Disconnected from network...");
       led.setMode(LED::LEDMode::WAITING_WIFI);
-      rfid.end();
-      webSite.end();
-      webServerAPI.end();
+      _srConnected.setWaiting();
       break;
 
     case Mycila::ESPConnect::State::PORTAL_COMPLETE: {
@@ -77,6 +71,7 @@ void EventHandler::_networkStateCallback(Mycila::ESPConnect::State state) {
       LOGD(TAG, "wifiSSID: %s", config.wifiSSID.c_str());
       LOGD(TAG, "wifiPassword: %s", config.wifiPassword.c_str());
       led.setMode(LED::LEDMode::WAITING_WIFI);
+      _srConnected.setWaiting();
       break;
     }
 

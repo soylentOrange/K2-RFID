@@ -173,6 +173,20 @@ bool CFSTag::writeSpoolData(Adafruit_PN532* nfc, SpoolData spooldata) {
     }
   }
 
-  LOGI(TAG, "Writing spooldata successful");
-  return true;
+  // check the data that was just written
+  SpoolData written = _spooldata;
+  if (!readSpoolData(nfc)) {
+    LOGE(TAG, "Reading tag after writing failed!");
+    _spooldata = written;
+    return false;
+  } else {
+    if (_spooldata == written) {
+      LOGI(TAG, "Writing spooldata successful");
+      return true;
+    } else {
+      LOGW(TAG, "Tag content doesn't match data to be written!");
+      _spooldata = written;
+      return false;
+    }
+  }
 }

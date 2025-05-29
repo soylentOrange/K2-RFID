@@ -95,6 +95,35 @@ void LED::setMode(LEDMode mode) {
         } }, _scheduler, false, NULL, NULL, true);
       _ledTask->enable();
     } break;
+
+    case LEDMode::ERROR: {
+      if (!_isRGB) {
+        ledcWrite(_ledPin, LED_BRIGHT_OFF);
+      } else {
+        _ledState = 0;
+        rgbLedWrite(_ledPin, 0, 0, 0);
+      }
+      // Set LED to fast blinking / fast blinking red
+      _ledTask = new Task(100, TASK_FOREVER, [&] {
+        if (!_isRGB) {
+          if (ledcRead(_ledPin) == LED_BRIGHT_DIM) {
+            ledcWrite(_ledPin, LED_BRIGHT_OFF);
+          } else {
+            ledcWrite(_ledPin, LED_BRIGHT_DIM);
+          }
+        } else {
+          CRGB led_color(CRGB::HTMLColorCode::Black);
+          if (!_ledState) {
+            led_color = CRGB(CHSV(HUE_RED, DEFAULT_SAT, LED_BRIGHT_DIM));
+            _adjustLed(&led_color, _colorAdjustment);
+            _ledState = 1;
+          } else {
+            _ledState = 0;
+          }
+          rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
+        } }, _scheduler, false, NULL, NULL, true);
+      _ledTask->enable();
+    } break;
     case LEDMode::WAITING_CAPTIVE: {
       if (!_isRGB) {
         ledcWrite(_ledPin, LED_BRIGHT_OFF);
