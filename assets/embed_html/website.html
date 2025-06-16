@@ -1115,7 +1115,7 @@
         throw new Error("unexpected data")
       }
 
-      if (deviceInfo["model"] != "F008") {
+      if ((deviceInfo["model"] != "F008") && (deviceInfo["model"] != "F018")) {
         throw new Error("wrong printer")
       }
 

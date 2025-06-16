@@ -47,7 +47,7 @@ By default, only empty tags are written. When you want to re-program tags, disab
 
 ### Future Materials
 
-As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus on your local network, download the material database and saves it onto the pro5grammer. No warranty that future firmware updates might break this behaviour... 
+As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus or Hi on your local network, download the material database and saves it onto the programmer. No warranty that future firmware updates might break this behaviour... 
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
@@ -133,7 +133,7 @@ Connect the PN532 board pins to:
 | ------------- |:-------------:| 
 | SCK      | 12 |
 | MOSI      | 11      | 
-| SS | 7     |    1 |
+| SS | 7     |
 | MISO | 9|
 
 Don't forget the ground line and connect PN532's VCC to the 3.3 V regulator output of the ESP board.
