@@ -589,7 +589,9 @@
           </div>
         </div>
         <h2><span>Material Database</span></h2>
-        <button id="button_updateDb" class="last">Update Database</button>
+        <button id="button_updateDb">Update Database</button>
+        <button id="button_uploadDb" class="last">Upload Database</button>
+        <input type="file" id="input_uploadDb" accept=".json,application/json" style="display: none" />
         <h2><span>Thingy Control</span></h2>
         <button id="restart_button">Restart Thingy</button>
         <button id="clear_wifi_button">Reset WiFi credentials</button>
@@ -658,6 +660,8 @@
   const write_empty_checkbox = document.getElementById("toggle_switch_checkbox_rewrite")
   const clone_checkbox = document.getElementById("toggle_switch_checkbox_clone")
   const button_updateDb = document.getElementById("button_updateDb")
+  const button_uploadDb = document.getElementById("button_uploadDb")
+  const input_uploadDb = document.getElementById("input_uploadDb")
 
   // ui elements - doing something with thingy
   const ui_result = document.getElementById("ui_result")
@@ -676,6 +680,14 @@
   const gateway = `ws://${window.location.host}/ws`
   const DISCONNECTED_CLIENT_ID = -1
   const isStandalaone = window.matchMedia('(display-mode: standalone)').matches
+  const MATERIAL_STORAGE_KEY = "k2rfid.lastMaterial"
+  // model codes as reported by http://<printer>/info
+  const SUPPORTED_PRINTERS = {
+    F008: "K2 Plus",
+    F012: "K2 Pro",
+    F018: "Hi",
+    F021: "K2",
+  }
 
   // business
   let websocket
@@ -688,6 +700,7 @@
   let genericFilaments = [{ id: "00001", name: "PLA" }]
   let genericFilamentsIDs = ["00001"]
   let dbVersion;
+  let dbLoaded = false
   let matDb;
   let paramStr;
   let spoolMaterial = {
@@ -740,25 +753,35 @@
     materialColorPicker.addEventListener("change", (event) => {
       materialColorText.innerText = `${event.target.value}`.toUpperCase()
       spoolMaterial.color = `${event.target.value}`.toUpperCase()
+      saveSpoolMaterial()
     })
 
     // Event handler for material weight range
     materialWeightSlider.addEventListener("input", (event) => {
       materialWeightText.innerText = `${event.target.value} g`
       spoolMaterial.weight = event.target.value
+      saveSpoolMaterial()
     })
 
     // Event handler for material vendor
     materialBrand.addEventListener("change", (event) => {
       change_types()
+      saveSpoolMaterial()
     })
 
     materialType.addEventListener("change", (event) => {
       spoolMaterial.type = event.target.value
+      saveSpoolMaterial()
     })
 
-    // show default material
-    resetSpoolMaterial()
+    // show the last used material (or the default, if there is none)
+    const savedMaterial = loadSavedSpoolMaterial()
+    if (savedMaterial) {
+      spoolMaterial = savedMaterial
+      showSpoolMaterial()
+    } else {
+      resetSpoolMaterial()
+    }
     // reset material to default (Generic, PLA, black) and disarm
     resetMaterial.addEventListener("click", (event) => {
       resetSpoolMaterial()
@@ -812,53 +835,39 @@
       sendConfig()
     })
 
-    // Database update button
-    button_updateDb.addEventListener("click", async () => {
-      showResultContainer()
-      result_text.innerHTML = "Processing..."
-      help_text.innerHTML = " "
+    // Database update button: fetch the database from a printer on the local network
+    button_updateDb.addEventListener("click", () => {
+      runDbUpdate(async () => {
+        result_text.innerHTML = "Trying to find a Creality printer on the local network..."
+        let printer
+        try {
+          printer = await findPrinter(hostIP)
+        } catch (error) {
+          throw new Error(`Found no supported printer (${Object.values(SUPPORTED_PRINTERS).join(", ")}) on the local network...`)
+        }
+        console.log(`found printer: ${printer.name} at ${printer.ip}`)
+        result_text.innerHTML = `Found ${printer.name} (at: ${printer.ip})...`
+        const printerDb = await fetchDbFromPrinter(printer.ip)
+        await uploadDb(printerDb)
+        result_text.innerHTML += "\n\nFetched and uploaded database..."
+      })
+    })
 
-      // try to find a printer on the local network
-      let confirmedPrinterHost
-      result_text.innerHTML = `Trying to find K2Plus on the local network...`
-      try {
-        confirmedPrinterHost = await findK2Plus(hostIP)
-        console.log(`found printer: ${confirmedPrinterHost}`)
-        result_text.innerHTML = `Found K2Plus (at: ${confirmedPrinterHost})...`
-      } catch (error) {
-        console.log("No printer found")
-        result_text.innerHTML = "Found no K2Plus on the local network..."
-        result_loader.style.display = "none"
-        result_loader_svg.style.display = "flex"
-        result_loader_svg.innerHTML = error_svg
-        confirmedPrinterHost = undefined
+    // Database upload button: let the user pick a (custom) material_database.json
+    button_uploadDb.addEventListener("click", () => {
+      input_uploadDb.value = ""
+      input_uploadDb.click()
+    })
+    input_uploadDb.addEventListener("change", () => {
+      const file = input_uploadDb.files[0]
+      if (!file) {
+        return
       }
-
-      // try to download the material database from the printer
-      try {
-        await uploadDbfromPrinter(confirmedPrinterHost)
-        result_loader.style.display = "none"
-        result_loader_svg.style.display = "flex"
-        result_loader_svg.innerHTML = success_svg
-        result_text.innerHTML += `\n\nFetched and uploaded database...`
-      } catch (error) {
-        console.log(error.message)
-        result_loader.style.display = "none"
-        result_loader_svg.style.display = "flex"
-        result_loader_svg.innerHTML = error_svg
-        result_text.innerHTML = `Unable to process database...\n\n${error.message}`
-      } finally {
-        // display the settings page after some timeout
-        window.setTimeout(() => {
-          if (writeTags) {
-            help_text.innerText = `Waiting to ${writeEmptyTags ? "W" : "(Re-)W"}rite...`
-          } else {
-            help_text.innerText = "Waiting to read..."
-          }
-
-          showSettings()
-        }, 5000)
-      }
+      runDbUpdate(async () => {
+        result_text.innerHTML = "Reading database file..."
+        await uploadDb(await file.text())
+        result_text.innerHTML += "\n\nUploaded database..."
+      })
     })
 
     // initialize websock connection
@@ -974,7 +983,7 @@
               color: ${msg.spooldata.color}`,
             duration: 5000,
             avatar: "data:image/svg+xml;base64," + btoa(spool_svg.replace("fill:#000000", "fill:" + msg.spooldata.color)),
-            onClick: function () { cacheSpoolMaterial(msg.spooldata); disarmProgrammer(); }
+            onClick: function () { cacheSpoolMaterial(msg.spooldata); saveSpoolMaterial(); disarmProgrammer(); }
           }).showToast()
           break
 
@@ -1102,32 +1111,56 @@
     }
   }
 
-  // fetch and parse info from printer
-  async function isK2Plus(ip) {
+  // run a database update and show progress/result, then go back to settings
+  async function runDbUpdate(task) {
+    showResultContainer()
+    result_text.innerHTML = "Processing..."
+    help_text.innerHTML = " "
+
     try {
-      const response = await fetch(`http://${ip}/info`)
-      if (!response.ok) {
-        throw new Error("fetch error")
-      }
-
-      const deviceInfo = await response.json()
-      if (typeof (deviceInfo["model"]) == undefined) {
-        throw new Error("unexpected data")
-      }
-
-      if ((deviceInfo["model"] != "F008") && (deviceInfo["model"] != "F018")) {
-        throw new Error("wrong printer")
-      }
-
-      console.log(`success at ${ip}`)
-      return ip
+      await task()
+      result_loader_svg.innerHTML = success_svg
     } catch (error) {
-      throw new Error(`${error} at ${ip}`)
+      console.log(error)
+      result_loader_svg.innerHTML = error_svg
+      result_text.innerHTML = `Unable to process database...\n\n${error.message}`
+    } finally {
+      result_loader.style.display = "none"
+      result_loader_svg.style.display = "flex"
+
+      // display the settings page after some timeout
+      window.setTimeout(() => {
+        if (writeTags) {
+          help_text.innerText = `Waiting to ${writeEmptyTags ? "W" : "(Re-)W"}rite...`
+        } else {
+          help_text.innerText = "Waiting to read..."
+        }
+
+        showSettings()
+      }, 5000)
     }
   }
 
+  // check whether there is a supported printer at the given ip
+  // resolves to { ip, name }, rejects otherwise
+  async function probePrinter(ip) {
+    const response = await fetch(`http://${ip}/info`)
+    if (!response.ok) {
+      throw new Error(`fetch error at ${ip}`)
+    }
+
+    const deviceInfo = await response.json()
+    const model = deviceInfo ? deviceInfo["model"] : undefined
+    if (!Object.hasOwn(SUPPORTED_PRINTERS, model)) {
+      throw new Error(`unsupported device (model: ${model}) at ${ip}`)
+    }
+
+    console.log(`success at ${ip}`)
+    return { ip: ip, name: SUPPORTED_PRINTERS[model] }
+  }
+
   // try to find a printer on the local network
-  async function findK2Plus(ip) {
+  async function findPrinter(ip) {
     let ip_parts = splitIpAddress(ip)
     let ip_subnet = `${ip_parts[0]}.${ip_parts[1]}.${ip_parts[2]}.`
     let nodes = []
@@ -1135,57 +1168,75 @@
       nodes.push(ip_subnet + `${i}`)
 
     try {
-      const requests = nodes.map((node) => isK2Plus(node))
-      const printer = await Promise.any(requests)
-      return printer
+      return await Promise.any(nodes.map((node) => probePrinter(node)))
     } catch (error) {
       throw new Error("None found")
     }
   }
 
-  // download, compress and upload material database
-  async function uploadDbfromPrinter(ip) {
-    if (typeof ip == undefined) {
-      throw new Error("No K2Plus found...")
+  // download the material database from the printer
+  async function fetchDbFromPrinter(ip) {
+    let response
+    try {
+      response = await fetch(`http://${ip}/downloads/defData/material_database.json`)
+    } catch (error) {
+      throw new Error("Error while downloading...")
+    }
+    if (!response.ok) {
+      throw new Error(`Error while downloading (status: ${response.status})...`)
+    }
+    return await response.text()
+  }
+
+  // check that the parsed json looks like a creality material database
+  function isMaterialDb(db) {
+    return db != null
+      && db.result != null
+      && Array.isArray(db.result.list)
+      && db.result.list.length > 0
+      && db.result.list.every((entry) => entry && entry.base && entry.base.id && entry.base.name)
+  }
+
+  // validate, compress and upload a material database (as json text) to the thingy
+  async function uploadDb(dbText) {
+    let db
+    try {
+      db = JSON.parse(dbText)
+    } catch (error) {
+      throw new Error("Not a valid JSON file...")
+    }
+    if (!isMaterialDb(db)) {
+      throw new Error("Not a Creality material database...")
     }
 
+    // Compress database (the plain json is too large for the thingy)
+    const compressedDb = await compress(new TextEncoder().encode(dbText))
+
+    // Prepare upload
+    let formData = new FormData()
+    const blob = new Blob([new Uint8Array(compressedDb)], { type: 'application/octet-stream' })
+    console.log("blob.size: " + blob.size)
+    formData.append('dbfile', blob, 'material_database.json.gz')
+
+    let uploadResponse
     try {
-      // download the database from printer
-      const downloadResponse = await fetch(`http://${ip}/downloads/defData/material_database.json`)
-      if (!downloadResponse.ok) {
-        throw new Error("Error while downloading...")
-      }
-      const printerDb = await downloadResponse.text()
-
-      // Compress database
-      const textEncoder = new TextEncoder()
-      let encodedDb = textEncoder.encode(printerDb)
-      let compressedDb = await compress(encodedDb)
-
-      // Prepare upload
-      let formData = new FormData();
-      const bytes = new Uint8Array(compressedDb)
-      const blob = new Blob([bytes], { type: 'application/octet-stream' })
-      console.log("blob.size: " + blob.size)
-      formData.append('dbfile', blob, 'material_database.json.gz')
-      const uploadResponse = await fetch('/material_database.json', {
+      uploadResponse = await fetch('/material_database.json', {
         method: "POST",
         body: formData
       })
-
-      // check for error
-      if (!uploadResponse.ok) {
-        throw new Error(`Error while uploading (status: ${uploadResponse.status})...`)
-      }
-
-      const uploadResult = await uploadResponse.text()
-      console.log("uploadResult: " + uploadResult)
-      if (uploadResult != "OK") {
-        throw new Error(`Error while uploading (response: ${uploadResult})...`)
-      }
     } catch (error) {
-      console.log(error)
-      throw new Error("Error while processing...")
+      throw new Error("Error while uploading...")
+    }
+
+    // check for error
+    if (!uploadResponse.ok) {
+      throw new Error(`Error while uploading (status: ${uploadResponse.status})...`)
+    }
+
+    const uploadResult = await uploadResponse.text()
+    console.log("uploadResult: " + uploadResult)
+    if (uploadResult != "OK") {
+      throw new Error(`Error while uploading (response: ${uploadResult})...`)
     }
   }
 
@@ -1202,7 +1253,7 @@
       }
 
       matDb = await response.json()
-      if (typeof (matDb["kvParam"]) == undefined) {
+      if (!isMaterialDb(matDb)) {
         throw new Error("corrupted")
       }
 
@@ -1224,8 +1275,12 @@
         }
       }
 
+      dbLoaded = true
       toast_text += "loaded from thingy"
-      change_types()
+
+      // keep the current selection (if it still exists in the database)
+      spoolMaterial.brand = crealityFilamentsIDs.includes(spoolMaterial.type) ? "Creality" : "Generic"
+      showSpoolMaterial()
     } catch (error) {
       toast_text += error
       avatar_icon = "data:image/svg+xml;base64," + btoa(error_svg)
@@ -1257,7 +1312,35 @@
       color: "#000000",
     })
     showSpoolMaterial()
+    saveSpoolMaterial()
     disarmProgrammer()
+  }
+
+  // remember the selected material in the browser
+  function saveSpoolMaterial() {
+    try {
+      localStorage.setItem(MATERIAL_STORAGE_KEY, JSON.stringify({
+        brand: spoolMaterial.brand,
+        type: spoolMaterial.type,
+        weight: spoolMaterial.weight,
+        color: spoolMaterial.color,
+      }))
+    } catch (error) {
+      console.log(`unable to save material: ${error}`)
+    }
+  }
+
+  // get the last selected material from the browser (or undefined)
+  function loadSavedSpoolMaterial() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(MATERIAL_STORAGE_KEY))
+      if (saved && saved.brand && saved.type && saved.weight && /^#[0-9A-F]{6}$/i.test(saved.color)) {
+        return saved
+      }
+    } catch (error) {
+      console.log(`unable to load material: ${error}`)
+    }
+    return undefined
   }
 
   // send config to thingy
@@ -1324,7 +1407,9 @@
       let index = idlist.findIndex((element) => element == setId)
       if (index == -1) { // failed, just use the first entry
         materialType.value = filamentlist[0].id
-        spoolMaterial.type = filamentlist[0].id
+        // keep the requested material until the database is loaded
+        if (dbLoaded)
+          spoolMaterial.type = filamentlist[0].id
         materialType.selectedIndex = 0
       } else { // set value and selectedIndex
         materialType.value = setId
@@ -1408,6 +1493,7 @@
     safeboot_button.disabled = disabled
     clear_wifi_button.disabled = disabled
     button_updateDb.disabled = disabled
+    button_uploadDb.disabled = disabled
   }
 
   // show the main-view and hide everything else

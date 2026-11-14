@@ -4,7 +4,7 @@ Web app controlled and esp32-powered K2/CFS RFID programming thingy based on [Dn
 
 ## Why do I need it?
 
-Creality's K2 Plus printer supports 1k MIFARE tags to identify the spool's material and color.
+Creality's K2-series printers (K2, K2 Pro, K2 Plus) and the Creality Hi support 1k MIFARE tags to identify the spool's material and color.
 As the tagged spools from Creality come with an additional price and also to retrofit older Creality or non-Creality spools, you could use this tool to simply write your own tags, add two of them per spool and enjoy the magic of automatically identified materials.
 
 ## What do I need to make one?
@@ -33,6 +33,8 @@ Once you have programmed your esp32, connected it to the PN532 NFC/RFID board, a
 
 Just select the color by hitting the large color circle to select the color of choice (or select one the the known - at least known to me - standard colors), the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
 
+The web interface remembers your last selection (color, material and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
+
 <p align="center">
     <img src="assets/doc/Screenshot_UI.jpeg" alt="screenshot UI" style="width:50%; height:auto;" >
 </p>
@@ -47,7 +49,12 @@ By default, only empty tags are written. When you want to re-program tags, disab
 
 ### Future Materials
 
-As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus or Hi on your local network, download the material database and saves it onto the programmer. No warranty that future firmware updates might break this behaviour... 
+As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known to the programmer. You can update the list in the settings in two ways:
+
+- `Update Database`: The programmer will try to identify a supported printer (K2, K2 Pro, K2 Plus or Hi) on your local network, download its material database and save it onto the programmer. No warranty that future firmware updates might break this behaviour...
+- `Upload Database`: Select a `material_database.json` file from your computer or phone (e.g. a database with your own custom materials, copied from the printer via SSH). The file is checked, compressed in your browser and saved onto the programmer.
+
+Note: `Update Database` downloads the printer's default database (`/downloads/defData/material_database.json`). Custom materials you have added to your printer are not part of it, use `Upload Database` for those.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
@@ -164,7 +171,7 @@ Note: When uploading to a factory fresh board, you might need to enable uploads 
 If you want to rebuild the firmware yourself before uploading, you'll need to have [PlatformIO](https://platformio.org/platformio-ide) (and [esptool.py](https://github.com/espressif/esptool)).
 
 For minifying the html parts, you also need to have [Node.js](https://nodejs.org/).
-Install development dependencies: 
+Install development dependencies globally (the build scripts call them directly, so they need to be on your `PATH`; if the build fails with an error about `html-minifier-terser`, this step is missing): 
 - [html-minifier-terser](https://github.com/terser/html-minifier-terser)
   - `npm install html-minifier-terser -g`
 - [clean-css](https://github.com/clean-css/clean-css)
