@@ -1,0 +1,85 @@
+# Build the firmware for all boards and publish a GitHub release.
+# Run it from the Actions tab ("Run workflow") with the new version, e.g. v1.2.0.
+# The release notes are taken from the matching section of CHANGELOG.md.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (tag), e.g. v1.2.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # tools/version.py takes the version from REF_NAME (vX.Y.Z -> X.Y.Z)
+      REF_NAME: ${{ inputs.version }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - env: lolin_s2_mini
+            asset: lolin_s2_mini
+          - env: lolin_s2_mini_extled
+            asset: lolin_s2_mini_external_WS2812b
+          - env: esp32_s3_tiny
+            asset: esp32_s3_tiny
+    steps:
+      - name: Check version
+        run: |
+          [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([_-][a-zA-Z0-9]+)?$ ]] || { echo "Invalid version: $REF_NAME"; exit 1; }
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install --upgrade platformio
+      - run: pio run -e ${{ matrix.env }}
+      - name: Collect images
+        run: |
+          mkdir -p dist
+          cp .pio/build/${{ matrix.env }}/firmware.bin dist/${{ matrix.asset }}.firmware.bin
+          cp .pio/build/${{ matrix.env }}/firmware.factory.bin dist/${{ matrix.asset }}.firmware.factory.bin
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.asset }}
+          path: dist/*.bin
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - name: Extract release notes
+        run: |
+          awk -v v="$VERSION" '
+            /^## / { if (found) exit; found = ($2 == v) ; next }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "No section '## $VERSION' in CHANGELOG.md"; exit 1; fi
+      - name: Create release
+        run: |
+          gh release create "$VERSION" dist/*.bin \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --notes-file notes.md
