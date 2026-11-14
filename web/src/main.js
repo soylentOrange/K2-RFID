@@ -104,7 +104,6 @@ function fillSelect(select, options) {
 // render the current spool into the form
 function renderSpool() {
   $('color').value = spool.color
-  $('color-text').textContent = spool.color
   $('weight').value = spool.weight
   $('weight-text').textContent = `${spool.weight} g`
 
@@ -119,6 +118,21 @@ function renderTypes(brand) {
   fillSelect($('type'), materials.map((m) => [m.id, m.name]))
   if (!materials.some((m) => m.id === spool.type)) spool.type = materials[0]?.id
   $('type').value = spool.type
+  renderColors()
+}
+
+// offer the colors of the selected material as presets in the color dialog
+function renderColors() {
+  const colors = db.colors(spool.type)
+  $('common-colors').replaceChildren(...colors.map(({ hex, name }) => new Option(name, hex)))
+  renderColorText($('color').value)
+}
+
+// "#C12E1F (Red)" if the color is one of the presets
+function renderColorText(value) {
+  const hex = value.toUpperCase()
+  const name = db.colors(spool.type).find((c) => c.hex === hex)?.name
+  $('color-text').textContent = name ? `${hex} (${name})` : hex
 }
 
 function setSpool(update, { remember = true } = {}) {
@@ -340,7 +354,7 @@ function bindUi() {
   // log of the thingy (hex dumps of the tags read, ...)
   $('open-weblog').onclick = () => window.open(device.url('/weblog'), '_blank', 'noopener')
 
-  $('color').oninput = (e) => ($('color-text').textContent = e.target.value.toUpperCase())
+  $('color').oninput = (e) => renderColorText(e.target.value)
   $('color').onchange = (e) => setSpool({ color: e.target.value })
   $('weight').oninput = (e) => ($('weight-text').textContent = `${e.target.value} g`)
   $('weight').onchange = (e) => setSpool({ weight: e.target.value })
