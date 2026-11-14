@@ -53,9 +53,11 @@ def generateFactooryImage(source, target, env):
             )
             if not os.path.isdir(safeboot_project):
                 raise Exception("SafeBoot project not found: %s" % safeboot_project)
-            env.Execute(
+            # fail loudly (e.g. if pio is not on the PATH): otherwise a stale image would be packed
+            if env.Execute(
                 "SAFEBOOT_BOARD=%s pio run -e safeboot -d %s" % (env.get("BOARD"), safeboot_project)
-            )
+            ):
+                raise Exception("Building the SafeBoot image failed (is 'pio' on the PATH?)")
             safeboot_image = join(safeboot_project, ".pio/build/safeboot/firmware.bin")
             if not os.path.isfile(safeboot_image):
                 raise Exception("SafeBoot image not found: %s" % safeboot_image)
@@ -77,7 +79,8 @@ def generateFactooryImage(source, target, env):
 
     if fs_offset != 0:
         status("Building File System image")
-        env.Execute("pio run -t buildfs -e %s" % env["PIOENV"])
+        if env.Execute("pio run -t buildfs -e %s" % env["PIOENV"]):
+            raise Exception("Building the file system image failed (is 'pio' on the PATH?)")
 
     factory_image = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
 
