@@ -10,8 +10,9 @@
 #define TAG "WebServer"
 
 void WebServerAPI::begin(Scheduler* scheduler) {
-  // Just to be sure that the static webserver is not running anymore before being started (again)
-  _webServer->end();
+  // Note: Don't call _webServer->end() here. begin() runs in setup() before the network stack
+  // is up, and AsyncTCP >= 3.5 takes the lwIP core lock in AsyncServer::end(), which asserts
+  // (and boot-loops) when lwIP isn't initialized yet.
 
   // Task handling
   _sr.setWaiting();

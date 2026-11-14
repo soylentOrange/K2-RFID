@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- Fixed a boot loop of v1.2.0 (no WiFi/captive portal, no USB): `WebServerAPI::begin()` called `AsyncWebServer::end()` in `setup()` before the network stack was up. Since AsyncTCP 3.5 this takes the lwIP core lock and asserts.
+- Building the factory image now fails if the SafeBoot or file system build fails (e.g. `pio` not on the `PATH`), instead of silently packing a stale SafeBoot image and no file system.
+
 ## v1.2.0
 
 ### Highlights
