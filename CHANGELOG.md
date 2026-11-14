@@ -17,6 +17,7 @@
 - Updated libraries: ArduinoJson 7.4.3, AsyncTCP 3.6.1, ESPAsyncWebServer 3.12.1, MycilaESPConnect 10.6.3, MycilaSystem 4.1.2, FastLED 3.10.9, Adafruit_BusIO 1.17.4; new: LibSSH-ESP32 5.10.0.
 - SafeBoot: Tasmota platform 2025.11.30, MycilaESPConnect 10.6.3 (matches MycilaSafeBoot v3.3.9) (#11).
 - CI builds the firmware for all boards; release images are built and attached automatically.
+- Building no longer needs globally installed `html-minifier-terser`/`clean-css`; npm dependencies are pinned in `web/package-lock.json` (also used for the SafeBoot website).
 - Fixed a C++20 ambiguity warning in `SpoolData::operator==`.
 
 ### Installation
