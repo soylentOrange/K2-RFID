@@ -56,8 +56,8 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/') return reply(200, await readFile(join(ROOT, 'dist-device/index.html')), 'text/html')
   if (url.pathname === '/material_database.json') return reply(200, database, 'application/json')
   if (url.pathname === '/api/printer') return reply(200, JSON.stringify({ ...printer, busy: false }), 'application/json')
-  if (url.pathname === '/boardname') return reply(200, 'mock_board')
-  if (url.pathname === '/appversion') return reply(200, 'v0.0.0-mock')
+  if (url.pathname === '/boardname') return reply(200, 'lolin_s2_mini')
+  if (url.pathname === '/appversion') return reply(200, 'v1.2.0')
   try {
     return reply(200, await readFile(join(DATA, url.pathname)), TYPES[extname(url.pathname)] ?? 'application/octet-stream')
   } catch {

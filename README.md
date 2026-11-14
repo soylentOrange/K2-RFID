@@ -33,13 +33,19 @@ Once you have programmed your esp32, connected it to the PN532 NFC/RFID board, a
 
 The same web app is also available at **https://soylentorange.github.io/K2-RFID/** and can be installed as an app (PWA) from there. Enter the address of your thingy (`k2rfid.local` or its IP address) in the settings and allow access to devices on your local network when your browser asks for it.
 
-Note: Talking from an https page to a device on your local network only works in Chromium-based browsers (Chrome, Edge, ...) with [Local Network Access](https://developer.chrome.com/docs/modern-web-guidance/guides/security/local-network-access). Safari (and thus every browser on iOS) and Firefox block it. In that case simply use the web app served by the thingy itself at http://k2rfid.local - it is the very same app.
+Note: Talking from an https page to a device on your local network only works in Chromium-based browsers (Chrome, Edge, ...) with [Local Network Access](https://developer.chrome.com/docs/modern-web-guidance/guides/security/local-network-access). Safari (and thus every browser on iOS) and Firefox block it. In that case simply use the web app served by the thingy itself at http://k2rfid.local - it is the very same app. The settings of the app served by the thingy also contain a link to the GitHub Pages version.
+
+<p align="center">
+    <img src="assets/doc/Screenshot_PagesApp.jpeg" alt="screenshot GitHub Pages app" style="width:50%; height:auto;" >
+</p>
 
 ### Select Material Settings via UI
 
 Just select the color by hitting the large color circle to select the color of choice (or select one the the known - at least known to me - standard colors), the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
 
-The web interface remembers your last selection (color, material and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
+The material is chosen by brand and type. The brands come from the material database, so with a database copied from your printer you'll also find e.g. eSUN or Polymaker materials (and your own presets) next to Creality and Generic.
+
+The web interface remembers your last selection (color, brand, material and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
 
 <p align="center">
     <img src="assets/doc/Screenshot_UI.jpeg" alt="screenshot UI" style="width:50%; height:auto;" >
@@ -71,6 +77,10 @@ The printer used by `Update Database` is set in the `Printer` section of the set
 - `Save Printer` stores address and password on the programmer. If no printer is set, `Update Database` searches for one first.
 
 Note: The password is stored on the programmer (unencrypted, in its preferences) and never sent back to the browser. The printer's SSH host key is not verified.
+
+| Search printer | Update Database | Upload Database |
+| :---: | :---: | :---: |
+| <img src="assets/doc/Screenshot_PrinterSearch.jpeg" alt="printer found" width="250"> | <img src="assets/doc/Screenshot_UpdateDb.jpeg" alt="database fetched via SSH" width="250"> | <img src="assets/doc/Screenshot_UploadDb.jpeg" alt="database uploaded" width="250"> |
 
 To copy the database manually (e.g. for `Upload Database`):
 
@@ -200,6 +210,21 @@ For building the web app you also need [Node.js](https://nodejs.org/) (version 2
 
 Then clone the repository, open it in [Visual Studio Code](https://code.visualstudio.com/), possibly adjust the `platformio.ini` to your likings and build it for your board. After a (successful) build, you can flash it using esptool (a hint on the command line is given after building).  
 
+What happens during a build:
+
+- `tools/build_web.py` installs the npm packages (`npm ci` in `web/`, only when needed), builds the web app (`npm run build:device`) and minifies the web log page (`assets/embed_html/webserial.html`). Both are gzipped into `.pio/embed/` and embedded into the firmware.
+- `tools/compress_data.py` gzips the files of `assets/data` for the LittleFS image.
+- For the factory image (`firmware.factory.bin`), `safeboot/tools/factory.py` also builds the SafeBoot project in `safeboot/`. Its website is minified with a global `html-minifier-terser` if you have one, otherwise with the one installed in `web/node_modules`.
+- `tools/version.py` derives the version from the git branch/tag. In detached HEAD state (e.g. in CI), set the environment variable `REF_NAME` to the branch or tag name.
+
+#### Continuous Integration
+
+GitHub Actions build every push and pull request:
+
+- `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts.
+- `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages.
+- Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.
+
 ### Developing the Web App
 
 The web app lives in [`web/`](web/) and is built with [Vite](https://vite.dev/) from plain JavaScript modules - no framework:
@@ -228,6 +253,8 @@ npm install
 npm run build:device && npm run mock   # embedded app on http://localhost:8080/
 npm run dev                            # dev server, open http://localhost:5173/?device=localhost:8080
 ```
+
+The screenshots in `assets/doc/Screenshot_*.jpeg` were taken with [Playwright](https://playwright.dev/) against this mock.
 
 To host the web app from your own fork, change `PAGES_URL` in `web/vite.config.js` and `CORS_ALLOW_ORIGIN` in `platformio.ini` and set *Settings > Pages > Source* to *GitHub Actions*.
 

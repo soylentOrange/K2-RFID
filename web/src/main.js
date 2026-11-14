@@ -178,9 +178,7 @@ async function loadPrinterSettings() {
     if (!response.ok) return // older firmware without printer settings
     const printer = await response.json()
     $('printer-host').value = printer.host
-    $('printer-password').placeholder = printer.customPassword
-      ? 'root password (saved)'
-      : 'root password (default: creality_2024)'
+    $('printer-password').placeholder = printer.customPassword ? 'root password (saved)' : 'root password (default)'
   } catch {
     // not reachable - nothing to show
   }
