@@ -14,9 +14,18 @@ export class MaterialDb {
     const list = json?.result?.list
     if (!Array.isArray(list) || list.length === 0) throw new Error('Not a Creality material database...')
 
-    const brands = new Map()
+    // A database copied from the printer also contains user presets sharing the id of
+    // the material they are based on (e.g. "HyPLA blue@K2 Plus 0.4 nz - RW" for 01001).
+    // Tags only store the id, so list each id once, preferring the plain material name.
+    const byId = new Map()
     for (const { base } of list) {
       if (!base?.id || !base?.name) continue
+      const known = byId.get(base.id)
+      if (!known || (known.name.includes('@') && !base.name.includes('@'))) byId.set(base.id, base)
+    }
+
+    const brands = new Map()
+    for (const base of byId.values()) {
       const brand = base.brand || 'Generic'
       // "Generic PLA" -> "PLA"
       const name = base.name.startsWith(`${brand} `) ? base.name.slice(brand.length + 1) : base.name
