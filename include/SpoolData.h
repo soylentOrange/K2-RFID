@@ -48,7 +48,7 @@ struct SpoolData {
     }
 
     // Equality operator
-    bool operator==(const SpoolData& rhs) {
+    bool operator==(const SpoolData& rhs) const {
       return _spooldata == rhs._spooldata;
     }
 
