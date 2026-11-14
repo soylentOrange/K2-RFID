@@ -53,6 +53,10 @@ Once a tag is read, just click the toast notification and it will make the conte
 
 By default, only empty tags are written. When you want to re-program tags, disable the `Write only empty tags` checkbox in the settings.
 
+### Verified Writing
+
+After writing, the programmer re-authenticates with the tag's (new) key, reads the data back and compares it with what should have been written. Only when this check passes, the success beep sounds and the LED signals a written tag. If a write fails (e.g. because the tag was just entering or leaving the reader's field), the programmer silently retries while the tag stays on the reader. A tag where a write attempt failed is written again even if `Write only empty tags` is active, since a partially written tag isn't empty anymore. After repeated failures, an error is signalled (error beep / LED); remove the tag and present it again to retry.
+
 ### Future Materials
 
 As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known to the programmer. You can update the list in the settings in two ways:
@@ -184,7 +188,7 @@ I found an old RGB LED-strip in my pile of junk. cutting one of the LEDs from th
 
 ### Flashing Firmware
 
-The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool.py write_flash 0x0 ADJUST_TO_YOUR_PATH/firmware.factory.bin`. 
+The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool write-flash 0x0 ADJUST_TO_YOUR_PATH/firmware.factory.bin` (esptool versions before v5 use `esptool.py write_flash` instead). 
 
 Note: When uploading to a factory fresh board, you might need to enable uploads by pressing both buttons, release the "0"-button first, then the "RST"-button (this sequence will enable the USB-CDC). 
 

@@ -1023,6 +1023,15 @@ uint8_t Adafruit_PN532::mifareclassic_WriteDataBlock(uint8_t blockNumber,
   /* Read the response packet */
   readdata(pn532_packetbuffer, 26);
 
+  /* If byte 8 isn't 0x00 the card didn't accept the write (e.g. NAK, timeout) */
+  if (pn532_packetbuffer[7] != 0x00) {
+#ifdef MIFAREDEBUG
+    PN532DEBUGPRINT.println(F("Write failed"));
+    Adafruit_PN532::PrintHexChar(pn532_packetbuffer, 26);
+#endif
+    return 0;
+  }
+
   return 1;
 }
 
