@@ -63,8 +63,10 @@ As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known
 Note: `Update Database` downloads the printer's default database (`http://PRINTER_IP/downloads/defData/material_database.json`). Newer printer firmware (e.g. current K2 Plus/K2 firmware) no longer provides this file and answers with 404. In that case, copy the database from the printer via SSH and upload it with `Upload Database`:
 
 ```
-scp root@PRINTER_IP:/mnt/UDISK/creality/userdata/box/material_database.json .
+scp -O root@PRINTER_IP:/mnt/UDISK/creality/userdata/box/material_database.json .
 ```
+
+The `-O` option makes scp use the legacy SCP protocol, as the printer has no SFTP server (without it, scp fails with `sftp-server: not found`).
 
 This file is also the one containing custom materials you have added to your printer.
 

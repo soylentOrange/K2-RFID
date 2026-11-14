@@ -59,7 +59,7 @@ export async function downloadPrinterDb(ip) {
     // current K2 / K2 Plus firmware doesn't serve the default database anymore
     throw new Error(
       "The printer's firmware doesn't provide the material database anymore...\n\n" +
-        `Copy it from the printer via SSH (e.g. scp root@${ip}:/mnt/UDISK/creality/userdata/box/material_database.json .) ` +
+        `Copy it from the printer via SSH (e.g. scp -O root@${ip}:/mnt/UDISK/creality/userdata/box/material_database.json .) ` +
         "and use the 'Upload Database' button instead.",
     )
   }
