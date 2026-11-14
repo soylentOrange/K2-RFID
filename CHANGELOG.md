@@ -14,6 +14,7 @@
 
 - Materials from printer databases are de-duplicated (user presets share the id of their base material); brands come from the database.
 - The last selected material is remembered.
+- Web app: the settings are split into `Settings` and `Database` pages, so every page fits on one screen (compact layout for small screens). A new `Web Log` button opens the thingy's `/weblog` (#13).
 - Updated libraries: ArduinoJson 7.4.3, AsyncTCP 3.6.1, ESPAsyncWebServer 3.12.1, MycilaESPConnect 10.6.3, MycilaSystem 4.1.2, FastLED 3.10.9, Adafruit_BusIO 1.17.4; new: LibSSH-ESP32 5.10.0.
 - SafeBoot: Tasmota platform 2025.11.30, MycilaESPConnect 10.6.3 (matches MycilaSafeBoot v3.3.9) (#11).
 - CI builds the firmware for all boards; release images are built and attached automatically.
