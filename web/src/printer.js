@@ -1,7 +1,6 @@
 // Find a Creality printer on the local network and download its material database
 
 import { localFetch } from './device.js'
-import { load, save } from './storage.js'
 
 // model codes reported by the printer's /info endpoint
 export const PRINTER_MODELS = {
@@ -22,20 +21,11 @@ async function probe(ip, signal) {
   return { ip, model: PRINTER_MODELS[model] }
 }
 
-// scan the /24 subnet of the given IPv4 address (the last known printer is tried first)
+// scan the /24 subnet of the given IPv4 address
 export async function findPrinter(subnetIp) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT)
   try {
-    const last = load('printerIp')
-    if (last) {
-      try {
-        return await probe(last, controller.signal)
-      } catch {
-        // moved or switched off - scan the subnet
-      }
-    }
-
     const parts = String(subnetIp ?? '').split('.')
     if (parts.length !== 4 || parts.some((p) => !/^\d{1,3}$/.test(p) || +p > 255)) {
       throw new Error('Unknown network address of the thingy')
@@ -45,7 +35,6 @@ export async function findPrinter(subnetIp) {
     const printer = await Promise.any(hosts.map((ip) => probe(ip, controller.signal))).catch(() => {
       throw new Error('No supported printer found on the local network')
     })
-    save('printerIp', printer.ip)
     return printer
   } finally {
     clearTimeout(timeout)

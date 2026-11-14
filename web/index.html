@@ -85,6 +85,19 @@
             <input id="clone" type="checkbox" class="switch" data-needs-connection disabled />
           </label>
 
+          <h2><span>Printer</span></h2>
+          <form id="printer-form">
+            <div class="row form-row">
+              <input id="printer-host" type="text" placeholder="Printer IP address" autocomplete="off"
+                autocapitalize="off" spellcheck="false" aria-label="Printer address" />
+              <button id="printer-search" type="button" class="narrow" data-needs-connection disabled>Search</button>
+            </div>
+            <input id="printer-password" type="password" autocomplete="off" aria-label="Root password of the printer"
+              placeholder="root password" />
+            <button type="submit" data-needs-connection disabled>Save Printer</button>
+          </form>
+          <p id="printer-info" class="hint">Used for downloading the material database (via SSH).</p>
+
           <h2><span>Material Database</span></h2>
           <button id="db-from-printer" data-needs-connection disabled>Update Database</button>
           <button id="db-from-file" data-needs-connection disabled>Upload Database</button>

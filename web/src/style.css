@@ -121,6 +121,24 @@ hr {
   padding: 8px 16px;
 }
 
+#printer-password {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 8px 0 0;
+  padding: 7px;
+  font-size: 16px;
+}
+
+.form-row input[type="text"] {
+  margin: 0;
+  padding: 7px;
+}
+
+.form-row button {
+  margin: 0;
+}
+
+.form-row,
 form.row {
   gap: 8px;
   align-items: center;

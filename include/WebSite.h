@@ -21,6 +21,7 @@ class WebSite {
   private:
     void _webSiteCallback();
     void _wsCleanupCallback();
+    void _textAll(const JsonDocument& jsonMsg);
     Task* _wsCleanupTask = nullptr;
     Scheduler* _scheduler = nullptr;
     StatusRequest _sr;

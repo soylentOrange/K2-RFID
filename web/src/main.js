@@ -166,6 +166,81 @@ async function uploadDb(text) {
 }
 
 // ---------------------------------------------------------------------------
+// printer (source of the material database)
+// ---------------------------------------------------------------------------
+
+const FETCH_DB_TIMEOUT = 60000
+let onFetchDbResult = null // set while the thingy downloads the database
+
+async function loadPrinterSettings() {
+  try {
+    const response = await device.fetch('/api/printer')
+    if (!response.ok) return // older firmware without printer settings
+    const printer = await response.json()
+    $('printer-host').value = printer.host
+    $('printer-password').placeholder = printer.customPassword
+      ? 'root password (saved)'
+      : 'root password (default: creality_2024)'
+  } catch {
+    // not reachable - nothing to show
+  }
+}
+
+// store printer address (and password, if one was entered) on the thingy
+async function savePrinter() {
+  const body = new URLSearchParams({ host: $('printer-host').value.trim() })
+  if ($('printer-password').value) body.set('password', $('printer-password').value)
+  await device.post('/api/printer', body, 'application/x-www-form-urlencoded')
+  $('printer-password').value = ''
+  await loadPrinterSettings()
+}
+
+// scan the local network for a printer and remember it
+async function searchPrinter() {
+  const printer = await findPrinter(state.hostIp ?? device.host)
+  $('printer-host').value = printer.ip
+  await savePrinter()
+  return printer
+}
+
+// let the thingy download the database via SSH; resolves with its report
+function fetchDbViaThingy() {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => finish({ result: false, message: 'No answer from the thingy' }), FETCH_DB_TIMEOUT)
+    const finish = (msg) => {
+      clearTimeout(timeout)
+      onFetchDbResult = null
+      msg.result ? resolve(msg.message) : reject(new Error(msg.message))
+    }
+    onFetchDbResult = finish
+    device.post('/api/fetchdb').catch((error) => finish({ result: false, message: error.message }))
+  })
+}
+
+async function updateDbFromPrinter(progress) {
+  if ($('printer-host').value.trim()) {
+    await savePrinter()
+  } else {
+    progress('Looking for a printer on the local network...')
+    const printer = await searchPrinter()
+    progress(`Found ${printer.model} at ${printer.ip}`)
+  }
+  const host = $('printer-host').value.trim()
+  progress(`Downloading the material database from ${host} (via SSH)...`)
+  try {
+    return await fetchDbViaThingy()
+  } catch (sshError) {
+    // older printer firmware still serves its default database via http
+    try {
+      await uploadDb(await downloadPrinterDb(host))
+      return `Fetched the database from ${host} (via http) and uploaded it to the thingy.`
+    } catch {
+      throw sshError
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // messages from the thingy
 // ---------------------------------------------------------------------------
 
@@ -205,6 +280,7 @@ const handlers = {
     onSpooldata(msg, { notify: false })
     onArmState(msg, { initial: true })
     loadDbFromThingy()
+    loadPrinterSettings()
     if (!msg.PN532) {
       state.readerAvailable = false
       runWithProgress('Checking reader...', () => Promise.reject(new Error('Reader not available!')), { returnTo: null })
@@ -219,6 +295,10 @@ const handlers = {
   },
   new_db() {
     loadDbFromThingy()
+  },
+  fetch_db(msg) {
+    if (onFetchDbResult) onFetchDbResult(msg)
+    else toast(`Material Database\n${msg.message}`, { icon: msg.result ? successIcon : errorIcon })
   },
   read_tag(msg) {
     toast(`Found empty tag\nuid: ${String(msg.uid).toUpperCase()}`, { icon: tagIcon })
@@ -278,13 +358,20 @@ function bindUi() {
     state.writeTags ? arm() : disarm()
   }
 
-  $('db-from-printer').onclick = () =>
-    runWithProgress('Looking for a printer on the local network...', async (progress) => {
-      const printer = await findPrinter(state.hostIp ?? device.host)
-      progress(`Found ${printer.model} at ${printer.ip}\nDownloading database...`)
-      await uploadDb(await downloadPrinterDb(printer.ip))
-      return `Fetched database from ${printer.model} (${printer.ip}) and uploaded it to the thingy.`
+  $('db-from-printer').onclick = () => runWithProgress('Updating the material database...', updateDbFromPrinter)
+
+  $('printer-search').onclick = () =>
+    runWithProgress('Looking for a printer on the local network...', async () => {
+      const printer = await searchPrinter()
+      return `Found ${printer.model} at ${printer.ip}\n\nSaved as printer for database updates.`
     })
+  $('printer-form').onsubmit = (e) => {
+    e.preventDefault()
+    savePrinter().then(
+      () => toast('Printer saved', { icon: successIcon }),
+      (error) => toast(`Printer not saved\n${error.message}`, { icon: errorIcon }),
+    )
+  }
 
   $('db-from-file').onclick = () => $('db-file').click()
   $('db-file').onchange = (e) => {

@@ -15,6 +15,7 @@
 #include <LittleFS.h>
 #include <MycilaESPConnect.h>
 #include <MycilaSystem.h>
+#include <PrinterDb.h>
 #include <RFID.h>
 #include <SpoolData.h>
 #include <WebServerAPI.h>
@@ -27,6 +28,7 @@ extern WebServerAPI webServerAPI;
 extern WebSite webSite;
 extern RFID rfid;
 extern LED led;
+extern PrinterDb printerDb;
 
 // Allow serial logging for App
 #ifdef MYCILA_LOGGER_SUPPORT_APP

@@ -57,10 +57,18 @@ By default, only empty tags are written. When you want to re-program tags, disab
 
 As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known to the programmer. You can update the list in the settings in two ways:
 
-- `Update Database`: The programmer will try to identify a supported printer (K2, K2 Pro, K2 Plus or Hi) on your local network, download its material database and save it onto the programmer. No warranty that future firmware updates might break this behaviour...
-- `Upload Database`: Select a `material_database.json` file from your computer or phone (e.g. a database with your own custom materials, copied from the printer via SSH). The file is checked, compressed in your browser and saved onto the programmer.
+- `Update Database`: The programmer logs into your printer via SSH (as `root`), downloads its material database (`/mnt/UDISK/creality/userdata/box/material_database.json`, which also contains your custom materials) and saves it. The printer compresses the file before sending (`gzip`), so only ~25 KB are transferred and stored. If that fails, it falls back to the default database older printer firmware provides via http (`http://PRINTER_IP/downloads/defData/material_database.json`). No warranty that future firmware updates might break this behaviour...
+- `Upload Database`: Select a `material_database.json` file from your computer or phone. The file is checked, compressed in your browser and saved onto the programmer.
 
-Note: `Update Database` downloads the printer's default database (`http://PRINTER_IP/downloads/defData/material_database.json`). Newer printer firmware (e.g. current K2 Plus/K2 firmware) no longer provides this file and answers with 404. In that case, copy the database from the printer via SSH and upload it with `Upload Database`:
+The printer used by `Update Database` is set in the `Printer` section of the settings:
+
+- Enter the printer's IP address, or hit `Search` to find a K2, K2 Pro, K2 Plus or Hi on your local network (the result is saved right away).
+- Enter the root password of your printer, if it isn't the default `creality_2024`. Leave the field empty to keep the saved password.
+- `Save Printer` stores address and password on the programmer. If no printer is set, `Update Database` searches for one first.
+
+Note: The password is stored on the programmer (unencrypted, in its preferences) and never sent back to the browser. The printer's SSH host key is not verified.
+
+To copy the database manually (e.g. for `Upload Database`):
 
 ```
 scp -O root@PRINTER_IP:/mnt/UDISK/creality/userdata/box/material_database.json .
@@ -230,5 +238,7 @@ To host the web app from your own fork, change `PAGES_URL` in `web/vite.config.j
 * Creating svgs with Inkscape leaves a lot of clutter in the file, [svgo](https://github.com/svg/svgo) helps.
 
 * The Toast notifications of the web log are made with [Toastify](https://github.com/apvarun/toastify-js).
+
+* The material database is fetched via SSH with [LibSSH-ESP32](https://github.com/ewpa/LibSSH-ESP32).
 
 * The formula for generating the breathing LED was found in a post at [ThingPulse](https://thingpulse.com/breathing-leds-cracking-the-algorithm-behind-our-breathing-pattern).

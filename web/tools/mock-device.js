@@ -14,6 +14,7 @@ const TYPES = { '.html': 'text/html', '.svg': 'image/svg+xml', '.png': 'image/pn
 
 let database = await readFile(join(DATA, 'material_database.json'))
 const config = { cloneSerial: false, beepAvailable: true, beepOnRW: false, writeTags: false, writeEmptyTags: true, PN532: true }
+const printer = { host: '', customPassword: false }
 let nextId = 1
 
 const server = createServer(async (req, res) => {
@@ -33,11 +34,28 @@ const server = createServer(async (req, res) => {
       broadcast({ type: 'new_db' })
       return reply(200, 'OK')
     }
+    if (url.pathname === '/api/printer') {
+      const form = new URLSearchParams(body.toString())
+      if (form.has('host')) printer.host = form.get('host')
+      if (form.has('password')) printer.customPassword = form.get('password') !== 'creality_2024'
+      return reply(200, 'OK')
+    }
+    if (url.pathname === '/api/fetchdb') {
+      if (!printer.host) return reply(400, 'No printer configured')
+      // pretend to download via SSH ("fail" as host simulates a wrong password)
+      setTimeout(() => {
+        const ok = printer.host !== 'fail'
+        broadcast({ type: 'fetch_db', result: ok, message: ok ? `Fetched material database from ${printer.host} (25041 bytes)` : 'Login to the printer failed - check the root password' })
+        if (ok) broadcast({ type: 'new_db' })
+      }, 1500)
+      return reply(202, 'Fetching database...')
+    }
     if (url.pathname.startsWith('/api/system/')) return reply(200, `Mock: ${url.pathname} done`)
     return reply(404, '')
   }
   if (url.pathname === '/') return reply(200, await readFile(join(ROOT, 'dist-device/index.html')), 'text/html')
   if (url.pathname === '/material_database.json') return reply(200, database, 'application/json')
+  if (url.pathname === '/api/printer') return reply(200, JSON.stringify({ ...printer, busy: false }), 'application/json')
   if (url.pathname === '/boardname') return reply(200, 'mock_board')
   if (url.pathname === '/appversion') return reply(200, 'v0.0.0-mock')
   try {
