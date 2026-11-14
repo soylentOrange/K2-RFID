@@ -43,9 +43,9 @@ Note: Talking from an https page to a device on your local network only works in
 
 Just select the color by hitting the large color circle to select the color of choice, the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
 
-The material is chosen by brand and type. The brands come from the material database, so with a database copied from your printer you'll also find e.g. eSUN or Polymaker materials (and your own presets) next to Creality and Generic.
+The material is chosen by brand and type. The brands come from the material database: Creality, Generic, eSUN and Polymaker are included by default, and with a database copied from your printer you'll also find your own presets.
 
-The color dialog offers the official colors of the selected material as presets (e.g. the 30 colors of Creality Hyper PLA, as in Creality Print). When you pick one of them, its name is shown next to the hex value, e.g. `#C12E1F (Red)`. The colors are taken from the material database on the thingy; the official colors of the Creality filaments are also built into the web app, in case the database doesn't list them. Materials without colors of their own get the Hyper PLA colors. Any other color can still be chosen freely.
+The color dialog offers the official colors of the selected material as presets (e.g. the 30 colors of Creality Hyper PLA, as in Creality Print). When you pick one of them, its name is shown next to the hex value, e.g. `#C12E1F (Red)`. The colors are taken from the material database on the thingy; the official colors of the Creality filaments are also built into the web app, in case the database doesn't list them (e.g. an older database that is still stored on your thingy). Materials without colors of their own get the Hyper PLA colors. Any other color can still be chosen freely.
 
 The web interface remembers your last selection (color, brand, material and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
 
@@ -67,7 +67,7 @@ After writing, the programmer re-authenticates with the tag's (new) key, reads t
 
 ### Future Materials
 
-As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known to the programmer. You can update the list on the `Database` page (`Settings >>`, then `Database >>`) in two ways:
+The programmer comes with the material database of a K2 Plus (101 materials, as of November 2026, without any custom presets). It is part of the file system image, so it's only installed when flashing a factory image, not with an OTA update of the firmware. You can update the list on the `Database` page (`Settings >>`, then `Database >>`) in two ways:
 
 - `Update Database`: The programmer logs into your printer via SSH (as `root`), downloads its material database (`/mnt/UDISK/creality/userdata/box/material_database.json`, which also contains your custom materials) and saves it. The printer compresses the file before sending (`gzip`), so only ~25 KB are transferred and stored. If that fails, it falls back to the default database older printer firmware provides via http (`http://PRINTER_IP/downloads/defData/material_database.json`). No warranty that future firmware updates might break this behaviour...
 - `Upload Database`: Select a `material_database.json` file from your computer or phone. The file is checked, compressed in your browser and saved onto the programmer.

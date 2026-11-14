@@ -12,6 +12,7 @@
 ### New
 
 - Web app: the color dialog offers the official colors of the selected material as presets, like "Official Filament" in Creality Print (taken from the material database; the colors of Creality's filaments are built in). The name of a preset color is shown next to its hex value (#14).
+- Updated the bundled material database to the current one of the K2 Plus (101 instead of 40 materials; adds eSUN and Polymaker, and the official colors of the Creality filaments). It is part of the file system image, so already flashed thingies get it via `Update Database`/`Upload Database` or by flashing a factory image (#17).
 
 ### Installation
 
