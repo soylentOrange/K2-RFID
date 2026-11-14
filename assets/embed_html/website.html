@@ -1182,6 +1182,12 @@
     } catch (error) {
       throw new Error("Error while downloading...")
     }
+    if (response.status == 404) {
+      // newer printer firmware doesn't serve the database via http anymore
+      throw new Error("The printer's firmware doesn't provide the material database anymore...\n\n"
+        + "Copy it from the printer via SSH (e.g. scp root@" + ip + ":/mnt/UDISK/creality/userdata/box/material_database.json .) "
+        + "and use the 'Upload Database' button instead.")
+    }
     if (!response.ok) {
       throw new Error(`Error while downloading (status: ${response.status})...`)
     }

@@ -54,7 +54,13 @@ As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known
 - `Update Database`: The programmer will try to identify a supported printer (K2, K2 Pro, K2 Plus or Hi) on your local network, download its material database and save it onto the programmer. No warranty that future firmware updates might break this behaviour...
 - `Upload Database`: Select a `material_database.json` file from your computer or phone (e.g. a database with your own custom materials, copied from the printer via SSH). The file is checked, compressed in your browser and saved onto the programmer.
 
-Note: `Update Database` downloads the printer's default database (`/downloads/defData/material_database.json`). Custom materials you have added to your printer are not part of it, use `Upload Database` for those.
+Note: `Update Database` downloads the printer's default database (`http://PRINTER_IP/downloads/defData/material_database.json`). Newer printer firmware (e.g. current K2 Plus/K2 firmware) no longer provides this file and answers with 404. In that case, copy the database from the printer via SSH and upload it with `Upload Database`:
+
+```
+scp root@PRINTER_IP:/mnt/UDISK/creality/userdata/box/material_database.json .
+```
+
+This file is also the one containing custom materials you have added to your printer.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
