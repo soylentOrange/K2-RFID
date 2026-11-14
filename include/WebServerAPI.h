@@ -21,4 +21,8 @@ class WebServerAPI {
     Scheduler* _scheduler = nullptr;
     AsyncWebServer* _webServer;
     bool _fsMounted = false;
+#ifdef CORS_ALLOW_ORIGIN
+    // allow the web app hosted elsewhere (GitHub Pages) to talk to the thingy
+    AsyncCorsMiddleware _cors;
+#endif
 };

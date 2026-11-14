@@ -29,6 +29,12 @@ Very optionally:
 
 Once you have programmed your esp32, connected it to the PN532 NFC/RFID board, and supplied it with power, a new access point (with SSID: K2RFID) will appear on your computer or phone. Set the WiFi credentials for your home network (or set it to AP-mode). After a restart of the device, just visit K2RFID.local. Here you can read and write the tags. Afterwards just put two of them (obviously with identical content) to a spool and load it into your printer's CFS.
 
+### Web App (GitHub Pages)
+
+The same web app is also available at **https://soylentorange.github.io/K2-RFID/** and can be installed as an app (PWA) from there. Enter the address of your thingy (`k2rfid.local` or its IP address) in the settings and allow access to devices on your local network when your browser asks for it.
+
+Note: Talking from an https page to a device on your local network only works in Chromium-based browsers (Chrome, Edge, ...) with [Local Network Access](https://developer.chrome.com/docs/modern-web-guidance/guides/security/local-network-access). Safari (and thus every browser on iOS) and Firefox block it. In that case simply use the web app served by the thingy itself at http://k2rfid.local - it is the very same app.
+
 ### Select Material Settings via UI
 
 Just select the color by hitting the large color circle to select the color of choice (or select one the the known - at least known to me - standard colors), the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
@@ -176,14 +182,40 @@ Note: When uploading to a factory fresh board, you might need to enable uploads 
 
 If you want to rebuild the firmware yourself before uploading, you'll need to have [PlatformIO](https://platformio.org/platformio-ide) (and [esptool.py](https://github.com/espressif/esptool)).
 
-For minifying the html parts, you also need to have [Node.js](https://nodejs.org/).
-Install development dependencies globally (the build scripts call them directly, so they need to be on your `PATH`; if the build fails with an error about `html-minifier-terser`, this step is missing): 
-- [html-minifier-terser](https://github.com/terser/html-minifier-terser)
-  - `npm install html-minifier-terser -g`
-- [clean-css](https://github.com/clean-css/clean-css)
-  - `npm install clean-css-cli -g`
+For building the web app you also need [Node.js](https://nodejs.org/) (version 20.19 or newer). The npm packages (see `web/package.json`) are installed automatically into `web/node_modules` on the first build - no global packages needed anymore.
 
 Then clone the repository, open it in [Visual Studio Code](https://code.visualstudio.com/), possibly adjust the `platformio.ini` to your likings and build it for your board. After a (successful) build, you can flash it using esptool (a hint on the command line is given after building).  
+
+### Developing the Web App
+
+The web app lives in [`web/`](web/) and is built with [Vite](https://vite.dev/) from plain JavaScript modules - no framework:
+
+| File | Purpose |
+| --- | --- |
+| `web/index.html` | markup of all views (main, settings, progress) |
+| `web/src/main.js` | UI logic and the websocket protocol of the thingy |
+| `web/src/device.js` | connection to the thingy (http + websocket, reconnects, heartbeat) |
+| `web/src/materials.js` | material database parsing |
+| `web/src/printer.js` | printer discovery and database download |
+| `web/src/style.css` | styles |
+
+One source, two builds:
+
+- `npm run build:device` creates a single self-contained html file that is gzipped and embedded into the firmware (done automatically by `tools/build_web.py` when building with PlatformIO).
+- `npm run build:pages` creates the static site for GitHub Pages in `web/dist` (done by the GitHub Action in `.github/workflows/pages.yml` on every push to `main`).
+
+Images, icons and the manifest are shared with the thingy's file system (`assets/data`).
+
+For development without hardware, there is a small mock of the thingy:
+
+```sh
+cd web
+npm install
+npm run build:device && npm run mock   # embedded app on http://localhost:8080/
+npm run dev                            # dev server, open http://localhost:5173/?device=localhost:8080
+```
+
+To host the web app from your own fork, change `PAGES_URL` in `web/vite.config.js` and `CORS_ALLOW_ORIGIN` in `platformio.ini` and set *Settings > Pages > Source* to *GitHub Actions*.
 
 ## Acknowledgements
 
@@ -195,8 +227,6 @@ Then clone the repository, open it in [Visual Studio Code](https://code.visualst
 
 * Creating svgs with Inkscape leaves a lot of clutter in the file, [svgo](https://github.com/svg/svgo) helps.
 
-* The Toast notifications are made with [Toastify](https://github.com/apvarun/toastify-js).
-
-* Splashcreens for iOS are auto-generated with [iosPWASplash](https://github.com/avadhesh18/iosPWASplash).
+* The Toast notifications of the web log are made with [Toastify](https://github.com/apvarun/toastify-js).
 
 * The formula for generating the breathing LED was found in a post at [ThingPulse](https://thingpulse.com/breathing-leds-cracking-the-algorithm-behind-our-breathing-pattern).

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>K2 RFID Tag Programmer</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/icon_96.png" sizes="96x96" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="K2 RFID" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="header">
+        <a href="./" class="logo-link" aria-label="K2 RFID Tag Programmer">
+          <img id="logo" src="/logo_thingy.svg" alt="K2 RFID Tag Programmer" class="logo" />
+        </a>
+        <p id="status" class="status">Not connected</p>
+      </header>
+
+      <main class="card">
+        <!-- main view: select spool material -->
+        <section id="view-main" class="view">
+          <label class="color-picker" title="Material color">
+            <input id="color" type="color" value="#000000" list="common-colors" />
+            <datalist id="common-colors">
+              <option value="#000000"></option>
+              <option value="#FFFFFF"></option>
+              <option value="#0A2989"></option>
+              <option value="#C12E1F"></option>
+            </datalist>
+          </label>
+          <output id="color-text" for="color" class="value-text">#000000</output>
+
+          <h2><span>Material Weight</span></h2>
+          <output id="weight-text" for="weight" class="value-text">1000 g</output>
+          <input id="weight" type="range" min="50" max="1000" step="50" value="1000" class="slider" />
+
+          <h2><span>Material Type</span></h2>
+          <div class="row">
+            <select id="brand" aria-label="Brand"></select>
+            <select id="type" aria-label="Material"></select>
+          </div>
+
+          <h2><span>Write Spool Data</span></h2>
+          <div class="row">
+            <button id="reset" data-needs-connection disabled>Reset</button>
+            <button id="apply" data-needs-connection disabled>Apply</button>
+          </div>
+        </section>
+
+        <!-- settings view -->
+        <section id="view-settings" class="view" hidden>
+          <div id="device-settings" hidden>
+            <h2><span>Device</span></h2>
+            <form id="device-form" class="row">
+              <input id="device-host" type="text" placeholder="k2rfid.local or 192.168.x.x" autocomplete="off"
+                autocapitalize="off" spellcheck="false" aria-label="Device address" />
+              <button type="submit" class="narrow">Connect</button>
+            </form>
+            <p class="hint">
+              Needs a Chromium-based browser (Chrome, Edge) that allows access to devices on your local network.
+              Otherwise open the device directly: <a id="device-direct-link" href="http://k2rfid.local/">http://k2rfid.local</a>
+            </p>
+          </div>
+
+          <h2 class="optional-1"><span>Annoyance</span></h2>
+          <label class="switch-row">
+            <span>Beep on tag r/w</span>
+            <input id="beep" type="checkbox" class="switch" data-needs-connection disabled />
+          </label>
+
+          <h2><span>Programmer Settings</span></h2>
+          <label class="switch-row">
+            <span>Write only empty tags</span>
+            <input id="write-empty" type="checkbox" class="switch" data-needs-connection disabled />
+          </label>
+          <label class="switch-row">
+            <span>Clone serial number</span>
+            <input id="clone" type="checkbox" class="switch" data-needs-connection disabled />
+          </label>
+
+          <h2><span>Material Database</span></h2>
+          <button id="db-from-printer" data-needs-connection disabled>Update Database</button>
+          <button id="db-from-file" data-needs-connection disabled>Upload Database</button>
+          <input id="db-file" type="file" accept=".json,application/json" hidden />
+          <p id="db-info" class="hint"></p>
+
+          <h2><span>Thingy Control</span></h2>
+          <button data-action="/api/system/restart" data-needs-connection disabled>Restart Thingy</button>
+          <button data-action="/api/system/clearwifi" data-needs-connection disabled>Reset WiFi credentials</button>
+          <button data-action="/api/system/safeboot" data-needs-connection disabled>Enter SafeBoot</button>
+
+          <h2 class="optional-2"><span>Thingy Info</span></h2>
+          <dl class="info">
+            <dt class="optional-1">Board Name:</dt>
+            <dd class="optional-1" id="info-board">Unknown</dd>
+            <dt class="optional-3">Thingy Build:</dt>
+            <dd class="optional-3" id="info-build">Unknown</dd>
+            <dt class="optional-3">Web App:</dt>
+            <dd class="optional-3" id="info-app"></dd>
+          </dl>
+          <a id="other-app-link" class="hint" hidden></a>
+        </section>
+
+        <!-- progress / result of a long running operation -->
+        <section id="view-result" class="view centered" hidden>
+          <div id="result-icon" class="result-icon"><div class="spinner"></div></div>
+          <p id="result-text" class="result-text">Processing...</p>
+        </section>
+
+        <footer id="nav" class="nav">
+          <hr />
+          <button id="show-main" hidden>&lt;&lt; Main</button>
+          <button id="show-settings">Settings &gt;&gt;</button>
+        </footer>
+      </main>
+    </div>
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
