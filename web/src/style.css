@@ -115,6 +115,14 @@ hr {
   min-width: 0;
 }
 
+.row.tight {
+  gap: 8px;
+}
+
+.row.tight button {
+  margin: 8px 0 0;
+}
+
 .row > .narrow {
   flex: 0 0 auto;
   width: auto;
@@ -437,5 +445,68 @@ input[type="color"]::-moz-color-swatch {
 @media (max-height: 660px) {
   .optional-3 {
     display: none;
+  }
+}
+
+/* compact layout for low screens, so that every page fits without scrolling */
+@media (max-height: 680px) {
+  .logo {
+    height: 54px;
+    width: 180px;
+    margin-top: 6px;
+  }
+
+  .status {
+    margin-bottom: 6px;
+  }
+
+  .card {
+    padding: 12px 20px;
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    margin: 10px auto;
+  }
+
+  hr {
+    margin: 6px auto 4px;
+  }
+
+  button,
+  .row.tight button {
+    padding: 6px;
+    margin-top: 6px;
+  }
+
+  .row button {
+    margin: 6px 0 8px;
+  }
+
+  .value-text {
+    margin: 6px auto;
+  }
+
+  .switch-row {
+    margin-bottom: 4px;
+  }
+
+  select,
+  input[type="text"] {
+    margin: 4px 0;
+  }
+
+  #printer-password {
+    margin-top: 6px;
+    padding: 5px;
+  }
+
+  .form-row input[type="text"],
+  form.row input[type="text"] {
+    padding: 5px;
+  }
+
+  .hint {
+    margin: 2px 0 4px;
   }
 }

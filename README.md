@@ -65,12 +65,12 @@ After writing, the programmer re-authenticates with the tag's (new) key, reads t
 
 ### Future Materials
 
-As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known to the programmer. You can update the list in the settings in two ways:
+As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known to the programmer. You can update the list on the `Database` page (`Settings >>`, then `Database >>`) in two ways:
 
 - `Update Database`: The programmer logs into your printer via SSH (as `root`), downloads its material database (`/mnt/UDISK/creality/userdata/box/material_database.json`, which also contains your custom materials) and saves it. The printer compresses the file before sending (`gzip`), so only ~25 KB are transferred and stored. If that fails, it falls back to the default database older printer firmware provides via http (`http://PRINTER_IP/downloads/defData/material_database.json`). No warranty that future firmware updates might break this behaviour...
 - `Upload Database`: Select a `material_database.json` file from your computer or phone. The file is checked, compressed in your browser and saved onto the programmer.
 
-The printer used by `Update Database` is set in the `Printer` section of the settings:
+The printer used by `Update Database` is set in the `Printer` section of the same page:
 
 - Enter the printer's IP address, or hit `Search` to find a K2, K2 Pro, K2 Plus or Hi on your local network (the result is saved right away).
 - Enter the root password of your printer, if it isn't the default `creality_2024`. Leave the field empty to keep the saved password.
@@ -91,6 +91,14 @@ scp -O root@PRINTER_IP:/mnt/UDISK/creality/userdata/box/material_database.json .
 The `-O` option makes scp use the legacy SCP protocol, as the printer has no SFTP server (without it, scp fails with `sftp-server: not found`).
 
 This file is also the one containing custom materials you have added to your printer.
+
+<p align="center">
+    <img src="assets/doc/Screenshot_Database.jpeg" alt="screenshot database page" style="width:50%; height:auto;" >
+</p>
+
+### Settings
+
+The web app has three pages (`Main`, `Settings` and `Database`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates), reset the WiFi credentials and open the web log.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
@@ -158,7 +166,7 @@ On boards with an onboard mono-color LED:
 
 ## Web logging
 
-Even though there is no button for it, if you open k2rfid.local/weblog, you'll see a logging window. For every tag being read it will show a hex and ascii dump of the data on the tag.
+Hit the `Web Log` button in the settings (or open k2rfid.local/weblog) and you'll see a logging window. For every tag being read it will show a hex and ascii dump of the data on the tag.
 
 <p align="center">
     <img src="assets/doc/screenshot_weblog.jpeg" alt="screenshot weblog" style="width:85%; height:auto;" >

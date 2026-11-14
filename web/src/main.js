@@ -36,16 +36,31 @@ let spool = { ...DEFAULT_SPOOL, ...load('spool', {}) }
 // views
 // ---------------------------------------------------------------------------
 
+// the views are pages in a row: main <-> settings <-> database
+const PAGES = ['main', 'settings', 'database']
+const PAGE_TITLES = { main: 'Main', settings: 'Settings', database: 'Database' }
+let currentPage = 'main'
+
 function showView(name) {
-  for (const view of ['main', 'settings', 'result']) $(`view-${view}`).hidden = view !== name
+  for (const view of [...PAGES, 'result']) $(`view-${view}`).hidden = view !== name
   $('nav').hidden = name === 'result'
-  $('show-main').hidden = name !== 'settings'
-  $('show-settings').hidden = name !== 'main'
-  if (name !== 'result') updateStatus()
+  if (name === 'result') return
+
+  currentPage = name
+  const index = PAGES.indexOf(name)
+  for (const [id, target] of [['nav-back', PAGES[index - 1]], ['nav-next', PAGES[index + 1]]]) {
+    const button = $(id)
+    button.hidden = !target
+    if (!target) continue
+    button.textContent = id === 'nav-back' ? `<< ${PAGE_TITLES[target]}` : `${PAGE_TITLES[target]} >>`
+    button.onclick = () => showView(target)
+  }
+  updateStatus()
 }
 
 // show the progress view while running a long operation, then the outcome
-async function runWithProgress(message, task, { returnTo = 'settings', delay = 5000 } = {}) {
+// (and return to the page it was started from, unless returnTo says otherwise)
+async function runWithProgress(message, task, { returnTo = currentPage, delay = 5000 } = {}) {
   const icon = $('result-icon')
   const text = $('result-text')
   icon.innerHTML = '<div class="spinner"></div>'
@@ -322,8 +337,8 @@ const handlers = {
 // ---------------------------------------------------------------------------
 
 function bindUi() {
-  $('show-main').onclick = () => showView('main')
-  $('show-settings').onclick = () => showView('settings')
+  // log of the thingy (hex dumps of the tags read, ...)
+  $('open-weblog').onclick = () => window.open(device.url('/weblog'), '_blank', 'noopener')
 
   $('color').oninput = (e) => ($('color-text').textContent = e.target.value.toUpperCase())
   $('color').onchange = (e) => setSpool({ color: e.target.value })

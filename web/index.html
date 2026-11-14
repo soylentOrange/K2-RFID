@@ -63,7 +63,7 @@
                 autocapitalize="off" spellcheck="false" aria-label="Device address" />
               <button type="submit" class="narrow">Connect</button>
             </form>
-            <p class="hint">
+            <p class="hint optional-2">
               Needs a Chromium-based browser (Chrome, Edge) that allows access to devices on your local network.
               Otherwise open the device directly: <a id="device-direct-link" href="http://k2rfid.local/">http://k2rfid.local</a>
             </p>
@@ -85,32 +85,15 @@
             <input id="clone" type="checkbox" class="switch" data-needs-connection disabled />
           </label>
 
-          <h2><span>Printer</span></h2>
-          <form id="printer-form">
-            <div class="row form-row">
-              <input id="printer-host" type="text" placeholder="Printer IP address" autocomplete="off"
-                autocapitalize="off" spellcheck="false" aria-label="Printer address" />
-              <button id="printer-search" type="button" class="narrow" data-needs-connection disabled>Search</button>
-            </div>
-            <input id="printer-password" type="password" autocomplete="off" aria-label="Root password of the printer"
-              placeholder="root password" />
-            <button type="submit" data-needs-connection disabled>Save Printer</button>
-          </form>
-          <p id="printer-info" class="hint">
-            Used for downloading the material database via SSH. The default root password is creality_2024,
-            leave the field empty to keep the saved one.
-          </p>
-
-          <h2><span>Material Database</span></h2>
-          <button id="db-from-printer" data-needs-connection disabled>Update Database</button>
-          <button id="db-from-file" data-needs-connection disabled>Upload Database</button>
-          <input id="db-file" type="file" accept=".json,application/json" hidden />
-          <p id="db-info" class="hint"></p>
-
           <h2><span>Thingy Control</span></h2>
-          <button data-action="/api/system/restart" data-needs-connection disabled>Restart Thingy</button>
-          <button data-action="/api/system/clearwifi" data-needs-connection disabled>Reset WiFi credentials</button>
-          <button data-action="/api/system/safeboot" data-needs-connection disabled>Enter SafeBoot</button>
+          <div class="row tight">
+            <button data-action="/api/system/restart" data-needs-connection disabled>Restart</button>
+            <button data-action="/api/system/safeboot" data-needs-connection disabled>SafeBoot</button>
+          </div>
+          <div class="row tight">
+            <button data-action="/api/system/clearwifi" data-needs-connection disabled>Reset WiFi</button>
+            <button id="open-weblog" type="button">Web Log</button>
+          </div>
 
           <h2 class="optional-2"><span>Thingy Info</span></h2>
           <dl class="info">
@@ -124,6 +107,31 @@
           <a id="other-app-link" class="hint" hidden></a>
         </section>
 
+        <!-- material database view -->
+        <section id="view-database" class="view" hidden>
+          <h2><span>Printer</span></h2>
+          <form id="printer-form">
+            <div class="row form-row">
+              <input id="printer-host" type="text" placeholder="Printer IP address" autocomplete="off"
+                autocapitalize="off" spellcheck="false" aria-label="Printer address" />
+              <button id="printer-search" type="button" class="narrow" data-needs-connection disabled>Search</button>
+            </div>
+            <input id="printer-password" type="password" autocomplete="off" aria-label="Root password of the printer"
+              placeholder="root password" />
+            <button type="submit" data-needs-connection disabled>Save Printer</button>
+          </form>
+          <p id="printer-info" class="hint optional-2">
+            Used for downloading the material database via SSH. The default root password is creality_2024,
+            leave the field empty to keep the saved one.
+          </p>
+
+          <h2><span>Material Database</span></h2>
+          <button id="db-from-printer" data-needs-connection disabled>Update Database</button>
+          <button id="db-from-file" data-needs-connection disabled>Upload Database</button>
+          <input id="db-file" type="file" accept=".json,application/json" hidden />
+          <p id="db-info" class="hint"></p>
+        </section>
+
         <!-- progress / result of a long running operation -->
         <section id="view-result" class="view centered" hidden>
           <div id="result-icon" class="result-icon"><div class="spinner"></div></div>
@@ -132,8 +140,10 @@
 
         <footer id="nav" class="nav">
           <hr />
-          <button id="show-main" hidden>&lt;&lt; Main</button>
-          <button id="show-settings">Settings &gt;&gt;</button>
+          <div class="row tight">
+            <button id="nav-back" hidden></button>
+            <button id="nav-next"></button>
+          </div>
         </footer>
       </main>
     </div>
