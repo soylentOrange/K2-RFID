@@ -109,101 +109,32 @@ void RFID::_rfidReadCallback() {
       }
 
       // read spooldata from tag
-      if (tag.readSpoolData(&_nfc)) {
-        if (tag.isEmpty()) {
-          LOGD(TAG, "tag is empty...");
-          // possibly write tag here
-          if (_writeEnabled) {
-            LOGW(TAG, "writing empty tag...");
-            bool write_result = tag.writeSpoolData(&_nfc, _spooldata);
-            led.setMode(LED::LEDMode::TAG_WRITTEN);
-            _doBeep(2000);
-            // invoke callback
-            if (_tagWriteCallback != nullptr) {
-              _tagWriteCallback(write_result);
-            }
-          } else {
-            led.setMode(LED::LEDMode::TAG_READ);
-            _doBeep();
-            // invoke event callback
-            if (_tagReadCallback != nullptr) {
-              _tagReadCallback(tag);
-            }
-          }
-        } else {
-          LOGD(TAG, "tag is not empty...");
-          // LOGD(TAG, "read from tag: %s", static_cast<std::string>(tag.getSpooldata()).c_str());
-          // possibly write tag here
-          if (_writeEnabled && _overwriteEnabled) {
-            LOGW(TAG, "re-writing tag...");
-            bool overwrite_result = tag.writeSpoolData(&_nfc, _spooldata);
-            if (overwrite_result) {
-              led.setMode(LED::LEDMode::TAG_REWRITTEN);
-              _doBeep(2000);
-              _writeError = 0;
-              // invoke event callback
-              if (_tagWriteCallback != nullptr) {
-                _tagWriteCallback(overwrite_result);
-              }
-            } else {
-              _tagInProximity = false;
-              _newTagInProximity = false;
-              _lastTag = CFSTag();
-              if (++_writeError > 10) {
-                // invoke event callback
-                if (_tagWriteCallback != nullptr) {
-                  _tagWriteCallback(overwrite_result);
-                }
-                led.setMode(LED::LEDMode::ERROR);
-                _doBeep(3000);
-              }
-            }
-          } else {
-            // Only signal when writing isn't enabled
-            if (!_writeEnabled) {
-              led.setMode(LED::LEDMode::TAG_READ);
-              _doBeep();
-            }
-            // invoke event callback
-            if (_tagReadCallback != nullptr) {
-              _tagReadCallback(tag);
-            }
-          }
-        }
-      } else {
+      bool readOk = tag.readSpoolData(&_nfc);
+      std::string uid = static_cast<std::string>(tag.getUid());
+      // a tag where a previous write attempt failed (possibly leaving partial
+      // data on it) is written again, even when overwriting isn't enabled
+      bool retryFailedWrite = !_failedWriteUid.empty() && (_failedWriteUid == uid);
+
+      if (!readOk) {
         LOGW(TAG, "tag data corrupted or reader error...");
-        // possibly write tag here
-        if (_writeEnabled && _overwriteEnabled) {
-          LOGW(TAG, "writing corrupted tag...");
-          bool write_result = tag.writeSpoolData(&_nfc, _spooldata);
-          if (write_result) {
-            led.setMode(LED::LEDMode::TAG_REWRITTEN);
-            _doBeep(2000);
-            _writeError = 0;
-            // invoke callback
-            if (_tagWriteCallback != nullptr) {
-              _tagWriteCallback(write_result);
-            }
-          } else {
-            _tagInProximity = false;
-            _newTagInProximity = false;
-            _lastTag = CFSTag();
-            if (++_writeError > 10) {
-              // invoke event callback
-              if (_tagWriteCallback != nullptr) {
-                _tagWriteCallback(write_result);
-              }
-              led.setMode(LED::LEDMode::ERROR);
-              _doBeep(3000);
-            }
-          }
-        } else {
+      } else if (tag.isEmpty()) {
+        LOGD(TAG, "tag is empty...");
+      } else {
+        LOGD(TAG, "tag is not empty...");
+      }
+
+      if (_writeEnabled && ((readOk && tag.isEmpty()) || _overwriteEnabled || retryFailedWrite)) {
+        // write tag
+        _writeTag(tag, readOk && tag.isEmpty());
+      } else {
+        // Only signal when writing isn't enabled
+        if (!_writeEnabled || !readOk) {
           led.setMode(LED::LEDMode::TAG_READ);
           _doBeep();
-          // invoke event callback
-          if (_tagReadCallback != nullptr) {
-            _tagReadCallback(tag);
-          }
+        }
+        // invoke event callback
+        if (_tagReadCallback != nullptr) {
+          _tagReadCallback(tag);
         }
       }
     } else { // the last tag is still in proximity
@@ -223,11 +154,52 @@ void RFID::_rfidReadCallback() {
   }
 }
 
+// write spooldata onto the tag and signal the (verified) result
+void RFID::_writeTag(CFSTag& tag, bool wasEmpty) {
+  std::string uid = static_cast<std::string>(tag.getUid());
+  LOGW(TAG, "%s tag (%s)...", wasEmpty ? "writing empty" : "re-writing", uid.c_str());
+
+  // writeSpoolData only returns true after the written data was read back and verified
+  if (tag.writeSpoolData(&_nfc, _spooldata)) {
+    _lastTag = tag;
+    _writeError = 0;
+    _failedWriteUid.clear();
+    led.setMode(wasEmpty ? LED::LEDMode::TAG_WRITTEN : LED::LEDMode::TAG_REWRITTEN);
+    _doBeep(2000);
+    // invoke event callback
+    if (_tagWriteCallback != nullptr) {
+      _tagWriteCallback(true);
+    }
+    return;
+  }
+
+  // writing failed: remember the tag, so it'll be written again on the next try
+  LOGW(TAG, "writing tag (%s) failed (attempt %u)", uid.c_str(), _writeError + 1);
+  _failedWriteUid = uid;
+  if (++_writeError > WRITE_RETRIES) {
+    // give up for now; keep the tag as last tag, so it is retried only
+    // after it was removed and presented again
+    _writeError = 0;
+    led.setMode(LED::LEDMode::ERROR);
+    _doBeep(3000);
+    // invoke event callback
+    if (_tagWriteCallback != nullptr) {
+      _tagWriteCallback(false);
+    }
+  } else {
+    // forget the tag, so it'll be detected (and written) again in the next cycle
+    _tagInProximity = false;
+    _newTagInProximity = false;
+    _lastTag = CFSTag();
+  }
+}
+
 // enable writing tag with the provided SpoolData
 void RFID::enableWriting(bool enable, bool overwrite) {
   _writeEnabled = enable;
   _overwriteEnabled = overwrite;
   _writeError = 0;
+  _failedWriteUid.clear();
 
   if (_writeEnabled && _overwriteEnabled) {
     led.setMode(LED::LEDMode::ARMED_REWRITING);
