@@ -208,7 +208,7 @@ I found an old RGB LED-strip in my pile of junk. cutting one of the LEDs from th
 
 ### Flashing Firmware
 
-The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool write-flash 0x0 ADJUST_TO_YOUR_PATH/firmware.factory.bin` (esptool versions before v5 use `esptool.py write_flash` instead). 
+The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool write-flash 0x0 ADJUST_TO_YOUR_PATH/lolin_s2_mini.firmware.factory.bin` (esptool versions before v5 use `esptool.py write_flash` instead). 
 
 Note: When uploading to a factory fresh board, you might need to enable uploads by pressing both buttons, release the "0"-button first, then the "RST"-button (this sequence will enable the USB-CDC). 
 
@@ -232,6 +232,7 @@ What happens during a build:
 GitHub Actions build every push and pull request:
 
 - `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts.
+- `.github/workflows/release.yml` publishes a release. Add a `## vX.Y.Z` section to `CHANGELOG.md` and bump `APP_VERSION` in `platformio.ini`, then start the workflow under *Actions → Release → Run workflow* with the version (e.g. `v1.2.0`). It builds all boards, creates the tag and the release with the notes from `CHANGELOG.md`, and attaches `<board>.firmware.factory.bin` (for esptool) and `<board>.firmware.bin` (for OTA/SafeBoot updates).
 - `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages.
 - Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.
 
