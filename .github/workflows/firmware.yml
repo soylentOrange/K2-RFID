@@ -13,6 +13,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # tools/version.py needs a branch name (checkout leaves a detached HEAD)
+      REF_NAME: ${{ github.head_ref || github.ref_name }}
     strategy:
       fail-fast: false
       matrix:
