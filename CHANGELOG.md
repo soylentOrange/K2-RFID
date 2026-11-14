@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Updated the bundled material database to the current one of the K2 Plus (101 instead of 40 materials; adds eSUN and Polymaker, and the official colors of the Creality filaments). It is part of the file system image, so already flashed thingies get it via `Update Database`/`Upload Database` or by flashing a factory image.
+
 ## v1.2.1
 
 **Please use this release instead of v1.2.0, which boot-loops on real hardware.**
