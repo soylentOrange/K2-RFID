@@ -41,9 +41,11 @@ Note: Talking from an https page to a device on your local network only works in
 
 ### Select Material Settings via UI
 
-Just select the color by hitting the large color circle to select the color of choice (or select one the the known - at least known to me - standard colors), the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
+Just select the color by hitting the large color circle to select the color of choice, the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
 
 The material is chosen by brand and type. The brands come from the material database, so with a database copied from your printer you'll also find e.g. eSUN or Polymaker materials (and your own presets) next to Creality and Generic.
+
+The color dialog offers the official colors of the selected material as presets (e.g. the 30 colors of Creality Hyper PLA, as in Creality Print). When you pick one of them, its name is shown next to the hex value, e.g. `#C12E1F (Red)`. The colors are taken from the material database on the thingy; the official colors of the Creality filaments are also built into the web app, in case the database doesn't list them. Materials without colors of their own get the Hyper PLA colors. Any other color can still be chosen freely.
 
 The web interface remembers your last selection (color, brand, material and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
 

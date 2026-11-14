@@ -1,5 +1,7 @@
 // Material database (material_database.json as provided by the printer)
 
+import { officialColors } from './colors.js'
+
 const FALLBACK = {
   Generic: [{ id: '00001', name: 'PLA' }],
   Creality: [{ id: '01001', name: 'Hyper PLA' }],
@@ -30,7 +32,7 @@ export class MaterialDb {
       // "Generic PLA" -> "PLA"
       const name = base.name.startsWith(`${brand} `) ? base.name.slice(brand.length + 1) : base.name
       if (!brands.has(brand)) brands.set(brand, [])
-      brands.get(brand).push({ id: base.id, name })
+      brands.get(brand).push({ id: base.id, name, colors: colorsOf(base) })
     }
     if (brands.size === 0) throw new Error('Database contains no materials')
 
@@ -54,11 +56,37 @@ export class MaterialDb {
     return undefined
   }
 
+  // preset colors of a material: from the database, else the official Creality colors
+  colors(id) {
+    for (const materials of this.#brands.values()) {
+      const material = materials.find((m) => m.id === id)
+      if (material?.colors?.length > 1) return material.colors
+    }
+    return officialColors(id)
+  }
+
   get count() {
     let n = 0
     for (const materials of this.#brands.values()) n += materials.length
     return n
   }
+}
+
+// colors listed for a material as [{ hex, name }]; tags have no alpha channel, so
+// "#FFFFFF00" (transparent) is reduced to "#FFFFFF" and duplicates are dropped
+function colorsOf(base) {
+  const names = new Map()
+  for (const info of base.mixColorInfoList ?? []) {
+    if (info?.hexValue) names.set(String(info.hexValue).toUpperCase(), info.colorEn?.trim() ?? '')
+  }
+  const colors = new Map()
+  for (const value of base.colors ?? []) {
+    const full = String(value).toUpperCase()
+    const hex = full.slice(0, 7)
+    if (!/^#[0-9A-F]{6}$/.test(hex) || colors.has(hex)) continue
+    colors.set(hex, names.get(full) || names.get(hex) || '')
+  }
+  return [...colors].map(([hex, name]) => ({ hex, name }))
 }
 
 // gzip a string (the thingy stores the database compressed)
