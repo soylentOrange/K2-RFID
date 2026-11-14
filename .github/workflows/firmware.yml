@@ -1,0 +1,42 @@
+# Build the firmware for all supported boards
+name: Firmware
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # tools/version.py needs a branch name (checkout leaves a detached HEAD)
+      REF_NAME: ${{ github.head_ref || github.ref_name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [lolin_s2_mini, lolin_s2_mini_extled, esp32_s3_tiny]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.platformio
+          key: pio-${{ matrix.env }}-${{ hashFiles('platformio.ini', 'safeboot/platformio.ini') }}
+      - run: pip install --upgrade platformio
+      - run: pio run -e ${{ matrix.env }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: firmware-${{ matrix.env }}
+          path: .pio/build/${{ matrix.env }}/*.bin

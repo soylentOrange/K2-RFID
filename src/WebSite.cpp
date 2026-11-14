@@ -227,6 +227,52 @@ void WebSite::_webSiteCallback() {
 
   _webServer->addHandler(_ws);
 
+  // printer for fetching the material database via SSH: address and root password
+  _webServer->on("/api/printer", HTTP_GET, [](AsyncWebServerRequest* request) {
+    JsonDocument doc;
+    doc["host"] = printerDb.getHost();
+    doc["customPassword"] = printerDb.hasCustomPassword();
+    doc["busy"] = printerDb.isBusy();
+    AsyncResponseStream* response = request->beginResponseStream("application/json");
+    serializeJson(doc, *response);
+    request->send(response);
+  });
+
+  // save printer settings (form fields: host, password - an empty password restores the default)
+  _webServer->on("/api/printer", HTTP_POST, [](AsyncWebServerRequest* request) {
+    if (request->hasParam("host", true)) {
+      printerDb.setHost(request->getParam("host", true)->value().c_str());
+    }
+    if (request->hasParam("password", true)) {
+      printerDb.setPassword(request->getParam("password", true)->value().c_str());
+    }
+    LOGI(TAG, "Printer set to %s", printerDb.getHost().c_str());
+    request->send(200, "text/plain", "OK");
+  });
+
+  // fetch the material database from the printer (in the background, result via websocket)
+  _webServer->on("/api/fetchdb", HTTP_POST, [&](AsyncWebServerRequest* request) {
+    if (printerDb.getHost().empty()) {
+      return request->send(400, "text/plain", "No printer configured");
+    }
+    bool started = printerDb.fetch([&](bool success, const std::string& message) {
+      JsonDocument jsonMsg;
+      jsonMsg["type"] = "fetch_db";
+      jsonMsg["result"] = success;
+      jsonMsg["message"] = message;
+      _textAll(jsonMsg);
+      if (success) {
+        JsonDocument newDbMsg;
+        newDbMsg["type"] = "new_db";
+        _textAll(newDbMsg);
+      }
+    });
+    if (!started) {
+      return request->send(409, "text/plain", "Already fetching the database");
+    }
+    request->send(202, "text/plain", "Fetching database...");
+  });
+
   // Handle posting database
   _webServer->on(
     "/material_database.json",
@@ -329,6 +375,15 @@ void WebSite::_webSiteCallback() {
 
   _sr.signalComplete();
   LOGD(TAG, "...done!");
+}
+
+// send a json message to all connected websocket clients
+void WebSite::_textAll(const JsonDocument& jsonMsg) {
+  if (_ws == nullptr || !_ws->count())
+    return;
+  AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
+  serializeJson(jsonMsg, buffer->get(), buffer->length());
+  _ws->textAll(buffer);
 }
 
 // get StatusRequest object for initializing task

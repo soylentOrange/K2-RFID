@@ -27,6 +27,9 @@ void WebServerAPI::end() {
   LittleFS.end();
   _sr.setWaiting();
   _webServer->end();
+#ifdef CORS_ALLOW_ORIGIN
+  _webServer->removeMiddleware(&_cors);
+#endif
   LOGD(TAG, "...done!");
 }
 
@@ -41,6 +44,15 @@ void WebServerAPI::_webServerCallback() {
     LOGD(TAG, "LittleFS mounted!");
     _fsMounted = true;
   }
+
+#ifdef CORS_ALLOW_ORIGIN
+  // CORS: let the web app on GitHub Pages access the API (also answers preflight requests)
+  _cors.setOrigin(CORS_ALLOW_ORIGIN);
+  _cors.setMethods("GET, POST, OPTIONS");
+  _cors.setHeaders("Content-Type");
+  _cors.setMaxAge(600);
+  _webServer->addMiddleware(&_cors);
+#endif
 
   // Handle getting files from File System (will auto-magically serve the gzipped files)
   _webServer->serveStatic("/", LittleFS, "/")

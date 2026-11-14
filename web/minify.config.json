@@ -1,0 +1,11 @@
+{
+  "removeComments": true,
+  "collapseWhitespace": true,
+  "conservativeCollapse": true,
+  "removeTagWhitespace": true,
+  "sortAttributes": true,
+  "sortClassName": true,
+  "caseSensitive": true,
+  "minifyCSS": { "level": { "1": { "specialComments": 0 } } },
+  "minifyJS": { "compress": { "drop_console": true }, "mangle": { "toplevel": true } }
+}

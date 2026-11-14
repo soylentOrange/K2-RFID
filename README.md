@@ -4,7 +4,7 @@ Web app controlled and esp32-powered K2/CFS RFID programming thingy based on [Dn
 
 ## Why do I need it?
 
-Creality's K2 Plus printer supports 1k MIFARE tags to identify the spool's material and color.
+Creality's K2-series printers (K2, K2 Pro, K2 Plus) and the Creality Hi support 1k MIFARE tags to identify the spool's material and color.
 As the tagged spools from Creality come with an additional price and also to retrofit older Creality or non-Creality spools, you could use this tool to simply write your own tags, add two of them per spool and enjoy the magic of automatically identified materials.
 
 ## What do I need to make one?
@@ -29,9 +29,23 @@ Very optionally:
 
 Once you have programmed your esp32, connected it to the PN532 NFC/RFID board, and supplied it with power, a new access point (with SSID: K2RFID) will appear on your computer or phone. Set the WiFi credentials for your home network (or set it to AP-mode). After a restart of the device, just visit K2RFID.local. Here you can read and write the tags. Afterwards just put two of them (obviously with identical content) to a spool and load it into your printer's CFS.
 
+### Web App (GitHub Pages)
+
+The same web app is also available at **https://soylentorange.github.io/K2-RFID/** and can be installed as an app (PWA) from there. Enter the address of your thingy (`k2rfid.local` or its IP address) in the settings and allow access to devices on your local network when your browser asks for it.
+
+Note: Talking from an https page to a device on your local network only works in Chromium-based browsers (Chrome, Edge, ...) with [Local Network Access](https://developer.chrome.com/docs/modern-web-guidance/guides/security/local-network-access). Safari (and thus every browser on iOS) and Firefox block it. In that case simply use the web app served by the thingy itself at http://k2rfid.local - it is the very same app. The settings of the app served by the thingy also contain a link to the GitHub Pages version.
+
+<p align="center">
+    <img src="assets/doc/Screenshot_PagesApp.jpeg" alt="screenshot GitHub Pages app" style="width:50%; height:auto;" >
+</p>
+
 ### Select Material Settings via UI
 
 Just select the color by hitting the large color circle to select the color of choice (or select one the the known - at least known to me - standard colors), the type of material and the amount of material on the spool. After hitting the `Apply` button, the programmer is armed and will wait for tags to write the content. A serial number is auto-generated and will be used for all subsequent writes. A new serial number is genereted whenever you hit the `Apply` button again.
+
+The material is chosen by brand and type. The brands come from the material database, so with a database copied from your printer you'll also find e.g. eSUN or Polymaker materials (and your own presets) next to Creality and Generic.
+
+The web interface remembers your last selection (color, brand, material and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
 
 <p align="center">
     <img src="assets/doc/Screenshot_UI.jpeg" alt="screenshot UI" style="width:50%; height:auto;" >
@@ -51,7 +65,32 @@ After writing, the programmer re-authenticates with the tag's (new) key, reads t
 
 ### Future Materials
 
-As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus or Hi on your local network, download the material database and saves it onto the programmer. No warranty that future firmware updates might break this behaviour... 
+As of now, a fixed set of materials (defined by the K2 Plus's firmware) is known to the programmer. You can update the list in the settings in two ways:
+
+- `Update Database`: The programmer logs into your printer via SSH (as `root`), downloads its material database (`/mnt/UDISK/creality/userdata/box/material_database.json`, which also contains your custom materials) and saves it. The printer compresses the file before sending (`gzip`), so only ~25 KB are transferred and stored. If that fails, it falls back to the default database older printer firmware provides via http (`http://PRINTER_IP/downloads/defData/material_database.json`). No warranty that future firmware updates might break this behaviour...
+- `Upload Database`: Select a `material_database.json` file from your computer or phone. The file is checked, compressed in your browser and saved onto the programmer.
+
+The printer used by `Update Database` is set in the `Printer` section of the settings:
+
+- Enter the printer's IP address, or hit `Search` to find a K2, K2 Pro, K2 Plus or Hi on your local network (the result is saved right away).
+- Enter the root password of your printer, if it isn't the default `creality_2024`. Leave the field empty to keep the saved password.
+- `Save Printer` stores address and password on the programmer. If no printer is set, `Update Database` searches for one first.
+
+Note: The password is stored on the programmer (unencrypted, in its preferences) and never sent back to the browser. The printer's SSH host key is not verified.
+
+| Search printer | Update Database | Upload Database |
+| :---: | :---: | :---: |
+| <img src="assets/doc/Screenshot_PrinterSearch.jpeg" alt="printer found" width="250"> | <img src="assets/doc/Screenshot_UpdateDb.jpeg" alt="database fetched via SSH" width="250"> | <img src="assets/doc/Screenshot_UploadDb.jpeg" alt="database uploaded" width="250"> |
+
+To copy the database manually (e.g. for `Upload Database`):
+
+```
+scp -O root@PRINTER_IP:/mnt/UDISK/creality/userdata/box/material_database.json .
+```
+
+The `-O` option makes scp use the legacy SCP protocol, as the printer has no SFTP server (without it, scp fails with `sftp-server: not found`).
+
+This file is also the one containing custom materials you have added to your printer.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
@@ -167,14 +206,57 @@ Note: When uploading to a factory fresh board, you might need to enable uploads 
 
 If you want to rebuild the firmware yourself before uploading, you'll need to have [PlatformIO](https://platformio.org/platformio-ide) (and [esptool.py](https://github.com/espressif/esptool)).
 
-For minifying the html parts, you also need to have [Node.js](https://nodejs.org/).
-Install development dependencies: 
-- [html-minifier-terser](https://github.com/terser/html-minifier-terser)
-  - `npm install html-minifier-terser -g`
-- [clean-css](https://github.com/clean-css/clean-css)
-  - `npm install clean-css-cli -g`
+For building the web app you also need [Node.js](https://nodejs.org/) (version 20.19 or newer). The npm packages (see `web/package.json`) are installed automatically into `web/node_modules` on the first build - no global packages needed anymore.
 
 Then clone the repository, open it in [Visual Studio Code](https://code.visualstudio.com/), possibly adjust the `platformio.ini` to your likings and build it for your board. After a (successful) build, you can flash it using esptool (a hint on the command line is given after building).  
+
+What happens during a build:
+
+- `tools/build_web.py` installs the npm packages (`npm ci` in `web/`, only when needed), builds the web app (`npm run build:device`) and minifies the web log page (`assets/embed_html/webserial.html`). Both are gzipped into `.pio/embed/` and embedded into the firmware.
+- `tools/compress_data.py` gzips the files of `assets/data` for the LittleFS image.
+- For the factory image (`firmware.factory.bin`), `safeboot/tools/factory.py` also builds the SafeBoot project in `safeboot/`. Its website is minified with a global `html-minifier-terser` if you have one, otherwise with the one installed in `web/node_modules`.
+- `tools/version.py` derives the version from the git branch/tag. In detached HEAD state (e.g. in CI), set the environment variable `REF_NAME` to the branch or tag name.
+
+#### Continuous Integration
+
+GitHub Actions build every push and pull request:
+
+- `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts.
+- `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages.
+- Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.
+
+### Developing the Web App
+
+The web app lives in [`web/`](web/) and is built with [Vite](https://vite.dev/) from plain JavaScript modules - no framework:
+
+| File | Purpose |
+| --- | --- |
+| `web/index.html` | markup of all views (main, settings, progress) |
+| `web/src/main.js` | UI logic and the websocket protocol of the thingy |
+| `web/src/device.js` | connection to the thingy (http + websocket, reconnects, heartbeat) |
+| `web/src/materials.js` | material database parsing |
+| `web/src/printer.js` | printer discovery and database download |
+| `web/src/style.css` | styles |
+
+One source, two builds:
+
+- `npm run build:device` creates a single self-contained html file that is gzipped and embedded into the firmware (done automatically by `tools/build_web.py` when building with PlatformIO).
+- `npm run build:pages` creates the static site for GitHub Pages in `web/dist` (done by the GitHub Action in `.github/workflows/pages.yml` on every push to `main`).
+
+Images, icons and the manifest are shared with the thingy's file system (`assets/data`).
+
+For development without hardware, there is a small mock of the thingy:
+
+```sh
+cd web
+npm install
+npm run build:device && npm run mock   # embedded app on http://localhost:8080/
+npm run dev                            # dev server, open http://localhost:5173/?device=localhost:8080
+```
+
+The screenshots in `assets/doc/Screenshot_*.jpeg` were taken with [Playwright](https://playwright.dev/) against this mock.
+
+To host the web app from your own fork, change `PAGES_URL` in `web/vite.config.js` and `CORS_ALLOW_ORIGIN` in `platformio.ini` and set *Settings > Pages > Source* to *GitHub Actions*.
 
 ## Acknowledgements
 
@@ -186,8 +268,8 @@ Then clone the repository, open it in [Visual Studio Code](https://code.visualst
 
 * Creating svgs with Inkscape leaves a lot of clutter in the file, [svgo](https://github.com/svg/svgo) helps.
 
-* The Toast notifications are made with [Toastify](https://github.com/apvarun/toastify-js).
+* The Toast notifications of the web log are made with [Toastify](https://github.com/apvarun/toastify-js).
 
-* Splashcreens for iOS are auto-generated with [iosPWASplash](https://github.com/avadhesh18/iosPWASplash).
+* The material database is fetched via SSH with [LibSSH-ESP32](https://github.com/ewpa/LibSSH-ESP32).
 
 * The formula for generating the breathing LED was found in a post at [ThingPulse](https://thingpulse.com/breathing-leds-cracking-the-algorithm-behind-our-breathing-pattern).

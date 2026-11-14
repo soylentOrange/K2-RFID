@@ -19,6 +19,7 @@ WebSite webSite(webServer);
 SPIClass rfidSpi(HSPI);
 RFID rfid(rfidSpi);
 LED led;
+PrinterDb printerDb;
 
 // Allow logging for K2RFID-app via serial
 #if defined(MYCILA_LOGGER_SUPPORT_APP)
@@ -62,6 +63,9 @@ void setup() {
 
   // Add WebServerAPI to Scheduler
   webServerAPI.begin(&scheduler);
+
+  // Printer settings (for fetching the material database)
+  printerDb.begin(&scheduler);
 
   // Add WebSite to Scheduler
   webSite.begin(&scheduler);
