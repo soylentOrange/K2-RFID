@@ -1,13 +1,25 @@
 # Changelog
 
-## Unreleased
+## v1.2.1
+
+**Please use this release instead of v1.2.0, which boot-loops on real hardware.**
 
 ### Fixes
 
-- Fixed a boot loop of v1.2.0 (no WiFi/captive portal, no USB): `WebServerAPI::begin()` called `AsyncWebServer::end()` in `setup()` before the network stack was up. Since AsyncTCP 3.5 this takes the lwIP core lock and asserts.
-- Building the factory image now fails if the SafeBoot or file system build fails (e.g. `pio` not on the `PATH`), instead of silently packing a stale SafeBoot image and no file system.
+- Fixed a boot loop of v1.2.0 (no WiFi/captive portal, no USB): `WebServerAPI::begin()` called `AsyncWebServer::end()` in `setup()` before the network stack was up. Since AsyncTCP 3.5 this takes the lwIP core lock and asserts (#15).
+- Building the factory image now fails if the SafeBoot or file system build fails (e.g. `pio` not on the `PATH`), instead of silently packing a stale SafeBoot image and no file system (#15).
+
+### New
+
+- Web app: the color dialog offers the official colors of the selected material as presets, like "Official Filament" in Creality Print (taken from the material database; the colors of Creality's filaments are built in). The name of a preset color is shown next to its hex value (#14).
+
+### Installation
+
+Same files and flashing as for v1.2.0: `<board>.firmware.factory.bin` for esptool (`esptool write-flash 0x0 lolin_s2_mini.firmware.factory.bin`), `<board>.firmware.bin` for updates via SafeBoot/OTA. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.2.0
+
+**Boot-loops on real hardware, use v1.2.1 instead.**
 
 ### Highlights
 
@@ -22,7 +34,6 @@
 - Materials from printer databases are de-duplicated (user presets share the id of their base material); brands come from the database.
 - The last selected material is remembered.
 - Web app: the settings are split into `Settings` and `Database` pages, so every page fits on one screen (compact layout for small screens). A new `Web Log` button opens the thingy's `/weblog` (#13).
-- Web app: the color dialog offers the official colors of the selected material as presets (from the material database, Creality's colors are built in) and shows the name of a preset color.
 - Updated libraries: ArduinoJson 7.4.3, AsyncTCP 3.6.1, ESPAsyncWebServer 3.12.1, MycilaESPConnect 10.6.3, MycilaSystem 4.1.2, FastLED 3.10.9, Adafruit_BusIO 1.17.4; new: LibSSH-ESP32 5.10.0.
 - SafeBoot: Tasmota platform 2025.11.30, MycilaESPConnect 10.6.3 (matches MycilaSafeBoot v3.3.9) (#11).
 - CI builds the firmware for all boards; release images are built and attached automatically.
