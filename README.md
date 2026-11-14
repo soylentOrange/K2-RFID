@@ -45,6 +45,10 @@ Once a tag is read, just click the toast notification and it will make the conte
 
 By default, only empty tags are written. When you want to re-program tags, disable the `Write only empty tags` checkbox in the settings.
 
+### Verified Writing
+
+After writing, the programmer re-authenticates with the tag's (new) key, reads the data back and compares it with what should have been written. Only when this check passes, the success beep sounds and the LED signals a written tag. If a write fails (e.g. because the tag was just entering or leaving the reader's field), the programmer silently retries while the tag stays on the reader. A tag where a write attempt failed is written again even if `Write only empty tags` is active, since a partially written tag isn't empty anymore. After repeated failures, an error is signalled (error beep / LED); remove the tag and present it again to retry.
+
 ### Future Materials
 
 As of now, a fixed set of materials (defined by the K2Plus's firmware) is known to the programmer. You can update the list by hitting the `Update Database` button in the setting. It will try to identify a K2Plus or Hi on your local network, download the material database and saves it onto the programmer. No warranty that future firmware updates might break this behaviour... 

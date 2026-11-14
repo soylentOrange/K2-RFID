@@ -13,6 +13,7 @@
 #include <string>
 
 #define RETRIES 3
+#define WRITE_RETRIES 10
 
 class RFID {
 
@@ -65,6 +66,8 @@ class RFID {
     bool _writeEnabled = false;
     bool _overwriteEnabled = false;
     uint32_t _writeError = 0;
+    std::string _failedWriteUid;
+    void _writeTag(CFSTag& tag, bool wasEmpty);
     bool _beep = false;
     void _doBeep(uint32_t freq = 1500);
 };

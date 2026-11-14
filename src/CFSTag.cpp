@@ -95,7 +95,8 @@ bool CFSTag::readSpoolData(Adafruit_PN532* nfc) {
   }
 
   // convert read (and decrypted) data to string
-  std::string spooldataStr = plainData.data;
+  // (data isn't necessarily null-terminated, so limit to 48 characters)
+  std::string spooldataStr(plainData.data, strnlen(plainData.data, sizeof(plainData.data)));
 
   // empty (yet unwritten) tag?
   if (!spooldataStr.size()) { // yes, it's empty
@@ -173,20 +174,30 @@ bool CFSTag::writeSpoolData(Adafruit_PN532* nfc, SpoolData spooldata) {
     }
   }
 
-  // check the data that was just written
-  SpoolData written = _spooldata;
-  if (!readSpoolData(nfc)) {
-    LOGE(TAG, "Reading tag after writing failed!");
-    _spooldata = written;
+  // verify the data that was just written:
+  // re-authenticate with the tag's own key (also proves that the sector trailer
+  // was updated) and compare the raw blocks with the data we wanted to write
+  if (!nfc->mifareclassic_AuthenticateBlock(_uid.uidByte, _uid.size, 7, 0, _eKey.keyByte)) {
+    LOGE(TAG, "Authentification with tag key after writing failed!");
     return false;
-  } else {
-    if (_spooldata == written) {
-      LOGI(TAG, "Writing spooldata successful");
-      return true;
-    } else {
-      LOGW(TAG, "Tag content doesn't match data to be written!");
-      _spooldata = written;
+  }
+  MIFARE_tripleBlock readBack;
+  for (size_t i = 0; i < 3; ++i) {
+    if (!nfc->mifareclassic_ReadDataBlock(i + 4, readBack.blockData[i])) {
+      LOGE(TAG, "Reading tag after writing failed!");
       return false;
     }
   }
+  if (memcmp(readBack.blockData, encryptedData.blockData, sizeof(readBack.blockData)) != 0) {
+    LOGW(TAG, "Tag content doesn't match data to be written!");
+    return false;
+  }
+
+  // the tag now holds the new (encrypted) spooldata
+  _encrypted = true;
+  _empty = false;
+  _validMaterial = true;
+  _spooldata = spooldata;
+  LOGI(TAG, "Writing spooldata successful");
+  return true;
 }
