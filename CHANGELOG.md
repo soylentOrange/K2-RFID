@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- `Update Database`: when the SSH download fails and the printer's factory default database is fetched via http instead, the web app now says so and shows why SSH failed (e.g. wrong root password). Before, it silently reported success, although the default database lacks materials synced from Creality Print and custom ones (#8).
+
 ## v1.2.1
 
 **Please use this release instead of v1.2.0, which boot-loops on real hardware.**

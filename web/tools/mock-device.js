@@ -42,9 +42,9 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname === '/api/fetchdb') {
       if (!printer.host) return reply(400, 'No printer configured')
-      // pretend to download via SSH ("fail" as host simulates a wrong password)
+      // pretend to download via SSH ("fail" as host or MOCK_SSH_FAIL=1 simulates a wrong password)
       setTimeout(() => {
-        const ok = printer.host !== 'fail'
+        const ok = printer.host !== 'fail' && !process.env.MOCK_SSH_FAIL
         broadcast({ type: 'fetch_db', result: ok, message: ok ? `Fetched material database from ${printer.host} (25041 bytes)` : 'Login to the printer failed - check the root password' })
         if (ok) broadcast({ type: 'new_db' })
       }, 1500)
