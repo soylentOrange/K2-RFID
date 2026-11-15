@@ -167,7 +167,9 @@ function sendConfig() {
 
 async function loadDbFromThingy({ silent = false } = {}) {
   try {
-    const response = await device.fetch('/material_database.json')
+    // bypass the browser cache: the thingy serves static files with max-age=600,
+    // so a freshly fetched/uploaded database would not show up otherwise
+    const response = await device.fetch('/material_database.json', { cache: 'no-store' })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     db.load(await response.json())
     renderSpool()
