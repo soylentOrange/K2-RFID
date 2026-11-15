@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### New
+
+- Printer discovery (`Search` on the `Database` page) also finds the K2-series models with the codes `F025`, `GS-04` and `Z2`. They share firmware and mainboard with the K2/K2 Pro and have a CFS; their material databases use the same material ids.
+
 ## v1.2.2
 
 ### Fixes
