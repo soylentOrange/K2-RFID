@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### New
+
+- Printer discovery (`Search` on the `Database` page) also finds the K2-series models with the codes `F025`, `GS-04` and `Z2`. They share firmware and mainboard with the K2/K2 Pro and have a CFS; their material databases use the same material ids.
+
 ### Fixes
 
 - `Update Database` hung (spinner "Downloading the material database ... (via SSH)") when the printer was switched off: after the SSH timeout, the http fallback waited for the browser's own connection timeout, which can take minutes. The fallback now gives up after 10 s and the SSH error is shown (#8).
