@@ -173,7 +173,8 @@ async function loadDbFromThingy({ silent = false } = {}) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     db.load(await response.json())
     renderSpool()
-    $('db-info').textContent = `${db.count} materials (version ${db.version})`
+    const presets = db.presets ? `, ${db.presets} presets` : ''
+    $('db-info').textContent = `${db.count} materials${presets} (version ${db.version})`
     if (!silent) toast('Material Database\nloaded from thingy', { icon: successIcon })
   } catch (error) {
     toast(`Material Database\n${error.message}`, { icon: errorIcon })
