@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- `Update Database` hung (spinner "Downloading the material database ... (via SSH)") when the printer was switched off: after the SSH timeout, the http fallback waited for the browser's own connection timeout, which can take minutes. The fallback now gives up after 10 s and the SSH error is shown (#8).
+
 ## v1.2.2
 
 ### Fixes
