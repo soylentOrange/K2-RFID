@@ -3,11 +3,16 @@
 import { localFetch } from './device.js'
 
 // model codes reported by the printer's /info endpoint
+// F025, GS-04 and Z2 run the same firmware (and mainboard) as K2/K2 Pro and support the CFS,
+// but have no known retail name: GS-04 is built like a K2 Pro, Z2 like a K2, F025 has 300x300x200 mm
 export const PRINTER_MODELS = {
   F008: 'K2 Plus',
   F012: 'K2 Pro',
   F021: 'K2',
   F018: 'Hi',
+  F025: 'K2 series printer (F025)',
+  'GS-04': 'K2 Pro variant (GS-04)',
+  Z2: 'K2 variant (Z2)',
 }
 
 const PROBE_TIMEOUT = 5000
@@ -17,7 +22,7 @@ async function probe(ip, signal) {
   const response = await localFetch(`http://${ip}/info`, { signal })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const { model } = await response.json()
-  if (!(model in PRINTER_MODELS)) throw new Error(`unsupported model ${model}`)
+  if (!Object.hasOwn(PRINTER_MODELS, model)) throw new Error(`unsupported model ${model}`)
   return { ip, model: PRINTER_MODELS[model] }
 }
 

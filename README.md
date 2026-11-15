@@ -4,7 +4,7 @@ Web app controlled and esp32-powered K2/CFS RFID programming thingy based on [Dn
 
 ## Why do I need it?
 
-Creality's K2-series printers (K2, K2 Pro, K2 Plus) and the Creality Hi support 1k MIFARE tags to identify the spool's material and color.
+Creality's K2-series printers (K2, K2 Pro, K2 Plus and the related models F025, GS-04 and Z2) and the Creality Hi support 1k MIFARE tags to identify the spool's material and color.
 As the tagged spools from Creality come with an additional price and also to retrofit older Creality or non-Creality spools, you could use this tool to simply write your own tags, add two of them per spool and enjoy the magic of automatically identified materials.
 
 ## What do I need to make one?
@@ -74,7 +74,7 @@ The programmer comes with the material database of a K2 Plus (101 materials, as 
 
 The printer used by `Update Database` is set in the `Printer` section of the same page:
 
-- Enter the printer's IP address, or hit `Search` to find a K2, K2 Pro, K2 Plus or Hi on your local network (the result is saved right away).
+- Enter the printer's IP address, or hit `Search` to find a K2, K2 Pro, K2 Plus or Hi on your local network (the result is saved right away). The search also finds the K2-series models that report the codes `F025`, `GS-04` and `Z2`. They run the same firmware as the K2/K2 Pro and have a CFS, but have no known retail name: `GS-04` is built like a K2 Pro, `Z2` like a K2, and `F025` has a 300×300×200 mm build volume.
 - Enter the root password of your printer, if it isn't the default `creality_2024`. Leave the field empty to keep the saved password.
 - `Save Printer` stores address and password on the programmer. If no printer is set, `Update Database` searches for one first.
 
