@@ -167,11 +167,14 @@ function sendConfig() {
 
 async function loadDbFromThingy({ silent = false } = {}) {
   try {
-    const response = await device.fetch('/material_database.json')
+    // bypass the browser cache: the thingy serves static files with max-age=600,
+    // so a freshly fetched/uploaded database would not show up otherwise
+    const response = await device.fetch('/material_database.json', { cache: 'no-store' })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     db.load(await response.json())
     renderSpool()
-    $('db-info').textContent = `${db.count} materials (version ${db.version})`
+    const presets = db.presets ? `, ${db.presets} presets` : ''
+    $('db-info').textContent = `${db.count} materials${presets} (version ${db.version})`
     if (!silent) toast('Material Database\nloaded from thingy', { icon: successIcon })
   } catch (error) {
     toast(`Material Database\n${error.message}`, { icon: errorIcon })
@@ -257,13 +260,22 @@ async function updateDbFromPrinter(progress) {
   try {
     return await fetchDbViaThingy()
   } catch (sshError) {
-    // older printer firmware still serves its default database via http
+    // older printer firmware still serves its default database via http.
+    // That's only the factory default (without materials synced from Creality Print or custom ones),
+    // so tell the user why SSH didn't work.
+    let printerDb
     try {
-      await uploadDb(await downloadPrinterDb(host))
-      return `Fetched the database from ${host} (via http) and uploaded it to the thingy.`
+      printerDb = await downloadPrinterDb(host)
     } catch {
       throw sshError
     }
+    await uploadDb(printerDb)
+    return (
+      `SSH download failed: ${sshError.message}\n\n` +
+      `Fetched the printer's factory default database from ${host} (via http) instead. ` +
+      'It lacks materials synced from Creality Print and custom ones. ' +
+      'Check the printer address and root password in the settings and try again.'
+    )
   }
 }
 
@@ -385,7 +397,7 @@ function bindUi() {
     state.writeTags ? arm() : disarm()
   }
 
-  $('db-from-printer').onclick = () => runWithProgress('Updating the material database...', updateDbFromPrinter)
+  $('db-from-printer').onclick = () => runWithProgress('Updating the material database...', updateDbFromPrinter, { delay: 10000 })
 
   $('printer-search').onclick = () =>
     runWithProgress('Looking for a printer on the local network...', async () => {

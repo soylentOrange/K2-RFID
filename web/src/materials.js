@@ -9,6 +9,7 @@ const FALLBACK = {
 
 export class MaterialDb {
   version = undefined
+  presets = 0 // entries sharing the id of another material (user presets)
   #brands = new Map(Object.entries(FALLBACK))
 
   // parse and validate a database; throws on unexpected content
@@ -20,8 +21,10 @@ export class MaterialDb {
     // the material they are based on (e.g. "HyPLA blue@K2 Plus 0.4 nz - RW" for 01001).
     // Tags only store the id, so list each id once, preferring the plain material name.
     const byId = new Map()
+    let entries = 0
     for (const { base } of list) {
       if (!base?.id || !base?.name) continue
+      entries++
       const known = byId.get(base.id)
       if (!known || (known.name.includes('@') && !base.name.includes('@'))) byId.set(base.id, base)
     }
@@ -38,6 +41,7 @@ export class MaterialDb {
 
     this.#brands = brands
     this.version = json.result.version
+    this.presets = entries - byId.size
     return this
   }
 
