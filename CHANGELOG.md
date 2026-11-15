@@ -1,12 +1,16 @@
 # Changelog
 
-## Unreleased
+## v1.2.2
 
 ### Fixes
 
 - `Update Database`: when the SSH download fails and the printer's factory default database is fetched via http instead, the web app now says so and shows why SSH failed (e.g. wrong root password). Before, it silently reported success, although the default database lacks materials synced from Creality Print and custom ones (#8).
-- After `Update Database`/`Upload Database`, the web app showed the old database for up to 10 minutes, because the browser reused its cached copy. The database is now always loaded fresh from the thingy (#8).
+- After `Update Database`, the web app showed the old database for up to 10 minutes, because the browser reused its cached copy. The database is now always loaded fresh from the thingy (#8).
 - The database info in the settings now also shows the number of user presets (e.g. "101 materials, 19 presets"). Presets share the id of the material they are based on and are listed only once, so before, a database fetched from the printer looked exactly like the bundled one (#8).
+
+### Installation
+
+Only the web app changed, so updating via SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept). For a fresh board use `<board>.firmware.factory.bin` with esptool (`esptool write-flash 0x0 lolin_s2_mini.firmware.factory.bin`). Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.2.1
 
