@@ -1,10 +1,18 @@
 # Changelog
 
-## Unreleased
+## v1.3.0
 
 ### New
 
 - Printer discovery (`Search` on the `Database` page) also finds the K2-series models with the codes `F025`, `GS-04` and `Z2`. They share firmware and mainboard with the K2/K2 Pro and have a CFS; their material databases use the same material ids.
+
+### Fixes
+
+- `Update Database` hung (spinner "Downloading the material database ... (via SSH)") when the printer was switched off: after the SSH timeout, the http fallback waited for the browser's own connection timeout, which can take minutes. The fallback now gives up after 10 s and the SSH error is shown (#8).
+
+### Installation
+
+Only the web app changed, so updating via SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept). For a fresh board use `<board>.firmware.factory.bin` with esptool (`esptool write-flash 0x0 lolin_s2_mini.firmware.factory.bin`). Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.2.2
 

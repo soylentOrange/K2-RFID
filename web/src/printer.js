@@ -16,6 +16,7 @@ export const PRINTER_MODELS = {
 }
 
 const PROBE_TIMEOUT = 5000
+const DOWNLOAD_TIMEOUT = 10000
 
 // ask a single host whether it is a supported printer; resolves to { ip, model } or rejects
 async function probe(ip, signal) {
@@ -48,7 +49,15 @@ export async function findPrinter(subnetIp) {
 }
 
 export async function downloadPrinterDb(ip) {
-  const response = await localFetch(`http://${ip}/downloads/defData/material_database.json`)
+  // without a timeout, fetch() towards a switched-off printer hangs for minutes
+  let response
+  try {
+    response = await localFetch(`http://${ip}/downloads/defData/material_database.json`, {
+      signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT),
+    })
+  } catch (error) {
+    throw new Error(error.name === 'TimeoutError' ? `No answer from ${ip}` : `Download failed (${error.message})`)
+  }
   if (response.status === 404) {
     // current K2 / K2 Plus firmware doesn't serve the default database anymore
     throw new Error(
