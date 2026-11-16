@@ -26,8 +26,32 @@ static std::string memoryInfo() {
   return info;
 }
 
+#ifdef PRINTER_SSH_STATIC_STACK
+// Variant: the stack of the download task is reserved at link time (in internal RAM), so starting
+// a download never fails because the heap is fragmented. Costs PRINTER_SSH_STACK_SIZE bytes for good.
+// The task is created once and waits for a notification to start a download.
+static StackType_t sshTaskStack[PRINTER_SSH_STACK_SIZE / sizeof(StackType_t)];
+static StaticTask_t sshTaskBuffer;
+
+void PrinterDb::_staticFetchTask(void* arg) {
+  PrinterDb* self = static_cast<PrinterDb*>(arg);
+  while (true) {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    std::string message;
+    self->_success = self->_fetchViaSSH(message);
+    self->_message = message;
+    self->_state = State::DONE;
+  }
+}
+#endif
+
 void PrinterDb::begin(Scheduler* scheduler) {
   _scheduler = scheduler;
+
+#ifdef PRINTER_SSH_STATIC_STACK
+  // ESP-IDF's FreeRTOS takes the stack size in bytes
+  _staticTask = xTaskCreateStatic(_staticFetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, sshTaskStack, &sshTaskBuffer);
+#endif
 
   Preferences preferences;
   preferences.begin("k2rfid", true);
@@ -67,6 +91,11 @@ bool PrinterDb::fetch(ResultCallback callback) {
   _callback = callback;
   _fetchHost = _host;
   _fetchPassword = _password;
+
+#ifdef PRINTER_SSH_STATIC_STACK
+  xTaskNotifyGive(_staticTask);
+  return true;
+#endif
 
   // libssh is blocking and needs a big stack - give it a task of its own
   if (xTaskCreate(_fetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, nullptr) != pdPASS) {

@@ -467,7 +467,10 @@ async function refreshSystemInfo() {
     $('info-psram').textContent = info.psramSize ? `${mb(info.psramSize)} (${kb(info.psramFree)} free)` : 'none'
     $('info-heap').textContent =
       `${kb(info.internalFree)} internal, largest block ${kb(info.internalMaxAlloc)} ` +
-      `(SSH download needs ${kb(info.sshStackSize)}), lowest since boot ${kb(info.internalMinFree)}`
+      (info.sshStackReserved
+        ? `(${kb(info.sshStackSize)} reserved for the SSH download), `
+        : `(SSH download needs ${kb(info.sshStackSize)}), `) +
+      `lowest since boot ${kb(info.internalMinFree)}`
   } catch {
     // not available
   }

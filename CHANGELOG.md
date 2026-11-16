@@ -12,9 +12,16 @@
 
 - When the SSH download fails, the message now says why (timeout, SSH error, database too large, file system full) and includes the free memory and PSRAM. Before, it only said "Not enough memory to start the download" or "Error while downloading the database" (#8).
 
+### Variant: reserved stack
+
+This pre-release comes in two variants for every board:
+
+- `<board>.firmware.bin`: as before, the 24 KB stack of the SSH download is allocated when `Update Database` is clicked. That fails with "Not enough memory to start the download" if no free block of that size is left.
+- `<board>_static-stack.firmware.bin`: the stack is reserved when the firmware starts (build flag `PRINTER_SSH_STATIC_STACK`), so starting the download can't fail that way. The 24 KB are taken for good, also when no download runs. `Thingy Info` shows "reserved for the SSH download" for this variant.
+
 ### Installation
 
-Updating via SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept). For a fresh board use `<board>.firmware.factory.bin` with esptool (`esptool write-flash 0x0 lolin_s2_mini.firmware.factory.bin`). Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+Updating via SafeBoot/OTA with `<board>.firmware.bin` (or `<board>_static-stack.firmware.bin`) is enough (WiFi credentials and the material database are kept). For a fresh board use the matching `.firmware.factory.bin` with esptool (`esptool write-flash 0x0 lolin_s2_mini.firmware.factory.bin`). Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.3.0
 

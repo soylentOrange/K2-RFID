@@ -34,6 +34,10 @@ class PrinterDb {
   private:
     enum class State : uint8_t { IDLE, RUNNING, DONE };
     static void _fetchTask(void* arg);
+#ifdef PRINTER_SSH_STATIC_STACK
+    static void _staticFetchTask(void* arg);
+    TaskHandle_t _staticTask = nullptr;
+#endif
     bool _fetchViaSSH(std::string& message);
     void _monitorCallback();
 
