@@ -17,6 +17,15 @@
 
 static const char* FETCH_COMMAND = "gzip -c " PRINTER_DB_PATH;
 
+// heap state, for diagnosing memory problems on boards with/without PSRAM
+static std::string memoryInfo() {
+  char info[160];
+  snprintf(info, sizeof(info), "free heap %u KB, largest block %u KB, PSRAM %u KB (%u KB free)",
+           static_cast<unsigned>(ESP.getFreeHeap() / 1024), static_cast<unsigned>(ESP.getMaxAllocHeap() / 1024),
+           static_cast<unsigned>(ESP.getPsramSize() / 1024), static_cast<unsigned>(ESP.getFreePsram() / 1024));
+  return info;
+}
+
 void PrinterDb::begin(Scheduler* scheduler) {
   _scheduler = scheduler;
 
@@ -62,7 +71,7 @@ bool PrinterDb::fetch(ResultCallback callback) {
   // libssh is blocking and needs a big stack - give it a task of its own
   if (xTaskCreate(_fetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, nullptr) != pdPASS) {
     _success = false;
-    _message = "Not enough memory to start the download";
+    _message = "Not enough memory to start the download (" + memoryInfo() + ", needs " + std::to_string(PRINTER_SSH_STACK_SIZE / 1024) + " KB in one block)";
     _state = State::DONE;
   }
   return true;
@@ -115,14 +124,14 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
     _sshInitialized = true;
   }
 
-  LOGI(TAG, "Fetching material database from %s via SSH...", _fetchHost.c_str());
+  LOGI(TAG, "Fetching material database from %s via SSH (%s)...", _fetchHost.c_str(), memoryInfo().c_str());
   bool success = false;
   ssh_channel channel = nullptr;
   File file;
 
   ssh_session session = ssh_new();
   if (session == nullptr) {
-    message = "Not enough memory for SSH";
+    message = "Not enough memory for SSH (" + memoryInfo() + ")";
     return false;
   }
 
@@ -160,18 +169,26 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
     // stream the gzipped database into the file
     uint8_t buffer[512];
     size_t total = 0;
-    bool readError = false;
+    std::string readError;
     while (true) {
       int n = ssh_channel_read_timeout(channel, buffer, sizeof(buffer), 0, PRINTER_SSH_TIMEOUT * 1000);
       if (n == 0 && ssh_channel_is_eof(channel))
         break; // done
-      if (n <= 0) {
-        readError = true; // error or timeout
+      if (n == 0) {
+        readError = "no data from the printer for " + std::to_string(PRINTER_SSH_TIMEOUT) + " s";
+        break;
+      }
+      if (n < 0) {
+        readError = std::string("SSH error: ") + ssh_get_error(session);
         break;
       }
       total += n;
-      if (total > DB_MAX_SIZE || file.write(buffer, n) != static_cast<size_t>(n)) {
-        readError = true;
+      if (total > DB_MAX_SIZE) {
+        readError = "database is larger than " + std::to_string(DB_MAX_SIZE / 1024) + " KB";
+        break;
+      }
+      if (file.write(buffer, n) != static_cast<size_t>(n)) {
+        readError = "can't write to the file system (full?)";
         break;
       }
     }
@@ -181,8 +198,8 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
     ssh_channel_send_eof(channel);
     ssh_channel_get_exit_state(channel, &exitCode, nullptr, nullptr);
 
-    if (readError) {
-      message = total > DB_MAX_SIZE ? "Database is too large" : "Error while downloading the database";
+    if (!readError.empty()) {
+      message = "Error while downloading the database after " + std::to_string(total) + " bytes: " + readError + " (" + memoryInfo() + ")";
       break;
     }
     if (exitCode != 0 || total < 20) {
