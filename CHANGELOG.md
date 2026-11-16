@@ -12,6 +12,13 @@
 
 - When the SSH download fails, the message now says why (timeout, SSH error, database too large, file system full) and includes the free memory and PSRAM. Before, it only said "Not enough memory to start the download" or "Error while downloading the database" (#8).
 
+### Web log
+
+- The four buttons (download, clear, pause auto-scrolling, time-stamps) sit in their own toolbar row next to the connection status instead of covering the log. The log fills the remaining height, active toggles are highlighted and the buttons stay visible on phones.
+- The buttons of the embedded web log did nothing, because the minifier renamed the functions the inline `onclick` handlers pointed to. They are now bound in JavaScript.
+- Time-stamped lines no longer get an extra blank line.
+- The toasts look the same as in the main web app; Toastify is no longer needed and was removed from the file system image.
+
 ### Variant: reserved stack
 
 This pre-release comes in two variants for every board:
