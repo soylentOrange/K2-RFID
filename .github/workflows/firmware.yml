@@ -26,6 +26,9 @@ jobs:
           - env: lolin_s2_mini
             flags: -D PRINTER_SSH_STATIC_STACK
             variant: _static-stack
+          - env: lolin_s2_mini_extled
+            flags: -D PRINTER_SSH_STATIC_STACK
+            variant: _static-stack
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
