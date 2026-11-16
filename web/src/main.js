@@ -463,14 +463,18 @@ async function refreshSystemInfo() {
     const info = await response.json()
     const kb = (bytes) => `${Math.round(bytes / 1024)} KB`
     const mb = (bytes) => `${+(bytes / 1048576).toFixed(1)} MB`
-    $('info-chip').textContent = `${info.chipModel} rev ${info.chipRevision}, ${info.cpuFreqMHz} MHz, ${mb(info.flashSize)} flash`
-    $('info-psram').textContent = info.psramSize ? `${mb(info.psramSize)} (${kb(info.psramFree)} free)` : 'none'
-    $('info-heap').textContent =
-      `${kb(info.internalFree)} internal, largest block ${kb(info.internalMaxAlloc)} ` +
-      (info.sshStackReserved
-        ? `(${kb(info.sshStackSize)} reserved for the SSH download), `
-        : `(SSH download needs ${kb(info.sshStackSize)}), `) +
-      `lowest since boot ${kb(info.internalMinFree)}`
+    const set = (id, text, details) => {
+      $(id).textContent = text
+      $(id).title = details
+    }
+    set('info-chip', `${info.chipModel} rev ${info.chipRevision}, ${mb(info.flashSize)}`,
+      `${info.chipModel} rev ${info.chipRevision}, ${info.chipCores} core(s), ${info.cpuFreqMHz} MHz, ${mb(info.flashSize)} flash`)
+    set('info-psram', info.psramSize ? `${mb(info.psramSize)}, ${mb(info.psramFree)} free` : 'none',
+      info.psramSize ? `${mb(info.psramSize)} PSRAM, ${kb(info.psramFree)} free` : 'no PSRAM')
+    set('info-heap', `${kb(info.internalFree)} free, block ${kb(info.internalMaxAlloc)}${info.sshStackReserved ? ` (+${kb(info.sshStackSize)} SSH)` : ''}`,
+      `internal RAM: ${kb(info.internalFree)} free, largest block ${kb(info.internalMaxAlloc)}, ` +
+        `lowest since boot ${kb(info.internalMinFree)}; SSH download ` +
+        (info.sshStackReserved ? `stack (${kb(info.sshStackSize)}) reserved` : `needs a ${kb(info.sshStackSize)} block`))
   } catch {
     // not available
   }
