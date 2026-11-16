@@ -9,8 +9,6 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="stylesheet" type="text/css" href="/toastify.css">
-  <script type="text/javascript" src="/toastify.min.js"></script>
   <title>K2 RFID Web Logger</title>
   <style type="text/css">
     div {
@@ -192,6 +190,60 @@
       background-color: white;
     }
 
+    /* toasts (same look as in the main web app) */
+    .toasts {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      left: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: min(320px, 100%);
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #73a5ff, #5477f5);
+      color: #fff;
+      font-family: Tahoma, Verdana, sans-serif;
+      font-size: 14px;
+      text-align: left;
+      white-space: pre-line;
+      box-shadow: 0 3px 6px -1px rgb(0 0 0 / 12%), 0 10px 36px -4px rgb(77 96 232 / 30%);
+      pointer-events: auto;
+      animation: toast-in 0.3s ease-out;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .toast.leaving {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+
+    .toast img {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #fff;
+      padding: 2px;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
     /* more compact buttons on small screens */
     @media screen and (max-width: 576px) {
       .pannel button {
@@ -209,34 +261,34 @@
   <div class="section main text-center">
     <h1 id="title" style="display: none">K2rfid Web Logger</h1>
     <a href="/weblog">
-      <img id="logo" src="/logo_webserial.svg" onerror="removeLogo()" height="75" width="250" />
+      <img id="logo" src="/logo_webserial.svg" height="75" width="250" />
     </a>
     <div id="control-buttons" class="pannel shadow">
       <div class="toolbar">
       <h5 id="help_text">Not connected</h5>
       <div id="control-button">
-        <button class="rounded shadow" onclick="downloadRecord()" title="Download log" aria-label="Download log">
+        <button class="rounded shadow" id="download_button" title="Download log" aria-label="Download log">
           <svg viewBox="0 0 20 20" focusable="false" data-icon="load" width="1em" height="1em" fill="currentColor"
             aria-hidden="true">
             <path
               d="M9.001 2a4 4 0 0 0-3.999 4.102 1 1 0 0 1-.75.992A3.002 3.002 0 0 0 5.001 13h1a1 1 0 1 1 0 2h-1a5 5 0 0 1-1.97-9.596 6 6 0 0 1 11.169-2.4A6 6 0 0 1 14.001 15a1 1 0 1 1 0-2 4 4 0 1 0-.328-7.987 1 1 0 0 1-.999-.6A4 4 0 0 0 9.001 2m1 6a1 1 0 0 1 1 1v7.586l.293-.293a1 1 0 0 1 1.414 1.414l-2 2a1 1 0 0 1-1.414 0l-2-2a1 1 0 1 1 1.414-1.414l.293.293V9a1 1 0 0 1 1-1" />
           </svg>
         </button>
-        <button class="rounded shadow" onclick="terminalClean()" title="Clear log" aria-label="Clear log">
+        <button class="rounded shadow" id="clear_button" title="Clear log" aria-label="Clear log">
           <svg viewBox="0 0 24 24" focusable="false" data-icon="delete" width="1em" height="1em" fill="currentColor"
             aria-hidden="true">
             <path
               d="M7 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h4a1 1 0 1 1 0 2h-1.069l-.867 12.142A2 2 0 0 1 17.069 22H6.93a2 2 0 0 1-1.995-1.858L4.07 8H3a1 1 0 0 1 0-2h4zm2 2h6V4H9zM6.074 8l.857 12H17.07l.857-12zM10 10a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1m4 0a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1" />
           </svg>
         </button>
-        <button class="rounded shadow" id="lock_button" onclick="toggleFlowLock()" title="Pause auto-scrolling" aria-label="Pause auto-scrolling" aria-pressed="false">
+        <button class="rounded shadow" id="lock_button" title="Pause auto-scrolling" aria-label="Pause auto-scrolling" aria-pressed="false">
           <svg viewBox="0 0 16 20" focusable="false" data-icon="lock" id="lock_icon" width="1em" height="1em" fill="currentColor"
             aria-hidden="true">
             <path id="btn_lock" d=" ">
             </path>
           </svg>
         </button>
-        <button class="rounded shadow" id="clock_button" onclick="toggleTimestamp()" title="Show time-stamps" aria-label="Show time-stamps" aria-pressed="false">
+        <button class="rounded shadow" id="clock_button" title="Show time-stamps" aria-label="Show time-stamps" aria-pressed="false">
           <svg viewBox="0 0 20 20" focusable="false" data-icon="clock-circle" id="clock_icon" width="1em" height="1em"
             fill="currentColor" aria-hidden="true">
             <path id="btn_clock" d=" ">
@@ -249,6 +301,7 @@
     </div>
     <div class="footer"></div>
   </div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
 </body>
 <script>
   let gateway = `ws://${window.location.host + window.location.pathname}ws`
@@ -269,21 +322,44 @@
   const lock_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="533.333" height="666.667" fill="none" viewBox="0 0 16 20"><path fill="#0d0d0d" d="M8 2c1.648 0 3 1.352 3 3v3H5V5c0-1.648 1.352-3 3-3m5 6V5c0-2.752-2.248-5-5-5S3 2.248 3 5v3H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2ZM2 10h12v8H2Z"/></svg>'
   const clock_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path stroke="#0d0d0d" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l2.5 1.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></svg>'
 
+  // minimal toast notifications, same as toast.js of the main web app
+  function toast(text, icon, duration = 3000) {
+    const el = document.createElement("div")
+    el.className = "toast"
+    const img = document.createElement("img")
+    img.src = icon
+    img.alt = ""
+    const span = document.createElement("span")
+    span.textContent = text.split("\n").map((l) => l.trim()).join("\n")
+    el.append(img, span)
+    document.getElementById("toasts").append(el)
+    setTimeout(() => {
+      el.classList.add("leaving")
+      setTimeout(() => el.remove(), 300)
+    }, duration)
+  }
+
   function removeLogo() {
     document.getElementById("logo").remove()
     document.getElementById("title").style.display = "block"
   }
 
   function initWebPage() {
+    // bind handlers here instead of inline onclick/onerror attributes: the
+    // minifier mangles top-level names, so inline handlers would not find them
+    const logo = document.getElementById("logo")
+    if (logo.complete && logo.naturalWidth === 0) removeLogo()
+    else logo.addEventListener("error", removeLogo)
+    document.getElementById("download_button").addEventListener("click", downloadRecord)
+    document.getElementById("clear_button").addEventListener("click", terminalClean)
+    document.getElementById("lock_button").addEventListener("click", toggleFlowLock)
+    document.getElementById("clock_button").addEventListener("click", toggleTimestamp)
+
     setInterval(() => {
       if (!pingTimeout && websocket.readyState == WebSocket.OPEN) {
         pingTimeout = setTimeout(() => {
-          Toastify({
-            text: `Connection lost
-            Reconnecting...`,
-            duration: 3000,
-            avatar: "data:image/svg+xml;base64," + btoa(error_svg)
-          }).showToast();
+          toast(`Connection lost
+            Reconnecting...`, "data:image/svg+xml;base64," + btoa(error_svg))
           websocket.close()
           initWebSocket()
         }, 5000)
@@ -326,12 +402,8 @@
   function onOpen(event) {
     clearTimeout(connectTimeout)
     setStatus("Connected", true)
-    Toastify({
-      text: `Connected
-      Start logging...`,
-      duration: 3000,
-      avatar: "data:image/svg+xml;base64," + btoa(success_svg)
-    }).showToast();
+    toast(`Connected
+      Start logging...`, "data:image/svg+xml;base64," + btoa(success_svg))
   }
 
   function onError(e) {
@@ -376,22 +448,14 @@
       document.getElementById('btn_lock').setAttribute("d", unlocked_path)
       setToggle("lock_button", false)
       textArea.scrollTop = textArea.scrollHeight
-      Toastify({
-        text: `Auto-scrolling:
-        enabled...`,
-        duration: 3000,
-        avatar: "data:image/svg+xml;base64," + btoa(lock_svg.replace("path fill=\"#0d0d0d\"", "path fill=\"#16c79a\""))
-      }).showToast();
+      toast(`Auto-scrolling:
+        enabled...`, "data:image/svg+xml;base64," + btoa(lock_svg.replace("path fill=\"#0d0d0d\"", "path fill=\"#16c79a\"")))
     } else {
       enableFlowLock = true
       document.getElementById('btn_lock').setAttribute("d", locked_path)
       setToggle("lock_button", true)
-      Toastify({
-        text: `Auto-scrolling:
-        disabled...`,
-        duration: 3000,
-        avatar: "data:image/svg+xml;base64," + btoa(lock_svg)
-      }).showToast();
+      toast(`Auto-scrolling:
+        disabled...`, "data:image/svg+xml;base64," + btoa(lock_svg))
     }
   }
 
@@ -401,22 +465,14 @@
       enableTimestamp = false
       document.getElementById('btn_clock').setAttribute("d", unclock_path)
       setToggle("clock_button", false)
-      Toastify({
-        text: `Time-stamp printing:
-        disabled...`,
-        duration: 3000,
-        avatar: "data:image/svg+xml;base64," + btoa(clock_svg)
-      }).showToast();
+      toast(`Time-stamp printing:
+        disabled...`, "data:image/svg+xml;base64," + btoa(clock_svg))
     } else {
       enableTimestamp = true
       document.getElementById('btn_clock').setAttribute("d", clock_path)
       setToggle("clock_button", true)
-      Toastify({
-        text: `Time-stamp printing:
-        enabled...`,
-        duration: 3000,
-        avatar: "data:image/svg+xml;base64," + btoa(clock_svg.replace("path stroke=\"#0d0d0d\"", "path stroke=\"#16c79a\""))
-      }).showToast();
+      toast(`Time-stamp printing:
+        enabled...`, "data:image/svg+xml;base64," + btoa(clock_svg.replace("path stroke=\"#0d0d0d\"", "path stroke=\"#16c79a\"")))
     }
   }
 
