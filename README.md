@@ -279,7 +279,6 @@ To host the web app from your own fork, change `PAGES_URL` in `web/vite.config.j
 
 * Creating svgs with Inkscape leaves a lot of clutter in the file, [svgo](https://github.com/svg/svgo) helps.
 
-* The Toast notifications of the web log are made with [Toastify](https://github.com/apvarun/toastify-js).
 
 * The material database is fetched via SSH with [LibSSH-ESP32](https://github.com/ewpa/LibSSH-ESP32).
 
