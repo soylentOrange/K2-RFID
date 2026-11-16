@@ -17,7 +17,7 @@
 This pre-release comes in two variants for every board:
 
 - `<board>.firmware.bin`: as before, the 24 KB stack of the SSH download is allocated when `Update Database` is clicked. That fails with "Not enough memory to start the download" if no free block of that size is left.
-- `<board>_static-stack.firmware.bin`: the stack is reserved when the firmware starts (build flag `PRINTER_SSH_STATIC_STACK`), so starting the download can't fail that way. The 24 KB are taken for good, also when no download runs. `Thingy Info` shows "reserved for the SSH download" for this variant.
+- `<board>_static-stack.firmware.bin`: the stack is reserved right after the firmware starts, while the memory isn't fragmented yet (build flag `PRINTER_SSH_STATIC_STACK`), so starting the download can't fail that way. The 24 KB are taken for good, also when no download runs. `Thingy Info` shows "reserved for the SSH download" for this variant.
 
 ### Installation
 

@@ -358,11 +358,7 @@ void WebSite::_webSiteCallback() {
               doc["internalMaxAlloc"] = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
               doc["internalMinFree"] = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
               doc["sshStackSize"] = PRINTER_SSH_STACK_SIZE;
-#ifdef PRINTER_SSH_STATIC_STACK
-              doc["sshStackReserved"] = true;
-#else
-              doc["sshStackReserved"] = false;
-#endif
+              doc["sshStackReserved"] = printerDb.hasReservedStack();
               doc["uptime"] = millis() / 1000;
               AsyncResponseStream* response = request->beginResponseStream("application/json");
               response->addHeader("Cache-Control", "no-store");

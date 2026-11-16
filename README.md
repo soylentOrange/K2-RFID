@@ -233,7 +233,7 @@ What happens during a build:
 
 GitHub Actions build every push and pull request:
 
-- `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts. It also builds `lolin_s2_mini` with the build flag `PRINTER_SSH_STATIC_STACK`, which reserves the stack of the SSH download at startup instead of allocating it per download.
+- `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts. It also builds `lolin_s2_mini` with the build flag `PRINTER_SSH_STATIC_STACK`, which reserves the stack of the SSH download right after startup instead of allocating it per download.
 - `.github/workflows/release.yml` publishes a release. Add a `## vX.Y.Z` section to `CHANGELOG.md` and bump `APP_VERSION` in `platformio.ini`, then start the workflow under *Actions → Release → Run workflow* with the version (e.g. `v1.2.0`). It builds all boards, creates the tag and the release with the notes from `CHANGELOG.md`, and attaches `<board>.firmware.factory.bin` (for esptool) and `<board>.firmware.bin` (for OTA/SafeBoot updates). A version with a suffix (e.g. `v1.3.1-beta`) is published as pre-release and additionally gets `<board>_static-stack` variants built with `PRINTER_SSH_STATIC_STACK`.
 - `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages.
 - Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.

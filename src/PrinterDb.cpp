@@ -4,6 +4,7 @@
  */
 
 #include <Preferences.h>
+#include <esp_heap_caps.h>
 #include <libssh_esp32.h>
 #include <thingy.h>
 
@@ -27,10 +28,10 @@ static std::string memoryInfo() {
 }
 
 #ifdef PRINTER_SSH_STATIC_STACK
-// Variant: the stack of the download task is reserved at link time (in internal RAM), so starting
-// a download never fails because the heap is fragmented. Costs PRINTER_SSH_STACK_SIZE bytes for good.
-// The task is created once and waits for a notification to start a download.
-static StackType_t sshTaskStack[PRINTER_SSH_STACK_SIZE / sizeof(StackType_t)];
+// Variant: the stack of the download task is reserved at startup (in internal RAM, while the heap
+// isn't fragmented yet), so starting a download never fails for lack of a big enough block. Costs
+// PRINTER_SSH_STACK_SIZE bytes for good. The task is created once and waits for a notification.
+// (A static array doesn't fit: DRAM .bss of the ESP32-S2 build is too small for it.)
 static StaticTask_t sshTaskBuffer;
 
 void PrinterDb::_staticFetchTask(void* arg) {
@@ -50,7 +51,11 @@ void PrinterDb::begin(Scheduler* scheduler) {
 
 #ifdef PRINTER_SSH_STATIC_STACK
   // ESP-IDF's FreeRTOS takes the stack size in bytes
-  _staticTask = xTaskCreateStatic(_staticFetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, sshTaskStack, &sshTaskBuffer);
+  StackType_t* stack = static_cast<StackType_t*>(heap_caps_malloc(PRINTER_SSH_STACK_SIZE, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+  if (stack != nullptr)
+    _staticTask = xTaskCreateStatic(_staticFetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, stack, &sshTaskBuffer);
+  if (_staticTask == nullptr)
+    LOGE(TAG, "Can't reserve the stack for the SSH download (%s)", memoryInfo().c_str());
 #endif
 
   Preferences preferences;
@@ -93,8 +98,10 @@ bool PrinterDb::fetch(ResultCallback callback) {
   _fetchPassword = _password;
 
 #ifdef PRINTER_SSH_STATIC_STACK
-  xTaskNotifyGive(_staticTask);
-  return true;
+  if (_staticTask != nullptr) {
+    xTaskNotifyGive(_staticTask);
+    return true;
+  }
 #endif
 
   // libssh is blocking and needs a big stack - give it a task of its own
