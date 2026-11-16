@@ -102,6 +102,8 @@ This file is also the one containing custom materials you have added to your pri
 
 The web app has three pages (`Main`, `Settings` and `Database`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates), reset the WiFi credentials and open the web log.
 
+At the bottom, `Thingy Info` shows the board the firmware was built for, the firmware and web app versions, the chip (model, revision, flash size), the PSRAM and the free memory. `Update Database` downloads the database via SSH, which needs a block of 24 KB of internal RAM (see "largest block"). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
+
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
 </p>

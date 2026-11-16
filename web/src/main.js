@@ -47,6 +47,7 @@ function showView(name) {
   if (name === 'result') return
 
   currentPage = name
+  if (name === 'settings' && device.connected) refreshSystemInfo()
   const index = PAGES.indexOf(name)
   for (const [id, target] of [['nav-back', PAGES[index - 1]], ['nav-next', PAGES[index + 1]]]) {
     const button = $(id)
@@ -451,6 +452,25 @@ function connect(host) {
   device.connect(host)
   device.text('/boardname').then((t) => ($('info-board').textContent = t), () => {})
   device.text('/appversion').then((t) => ($('info-build').textContent = t), () => {})
+  refreshSystemInfo()
+}
+
+// chip and memory info of the thingy (older firmware doesn't provide it)
+async function refreshSystemInfo() {
+  try {
+    const response = await device.fetch('/api/system/info', { cache: 'no-store' })
+    if (!response.ok) return
+    const info = await response.json()
+    const kb = (bytes) => `${Math.round(bytes / 1024)} KB`
+    const mb = (bytes) => `${+(bytes / 1048576).toFixed(1)} MB`
+    $('info-chip').textContent = `${info.chipModel} rev ${info.chipRevision}, ${info.cpuFreqMHz} MHz, ${mb(info.flashSize)} flash`
+    $('info-psram').textContent = info.psramSize ? `${mb(info.psramSize)} (${kb(info.psramFree)} free)` : 'none'
+    $('info-heap').textContent =
+      `${kb(info.internalFree)} internal, largest block ${kb(info.internalMaxAlloc)} ` +
+      `(SSH download needs ${kb(info.sshStackSize)}), lowest since boot ${kb(info.internalMinFree)}`
+  } catch {
+    // not available
+  }
 }
 
 function bindDevice() {

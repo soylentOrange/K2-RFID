@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.3.1-beta
+
+**Pre-release for diagnosing memory problems with `Update Database` (#8).**
+
+### New
+
+- The settings page shows the chip (model, revision, flash size), the PSRAM and the free memory (free internal RAM, largest free block, lowest free internal RAM since boot). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
+
+### Fixes
+
+- When the SSH download fails, the message now says why (timeout, SSH error, database too large, file system full) and includes the free memory and PSRAM. Before, it only said "Not enough memory to start the download" or "Error while downloading the database" (#8).
+
+### Installation
+
+Updating via SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept). For a fresh board use `<board>.firmware.factory.bin` with esptool (`esptool write-flash 0x0 lolin_s2_mini.firmware.factory.bin`). Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.3.0
 
 ### New

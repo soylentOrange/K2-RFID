@@ -56,6 +56,8 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/') return reply(200, await readFile(join(ROOT, 'dist-device/index.html')), 'text/html')
   if (url.pathname === '/material_database.json') return reply(200, database, 'application/json')
   if (url.pathname === '/api/printer') return reply(200, JSON.stringify({ ...printer, busy: false }), 'application/json')
+  if (url.pathname === '/api/system/info')
+    return reply(200, JSON.stringify({ chipModel: 'ESP32-S2', chipRevision: 0, chipCores: 1, cpuFreqMHz: 240, flashSize: 4194304, psramSize: 2097152, psramFree: 1980000, heapSize: 2300000, heapFree: 2100000, heapMinFree: 1900000, heapMaxAlloc: 1900000, internalFree: 98000, internalMaxAlloc: 31744, internalMinFree: 61000, sshStackSize: 24576, uptime: 123 }), 'application/json')
   if (url.pathname === '/boardname') return reply(200, 'lolin_s2_mini')
   if (url.pathname === '/appversion') return reply(200, 'v1.2.0')
   try {

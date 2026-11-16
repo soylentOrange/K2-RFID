@@ -82,4 +82,5 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$VERSION" \
-            --notes-file notes.md
+            --notes-file notes.md \
+            $([[ "$VERSION" == *-* ]] && echo --prerelease)
