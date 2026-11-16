@@ -97,7 +97,8 @@
       flex-direction: column;
       justify-content: flex-start;
       align-items: center;
-      height: 100%;
+      height: 100vh;
+      height: 100dvh;
     }
 
     .main .pannel {
@@ -108,7 +109,11 @@
       border-radius: 1rem;
       background-color: #fff;
       width: calc(100% - 2rem);
-      height: calc(100% - 2rem);
+      flex: 1 1 auto;
+      min-height: 10rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
       font-size: medium;
       margin-top: 0.75rem;
       box-shadow:
@@ -125,19 +130,61 @@
       color: #fff;
       background-color: #36454F;
       -webkit-touch-callout: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pannel button:hover {
+      background-color: #4a5c69;
+    }
+
+    .pannel button.active {
+      background-color: #16c79a;
     }
 
     .pannel #record {
+      flex: 1 1 auto;
       min-height: 3.25rem;
       padding: 0.5rem;
-      resize: vertical;
+      resize: none;
       overscroll-behavior: none;
     }
 
+    /* toolbar row above the log: status on the left, buttons on the right */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .toolbar #help_text {
+      margin: 0 0 0 0.25rem;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toolbar #help_text::before {
+      content: "";
+      display: inline-block;
+      width: 0.6rem;
+      height: 0.6rem;
+      margin-right: 0.4rem;
+      border-radius: 50%;
+      background-color: #ec4646;
+      vertical-align: -0.05rem;
+    }
+
+    .toolbar #help_text.connected::before {
+      background-color: #16c79a;
+    }
+
     #control-button {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
+      display: flex;
+      flex-shrink: 0;
+      gap: 0.5rem;
     }
 
     .footer {
@@ -145,10 +192,14 @@
       background-color: white;
     }
 
-    /* disable buttons on small screens */
-    @media screen and (max-device-width: 576px) {
+    /* more compact buttons on small screens */
+    @media screen and (max-width: 576px) {
+      .pannel button {
+        padding: 6px 8px;
+      }
+
       #control-button {
-        display: none;
+        gap: 0.35rem;
       }
     }
   </style>
@@ -160,37 +211,39 @@
     <a href="/weblog">
       <img id="logo" src="/logo_webserial.svg" onerror="removeLogo()" height="75" width="250" />
     </a>
-    <h5 id="help_text">Not connected</h5>
-    <div id="control-buttons" class="pannel shadow grid gap-2">
+    <div id="control-buttons" class="pannel shadow">
+      <div class="toolbar">
+      <h5 id="help_text">Not connected</h5>
       <div id="control-button">
-        <button class="rounded shadow" onclick="downloadRecord()">
+        <button class="rounded shadow" onclick="downloadRecord()" title="Download log" aria-label="Download log">
           <svg viewBox="0 0 20 20" focusable="false" data-icon="load" width="1em" height="1em" fill="currentColor"
             aria-hidden="true">
             <path
               d="M9.001 2a4 4 0 0 0-3.999 4.102 1 1 0 0 1-.75.992A3.002 3.002 0 0 0 5.001 13h1a1 1 0 1 1 0 2h-1a5 5 0 0 1-1.97-9.596 6 6 0 0 1 11.169-2.4A6 6 0 0 1 14.001 15a1 1 0 1 1 0-2 4 4 0 1 0-.328-7.987 1 1 0 0 1-.999-.6A4 4 0 0 0 9.001 2m1 6a1 1 0 0 1 1 1v7.586l.293-.293a1 1 0 0 1 1.414 1.414l-2 2a1 1 0 0 1-1.414 0l-2-2a1 1 0 1 1 1.414-1.414l.293.293V9a1 1 0 0 1 1-1" />
           </svg>
         </button>
-        <button class="rounded shadow" onclick="terminalClean()">
+        <button class="rounded shadow" onclick="terminalClean()" title="Clear log" aria-label="Clear log">
           <svg viewBox="0 0 24 24" focusable="false" data-icon="delete" width="1em" height="1em" fill="currentColor"
             aria-hidden="true">
             <path
               d="M7 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h4a1 1 0 1 1 0 2h-1.069l-.867 12.142A2 2 0 0 1 17.069 22H6.93a2 2 0 0 1-1.995-1.858L4.07 8H3a1 1 0 0 1 0-2h4zm2 2h6V4H9zM6.074 8l.857 12H17.07l.857-12zM10 10a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1m4 0a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1" />
           </svg>
         </button>
-        <button class="rounded shadow" onclick="toggleFlowLock()">
+        <button class="rounded shadow" id="lock_button" onclick="toggleFlowLock()" title="Pause auto-scrolling" aria-label="Pause auto-scrolling" aria-pressed="false">
           <svg viewBox="0 0 16 20" focusable="false" data-icon="lock" id="lock_icon" width="1em" height="1em" fill="currentColor"
             aria-hidden="true">
             <path id="btn_lock" d=" ">
             </path>
           </svg>
         </button>
-        <button class="rounded shadow" onclick="toggleTimestamp()">
+        <button class="rounded shadow" id="clock_button" onclick="toggleTimestamp()" title="Show time-stamps" aria-label="Show time-stamps" aria-pressed="false">
           <svg viewBox="0 0 20 20" focusable="false" data-icon="clock-circle" id="clock_icon" width="1em" height="1em"
             fill="currentColor" aria-hidden="true">
             <path id="btn_clock" d=" ">
             </path>
           </svg>
         </button>
+      </div>
       </div>
       <textarea class="w-full rounded" title="record" id="record" rows="10" cols="30" disabled></textarea>
     </div>
@@ -241,11 +294,17 @@
     document.getElementById('btn_lock').setAttribute("d", unlocked_path)
     document.getElementById('btn_clock').setAttribute("d", unclock_path)
     initWebSocket()
+  }
 
-    // adjust number of rows to fill screen
-    let pannel_rows = (10 * (document.body.offsetHeight - document.getElementById("logo").offsetHeight - 5 * 16)) / (textArea.offsetHeight - 13)
-    //let pannel_rows = (10 * (document.body.offsetHeight - 75 - 4.5 * 16)) / (textArea.offsetHeight - 13)
-    document.getElementById("record").rows = pannel_rows
+  function setStatus(text, connected) {
+    help_text.textContent = text
+    help_text.classList.toggle("connected", connected)
+  }
+
+  function setToggle(id, on) {
+    const button = document.getElementById(id)
+    button.classList.toggle("active", on)
+    button.setAttribute("aria-pressed", on)
   }
 
   function initWebSocket() {
@@ -256,7 +315,7 @@
       websocket.close()
       initWebSocket()
     }, 3000)
-    help_text.innerHTML = "Connecting..."
+    setStatus("Connecting...", false)
     websocket = new WebSocket(gateway)
     websocket.onopen = onOpen
     websocket.onclose = onClose
@@ -266,7 +325,7 @@
 
   function onOpen(event) {
     clearTimeout(connectTimeout)
-    help_text.innerHTML = " "
+    setStatus("Connected", true)
     Toastify({
       text: `Connected
       Start logging...`,
@@ -282,6 +341,7 @@
 
   function onClose(e) {
     console.log("[WebSerial] Connection closed.", e)
+    setStatus("Not connected", false)
   }
 
   function onMessage(event) {
@@ -296,7 +356,7 @@
   function terminalWrite(raw) {
     if (enableTimestamp) {
       let now = new Date()
-      raw = "[" + now.toLocaleTimeString() + "] " + raw + "\n"
+      raw = "[" + now.toLocaleTimeString() + "] " + raw
     }
     textArea.value += raw + "\n"
     if (!enableFlowLock) {
@@ -314,6 +374,8 @@
     if (enableFlowLock) {
       enableFlowLock = false
       document.getElementById('btn_lock').setAttribute("d", unlocked_path)
+      setToggle("lock_button", false)
+      textArea.scrollTop = textArea.scrollHeight
       Toastify({
         text: `Auto-scrolling:
         enabled...`,
@@ -323,6 +385,7 @@
     } else {
       enableFlowLock = true
       document.getElementById('btn_lock').setAttribute("d", locked_path)
+      setToggle("lock_button", true)
       Toastify({
         text: `Auto-scrolling:
         disabled...`,
@@ -337,6 +400,7 @@
     if (enableTimestamp) {
       enableTimestamp = false
       document.getElementById('btn_clock').setAttribute("d", unclock_path)
+      setToggle("clock_button", false)
       Toastify({
         text: `Time-stamp printing:
         disabled...`,
@@ -346,6 +410,7 @@
     } else {
       enableTimestamp = true
       document.getElementById('btn_clock').setAttribute("d", clock_path)
+      setToggle("clock_button", true)
       Toastify({
         text: `Time-stamp printing:
         enabled...`,
