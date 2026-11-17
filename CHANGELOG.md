@@ -1,12 +1,22 @@
 # Changelog
 
-## Unreleased
+## v1.4.0
+
+Includes everything from [v1.3.1-beta](#v131-beta) (memory diagnostics, the `_static-stack` variant and the web log fixes).
 
 ### New
 
-- User presets from a database copied from the printer (filament profiles that Creality Print syncs to the printer, e.g. `HyPLA blue@K2 Plus 0.4 nz - RW` or `JAYO PETG ...`) are listed in their own category `Presets`, each name once. A tag only stores the material id, so a preset is written as the material it's based on; the selection shows which one (#8).
+- User presets from a database copied from the printer (filament profiles that Creality Print syncs to the printer, e.g. `HyPLA blue@K2 Plus 0.4 nz - RW` or `JAYO PETG ...`) are listed in their own category `User Presets`, each name once. A tag only stores the material id, so a preset is written as the material it's based on; the heading above the selection shows which one (#8).
 - The presets count on the `Database` page counts each preset once (Creality Print can sync the same preset several times).
+
+### Fixes
+
 - The material itself is always preferred over its presets, also when a preset comes first in the database or its name has no `@`.
+- Long material names no longer widen the page.
+
+### Installation
+
+Updating via SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept). If `Update Database` reports "Not enough memory to start the download", use `<board>_static-stack.firmware.bin` instead, which reserves the memory for the download at boot (see [v1.3.1-beta](#v131-beta)). For a fresh board use the matching `.firmware.factory.bin` with esptool. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.3.1-beta
 

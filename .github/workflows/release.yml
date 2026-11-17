@@ -29,19 +29,16 @@ jobs:
             asset: lolin_s2_mini_external_WS2812b
           - env: esp32_s3_tiny
             asset: esp32_s3_tiny
-          # pre-releases only: variants with the stack of the SSH download reserved at link time
+          # variants with the stack of the SSH download reserved at boot (for boards that run out of memory)
           - env: lolin_s2_mini
             asset: lolin_s2_mini_static-stack
             flags: -D PRINTER_SSH_STATIC_STACK
-            prerelease_only: true
           - env: lolin_s2_mini_extled
             asset: lolin_s2_mini_external_WS2812b_static-stack
             flags: -D PRINTER_SSH_STATIC_STACK
-            prerelease_only: true
           - env: esp32_s3_tiny
             asset: esp32_s3_tiny_static-stack
             flags: -D PRINTER_SSH_STATIC_STACK
-            prerelease_only: true
     steps:
       - name: Check version
         if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}

@@ -115,6 +115,13 @@ hr {
   min-width: 0;
 }
 
+/* long names (e.g. user presets) must not widen the page */
+.row > select {
+  flex-basis: 0;
+  width: 100%;
+  text-overflow: ellipsis;
+}
+
 .row.tight {
   gap: 8px;
 }

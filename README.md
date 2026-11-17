@@ -45,7 +45,7 @@ Just select the color by hitting the large color circle to select the color of c
 
 The material is chosen by brand and type. The brands come from the material database: Creality, Generic, eSUN and Polymaker are included by default, and with a database copied from your printer you'll also find your own presets.
 
-A database copied from your printer also contains the filament presets you created in Creality Print (e.g. `HyPLA blue@K2 Plus 0.4 nz - RW`, or custom filaments of other brands). They are listed in their own category `Presets`. A preset is only a label: the tag stores the material id, not the preset, so it's written as the material the preset is based on, which is shown below the selection (e.g. `Written as Creality Hyper PLA (01001)`). The printer then shows the spool as that material.
+A database copied from your printer also contains the filament presets you created in Creality Print (e.g. `HyPLA blue@K2 Plus 0.4 nz - RW`, or custom filaments of other brands such as `JAYO PETG ...`). They are listed in their own category `User Presets`, each name once. A preset is only a label: the tag stores the material id, not the preset, so it's written as the material the preset is based on, which is shown in the heading above the selection (e.g. `Written as Creality Hyper PLA`). The printer then shows the spool as that material.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Presets.jpeg" alt="screenshot presets" style="width:50%; height:auto;" >
@@ -108,7 +108,7 @@ This file is also the one containing custom materials you have added to your pri
 
 The web app has three pages (`Main`, `Settings` and `Database`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates), reset the WiFi credentials and open the web log.
 
-At the bottom, `Thingy Info` shows the board the firmware was built for, the firmware and web app versions, the chip (model, revision, flash size), the PSRAM and the free internal RAM with its largest free block (hover or long-press an entry for details). `Update Database` downloads the database via SSH, which needs a block of 24 KB of internal RAM (see "block"). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
+At the bottom, `Thingy Info` shows the board the firmware was built for, the firmware and web app versions, the chip (model, revision, flash size), the PSRAM and the free internal RAM with its largest free block (hover or long-press an entry for details). `Update Database` downloads the database via SSH, which needs a block of 24 KB of internal RAM (see "block"). If it fails with "Not enough memory to start the download", flash `<board>_static-stack.firmware.bin` from the release, which reserves this block right at boot (shown as `+24 KB SSH`). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
@@ -240,7 +240,7 @@ What happens during a build:
 GitHub Actions build every push and pull request:
 
 - `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts. It also builds `lolin_s2_mini` and `lolin_s2_mini_extled` with the build flag `PRINTER_SSH_STATIC_STACK`, which reserves the stack of the SSH download right after startup instead of allocating it per download.
-- `.github/workflows/release.yml` publishes a release. Add a `## vX.Y.Z` section to `CHANGELOG.md` and bump `APP_VERSION` in `platformio.ini`, then start the workflow under *Actions → Release → Run workflow* with the version (e.g. `v1.2.0`). It builds all boards, creates the tag and the release with the notes from `CHANGELOG.md`, and attaches `<board>.firmware.factory.bin` (for esptool) and `<board>.firmware.bin` (for OTA/SafeBoot updates). A version with a suffix (e.g. `v1.3.1-beta`) is published as pre-release and additionally gets `<board>_static-stack` variants built with `PRINTER_SSH_STATIC_STACK`.
+- `.github/workflows/release.yml` publishes a release. Add a `## vX.Y.Z` section to `CHANGELOG.md` and bump `APP_VERSION` in `platformio.ini`, then start the workflow under *Actions → Release → Run workflow* with the version (e.g. `v1.2.0`). It builds all boards, creates the tag and the release with the notes from `CHANGELOG.md`, and attaches `<board>.firmware.factory.bin` (for esptool) and `<board>.firmware.bin` (for OTA/SafeBoot updates). Every release also gets `<board>_static-stack` variants built with `PRINTER_SSH_STATIC_STACK` (the memory for the database download is reserved at boot). A version with a suffix (e.g. `v1.3.1-beta`) is published as pre-release.
 - `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages.
 - Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.
 

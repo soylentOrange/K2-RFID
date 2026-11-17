@@ -8,7 +8,7 @@ const FALLBACK = {
 }
 
 // category in the brand list holding the user presets of a database
-export const PRESETS = 'Presets'
+export const PRESETS = 'User Presets'
 
 export class MaterialDb {
   version = undefined

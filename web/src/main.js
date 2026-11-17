@@ -127,11 +127,13 @@ function renderTypes(brand, key = spool.key) {
     spool.type = materials[0]?.id ?? spool.type
   }
   $('type').value = key
-  // a preset is written as its base material (tags only store the material id)
+  // a user preset is written as its base material (tags only store the material id),
+  // which is shown in the heading instead of an extra line
   const preset = brand === PRESETS && db.find(key)?.material
   const base = preset && db.find(preset.id)
-  $('type-hint').hidden = !preset
-  if (preset) $('type-hint').textContent = `Written as ${base ? `${base.brand} ${base.material.name}` : 'material'} (${preset.id})`
+  $('type-heading').textContent = preset
+    ? `Written as ${base ? `${base.brand} ${base.material.name}` : preset.id}`
+    : 'Material Type'
   renderColors()
 }
 
