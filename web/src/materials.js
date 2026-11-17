@@ -24,19 +24,21 @@ export class MaterialDb {
 
     // A database copied from the printer also contains user presets sharing the id of
     // the material they are based on (e.g. "HyPLA blue@K2 Plus 0.4 nz - RW" for 01001).
-    // Tags only store the id, so list each id once, preferring the plain material name.
+    // Tags only store the id, so list each id once, preferring the material itself over
+    // presets (synced by Creality Print with a "userMaterial" path, often named "...@...").
     // The other entries become presets.
+    const rank = ({ base, userMaterial }) => (userMaterial ? 2 : base.name.includes('@') ? 1 : 0)
     const byId = new Map()
     const bases = []
-    for (const { base, userMaterial } of list) {
-      if (!base?.id || !base?.name) continue
-      bases.push({ base, userMaterial })
-      const known = byId.get(base.id)
-      if (!known || (known.name.includes('@') && !base.name.includes('@'))) byId.set(base.id, base)
+    for (const entry of list) {
+      if (!entry?.base?.id || !entry.base.name) continue
+      bases.push(entry)
+      const known = byId.get(entry.base.id)
+      if (!known || rank(entry) < rank(known)) byId.set(entry.base.id, entry)
     }
 
     const brands = new Map()
-    for (const base of byId.values()) {
+    for (const { base } of byId.values()) {
       const brand = base.brand || 'Generic'
       // "Generic PLA" -> "PLA"
       const name = base.name.startsWith(`${brand} `) ? base.name.slice(brand.length + 1) : base.name
@@ -46,12 +48,12 @@ export class MaterialDb {
     if (brands.size === 0) throw new Error('Database contains no materials')
 
     const presets = new Map()
-    // Creality Print identifies a preset by its "userMaterial" path (e.g.
-    // ".../usrMaterial/<user>/684db5343357ea87c8294b57-1"); the same preset can be listed
-    // several times (e.g. once per printer), so each one is listed once
-    for (const { base, userMaterial } of bases) {
-      if (byId.get(base.id) === base) continue
-      const key = `${base.id}:${userMaterial || base.name}`
+    // The same preset can be listed several times (synced again, or re-created in Creality
+    // Print with a new "userMaterial" path), so each name is listed once.
+    for (const entry of bases) {
+      if (byId.get(entry.base.id) === entry) continue
+      const { base } = entry
+      const key = `${base.id}:${base.name}`
       if (!presets.has(key)) presets.set(key, { key, id: base.id, name: base.name, colors: colorsOf(base) })
     }
 
