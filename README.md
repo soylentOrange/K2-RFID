@@ -45,9 +45,15 @@ Just select the color by hitting the large color circle to select the color of c
 
 The material is chosen by brand and type. The brands come from the material database: Creality, Generic, eSUN and Polymaker are included by default, and with a database copied from your printer you'll also find your own presets.
 
+A database copied from your printer also contains the filament presets you created in Creality Print (e.g. `HyPLA blue@K2 Plus 0.4 nz - RW`, or custom filaments of other brands). They are listed in their own category `Presets`. A preset is only a label: the tag stores the material id, not the preset, so it's written as the material the preset is based on, which is shown below the selection (e.g. `Written as Creality Hyper PLA (01001)`). The printer then shows the spool as that material.
+
+<p align="center">
+    <img src="assets/doc/Screenshot_Presets.jpeg" alt="screenshot presets" style="width:50%; height:auto;" >
+</p>
+
 The color dialog offers the official colors of the selected material as presets (e.g. the 30 colors of Creality Hyper PLA, as in Creality Print). When you pick one of them, its name is shown next to the hex value, e.g. `#C12E1F (Red)`. The colors are taken from the material database on the thingy; the official colors of the Creality filaments are also built into the web app, in case the database doesn't list them (e.g. an older database that is still stored on your thingy). Materials without colors of their own get the Hyper PLA colors. Any other color can still be chosen freely.
 
-The web interface remembers your last selection (color, brand, material and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
+The web interface remembers your last selection (color, brand, material or preset and weight) in your browser, so it is pre-selected the next time you open it. Hitting `Reset` goes back to the default (Generic PLA, black, 1000 g).
 
 <p align="center">
     <img src="assets/doc/Screenshot_UI.jpeg" alt="screenshot UI" style="width:50%; height:auto;" >

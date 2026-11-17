@@ -3,14 +3,19 @@
 import { officialColors } from './colors.js'
 
 const FALLBACK = {
-  Generic: [{ id: '00001', name: 'PLA' }],
-  Creality: [{ id: '01001', name: 'Hyper PLA' }],
+  Generic: [{ key: '00001', id: '00001', name: 'PLA' }],
+  Creality: [{ key: '01001', id: '01001', name: 'Hyper PLA' }],
 }
+
+// category in the brand list holding the user presets of a database
+export const PRESETS = 'Presets'
 
 export class MaterialDb {
   version = undefined
-  presets = 0 // entries sharing the id of another material (user presets)
   #brands = new Map(Object.entries(FALLBACK))
+  // user presets: entries sharing the id of another material, listed as their own
+  // category; a tag only stores the id, so choosing one writes the id of its base material
+  #presets = []
 
   // parse and validate a database; throws on unexpected content
   load(json) {
@@ -20,11 +25,12 @@ export class MaterialDb {
     // A database copied from the printer also contains user presets sharing the id of
     // the material they are based on (e.g. "HyPLA blue@K2 Plus 0.4 nz - RW" for 01001).
     // Tags only store the id, so list each id once, preferring the plain material name.
+    // The other entries become presets.
     const byId = new Map()
-    let entries = 0
-    for (const { base } of list) {
+    const bases = []
+    for (const { base, userMaterial } of list) {
       if (!base?.id || !base?.name) continue
-      entries++
+      bases.push({ base, userMaterial })
       const known = byId.get(base.id)
       if (!known || (known.name.includes('@') && !base.name.includes('@'))) byId.set(base.id, base)
     }
@@ -35,38 +41,60 @@ export class MaterialDb {
       // "Generic PLA" -> "PLA"
       const name = base.name.startsWith(`${brand} `) ? base.name.slice(brand.length + 1) : base.name
       if (!brands.has(brand)) brands.set(brand, [])
-      brands.get(brand).push({ id: base.id, name, colors: colorsOf(base) })
+      brands.get(brand).push({ key: base.id, id: base.id, name, colors: colorsOf(base) })
     }
     if (brands.size === 0) throw new Error('Database contains no materials')
 
+    const presets = new Map()
+    // Creality Print identifies a preset by its "userMaterial" path (e.g.
+    // ".../usrMaterial/<user>/684db5343357ea87c8294b57-1"); the same preset can be listed
+    // several times (e.g. once per printer), so each one is listed once
+    for (const { base, userMaterial } of bases) {
+      if (byId.get(base.id) === base) continue
+      const key = `${base.id}:${userMaterial || base.name}`
+      if (!presets.has(key)) presets.set(key, { key, id: base.id, name: base.name, colors: colorsOf(base) })
+    }
+
     this.#brands = brands
+    this.#presets = [...presets.values()].sort((a, b) => a.name.localeCompare(b.name))
     this.version = json.result.version
-    this.presets = entries - byId.size
     return this
   }
 
+  // number of user presets
+  get presets() {
+    return this.#presets.length
+  }
+
+  // brands, followed by the presets category if the database has presets
   get brands() {
-    return [...this.#brands.keys()]
+    const brands = [...this.#brands.keys()]
+    return this.#presets.length ? [...brands, PRESETS] : brands
   }
 
+  // materials of a brand (or the presets) as [{ key, id, name, colors }]; key is unique,
+  // id is what gets written to the tag
   materials(brand) {
-    return this.#brands.get(brand) ?? []
+    return brand === PRESETS ? this.#presets : (this.#brands.get(brand) ?? [])
   }
 
-  brandOf(id) {
-    for (const [brand, materials] of this.#brands) {
-      if (materials.some((m) => m.id === id)) return brand
+  // brand and material for a selection key (a material id or a preset key)
+  find(key) {
+    for (const brand of this.brands) {
+      const material = this.materials(brand).find((m) => m.key === key)
+      if (material) return { brand, material }
     }
     return undefined
   }
 
-  // preset colors of a material: from the database, else the official Creality colors
-  colors(id) {
-    for (const materials of this.#brands.values()) {
-      const material = materials.find((m) => m.id === id)
-      if (material?.colors?.length > 1) return material.colors
-    }
-    return officialColors(id)
+  // preset colors of a selection: from the database (a preset without colors uses those
+  // of its base material), else the official Creality colors
+  colors(key) {
+    const material = this.find(key)?.material
+    if (material?.colors?.length > 1) return material.colors
+    const base = material && this.find(material.id)?.material
+    if (base?.colors?.length > 1) return base.colors
+    return officialColors(material?.id ?? key)
   }
 
   get count() {

@@ -12,7 +12,8 @@ const ROOT = new URL('..', import.meta.url).pathname
 const DATA = join(ROOT, '../assets/data')
 const TYPES = { '.html': 'text/html', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' }
 
-let database = await readFile(join(DATA, 'material_database.json'))
+// MOCK_DB=path serves another database, e.g. one copied from a printer
+let database = await readFile(process.env.MOCK_DB ?? join(DATA, 'material_database.json'))
 const config = { cloneSerial: false, beepAvailable: true, beepOnRW: false, writeTags: false, writeEmptyTags: true, PN532: true }
 const printer = { host: '', customPassword: false }
 let nextId = 1

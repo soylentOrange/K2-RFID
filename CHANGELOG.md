@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### New
+
+- User presets from a database copied from the printer (entries like `HyPLA blue@K2 Plus 0.4 nz - RW` that Creality Print syncs with a `userMaterial` path) are listed in their own category `Presets`, each once. A tag only stores the material id, so a preset is written as the material it's based on; the selection shows which one (#8).
+- The presets count on the `Database` page counts each preset once (Creality Print can sync the same preset several times).
+
 ## v1.3.1-beta
 
 **Pre-release for diagnosing memory problems with `Update Database` (#8).**
