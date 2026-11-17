@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.4.0
+
+Includes everything from [v1.3.1-beta](#v131-beta) (memory diagnostics, the `_static-stack` variant and the web log fixes).
+
+### New
+
+- User presets from a database copied from the printer (filament profiles that Creality Print syncs to the printer, e.g. `HyPLA blue@K2 Plus 0.4 nz - RW` or `JAYO PETG ...`) are listed in their own category `User Presets`, each name once. A tag only stores the material id, so a preset is written as the material it's based on; the heading above the selection shows which one (#8).
+- The presets count on the `Database` page counts each preset once (Creality Print can sync the same preset several times).
+
+### Fixes
+
+- The material itself is always preferred over its presets, also when a preset comes first in the database or its name has no `@`.
+- Long material names no longer widen the page.
+
+### Installation
+
+Updating via SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept). If `Update Database` reports "Not enough memory to start the download", use `<board>_static-stack.firmware.bin` instead, which reserves the memory for the download at boot (see [v1.3.1-beta](#v131-beta)). For a fresh board use the matching `.firmware.factory.bin` with esptool. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
+## v1.3.1-beta
+
+**Pre-release for diagnosing memory problems with `Update Database` (#8).**
+
+### New
+
+- The settings page shows the chip (model, revision, flash size), the PSRAM and the free memory (free internal RAM, largest free block, lowest free internal RAM since boot). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
+
+### Fixes
+
+- When the SSH download fails, the message now says why (timeout, SSH error, database too large, file system full) and includes the free memory and PSRAM. Before, it only said "Not enough memory to start the download" or "Error while downloading the database" (#8).
+
+### Web log
+
+- The four buttons (download, clear, pause auto-scrolling, time-stamps) sit in their own toolbar row next to the connection status instead of covering the log. The log fills the remaining height, active toggles are highlighted and the buttons stay visible on phones.
+- The buttons of the embedded web log did nothing, because the minifier renamed the functions the inline `onclick` handlers pointed to. They are now bound in JavaScript.
+- Time-stamped lines no longer get an extra blank line.
+- The toasts look the same as in the main web app; Toastify is no longer needed and was removed from the file system image.
+
+### Variant: reserved stack
+
+This pre-release comes in two variants for every board:
+
+- `<board>.firmware.bin`: as before, the 24 KB stack of the SSH download is allocated when `Update Database` is clicked. That fails with "Not enough memory to start the download" if no free block of that size is left.
+- `<board>_static-stack.firmware.bin`: the stack is reserved right after the firmware starts, while the memory isn't fragmented yet (build flag `PRINTER_SSH_STATIC_STACK`), so starting the download can't fail that way. The 24 KB are taken for good, also when no download runs. `Thingy Info` shows "reserved for the SSH download" for this variant.
+
+### Installation
+
+Updating via SafeBoot/OTA with `<board>.firmware.bin` (or `<board>_static-stack.firmware.bin`) is enough (WiFi credentials and the material database are kept). For a fresh board use the matching `.firmware.factory.bin` with esptool (`esptool write-flash 0x0 lolin_s2_mini.firmware.factory.bin`). Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.3.0
 
 ### New

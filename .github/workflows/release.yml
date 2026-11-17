@@ -29,27 +29,47 @@ jobs:
             asset: lolin_s2_mini_external_WS2812b
           - env: esp32_s3_tiny
             asset: esp32_s3_tiny
+          # variants with the stack of the SSH download reserved at boot (for boards that run out of memory)
+          - env: lolin_s2_mini
+            asset: lolin_s2_mini_static-stack
+            flags: -D PRINTER_SSH_STATIC_STACK
+          - env: lolin_s2_mini_extled
+            asset: lolin_s2_mini_external_WS2812b_static-stack
+            flags: -D PRINTER_SSH_STATIC_STACK
+          - env: esp32_s3_tiny
+            asset: esp32_s3_tiny_static-stack
+            flags: -D PRINTER_SSH_STATIC_STACK
     steps:
       - name: Check version
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
         run: |
           [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([_-][a-zA-Z0-9]+)?$ ]] || { echo "Invalid version: $REF_NAME"; exit 1; }
       - uses: actions/checkout@v7
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
       - uses: actions/setup-node@v7
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
         with:
           node-version: lts/*
           cache: npm
           cache-dependency-path: web/package-lock.json
       - uses: actions/setup-python@v7
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
         with:
           python-version: "3.13"
       - run: pip install --upgrade platformio
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
       - run: pio run -e ${{ matrix.env }}
+        env:
+          PLATFORMIO_BUILD_FLAGS: ${{ matrix.flags }}
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
       - name: Collect images
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
         run: |
           mkdir -p dist
           cp .pio/build/${{ matrix.env }}/firmware.bin dist/${{ matrix.asset }}.firmware.bin
           cp .pio/build/${{ matrix.env }}/firmware.factory.bin dist/${{ matrix.asset }}.firmware.factory.bin
       - uses: actions/upload-artifact@v7
+        if: ${{ !matrix.prerelease_only || contains(inputs.version, '-') }}
         with:
           name: release-${{ matrix.asset }}
           path: dist/*.bin
@@ -82,4 +102,5 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$VERSION" \
-            --notes-file notes.md
+            --notes-file notes.md \
+            $([[ "$VERSION" == *-* ]] && echo --prerelease)

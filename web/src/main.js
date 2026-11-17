@@ -3,7 +3,7 @@
 
 import './style.css'
 import { Device } from './device.js'
-import { MaterialDb, gzip } from './materials.js'
+import { MaterialDb, PRESETS, gzip } from './materials.js'
 import { findPrinter, downloadPrinterDb } from './printer.js'
 import { load, save } from './storage.js'
 import { toast } from './toast.js'
@@ -47,6 +47,7 @@ function showView(name) {
   if (name === 'result') return
 
   currentPage = name
+  if (name === 'settings' && device.connected) refreshSystemInfo()
   const index = PAGES.indexOf(name)
   for (const [id, target] of [['nav-back', PAGES[index - 1]], ['nav-next', PAGES[index + 1]]]) {
     const button = $(id)
@@ -107,23 +108,38 @@ function renderSpool() {
   $('weight').value = spool.weight
   $('weight-text').textContent = `${spool.weight} g`
 
-  const brand = db.brandOf(spool.type) ?? load('brand') ?? db.brands[0]
+  // the selection (spool.key) is a material id or a user preset; a preset that isn't in the
+  // database (yet) or whose base material isn't the spool type anymore (e.g. after reading a
+  // tag) is shown as the material itself
+  const key = db.find(spool.key)?.material.id === spool.type ? spool.key : spool.type
+  const brand = db.find(key)?.brand ?? load('brand') ?? db.brands[0]
   fillSelect($('brand'), db.brands.map((b) => [b, b]))
   $('brand').value = brand
-  renderTypes(brand)
+  renderTypes(brand, key)
 }
 
-function renderTypes(brand) {
+function renderTypes(brand, key = spool.key) {
   const materials = db.materials(brand)
-  fillSelect($('type'), materials.map((m) => [m.id, m.name]))
-  if (!materials.some((m) => m.id === spool.type)) spool.type = materials[0]?.id
-  $('type').value = spool.type
+  fillSelect($('type'), materials.map((m) => [m.key, m.name]))
+  if (!materials.some((m) => m.key === key)) {
+    // another brand was chosen: take its first material
+    spool.key = key = materials[0]?.key
+    spool.type = materials[0]?.id ?? spool.type
+  }
+  $('type').value = key
+  // a user preset is written as its base material (tags only store the material id),
+  // which is shown in the heading instead of an extra line
+  const preset = brand === PRESETS && db.find(key)?.material
+  const base = preset && db.find(preset.id)
+  $('type-heading').textContent = preset
+    ? `Written as ${base ? `${base.brand} ${base.material.name}` : preset.id}`
+    : 'Material Type'
   renderColors()
 }
 
 // offer the colors of the selected material as presets in the color dialog
 function renderColors() {
-  const colors = db.colors(spool.type)
+  const colors = db.colors($('type').value)
   $('common-colors').replaceChildren(...colors.map(({ hex, name }) => new Option(name, hex)))
   renderColorText($('color').value)
 }
@@ -131,7 +147,7 @@ function renderColors() {
 // "#C12E1F (Red)" if the color is one of the presets
 function renderColorText(value) {
   const hex = value.toUpperCase()
-  const name = db.colors(spool.type).find((c) => c.hex === hex)?.name
+  const name = db.colors($('type').value).find((c) => c.hex === hex)?.name
   $('color-text').textContent = name ? `${hex} (${name})` : hex
 }
 
@@ -139,7 +155,7 @@ function setSpool(update, { remember = true } = {}) {
   spool = { ...spool, ...update }
   spool.color = String(spool.color).toUpperCase()
   spool.weight = Number(spool.weight) || DEFAULT_SPOOL.weight
-  if (remember) save('spool', { type: spool.type, weight: spool.weight, color: spool.color })
+  if (remember) save('spool', { type: spool.type, key: spool.key, weight: spool.weight, color: spool.color })
   renderSpool()
 }
 
@@ -373,13 +389,13 @@ function bindUi() {
   $('brand').onchange = (e) => {
     save('brand', e.target.value)
     renderTypes(e.target.value)
-    setSpool({ type: $('type').value })
+    setSpool({ key: spool.key, type: spool.type })
   }
-  $('type').onchange = (e) => setSpool({ type: e.target.value })
+  $('type').onchange = (e) => setSpool({ key: e.target.value, type: db.find(e.target.value)?.material.id })
 
   $('reset').onclick = () => {
     save('brand', null)
-    setSpool({ ...DEFAULT_SPOOL, serial: undefined })
+    setSpool({ ...DEFAULT_SPOOL, key: DEFAULT_SPOOL.type, serial: undefined })
     disarm()
   }
   $('apply').onclick = arm
@@ -451,6 +467,32 @@ function connect(host) {
   device.connect(host)
   device.text('/boardname').then((t) => ($('info-board').textContent = t), () => {})
   device.text('/appversion').then((t) => ($('info-build').textContent = t), () => {})
+  refreshSystemInfo()
+}
+
+// chip and memory info of the thingy (older firmware doesn't provide it)
+async function refreshSystemInfo() {
+  try {
+    const response = await device.fetch('/api/system/info', { cache: 'no-store' })
+    if (!response.ok) return
+    const info = await response.json()
+    const kb = (bytes) => `${Math.round(bytes / 1024)} KB`
+    const mb = (bytes) => `${+(bytes / 1048576).toFixed(1)} MB`
+    const set = (id, text, details) => {
+      $(id).textContent = text
+      $(id).title = details
+    }
+    set('info-chip', `${info.chipModel} rev ${info.chipRevision}, ${mb(info.flashSize)}`,
+      `${info.chipModel} rev ${info.chipRevision}, ${info.chipCores} core(s), ${info.cpuFreqMHz} MHz, ${mb(info.flashSize)} flash`)
+    set('info-psram', info.psramSize ? `${mb(info.psramSize)}, ${mb(info.psramFree)} free` : 'none',
+      info.psramSize ? `${mb(info.psramSize)} PSRAM, ${kb(info.psramFree)} free` : 'no PSRAM')
+    set('info-heap', `${kb(info.internalFree)} free, block ${kb(info.internalMaxAlloc)}${info.sshStackReserved ? ` (+${kb(info.sshStackSize)} SSH)` : ''}`,
+      `internal RAM: ${kb(info.internalFree)} free, largest block ${kb(info.internalMaxAlloc)}, ` +
+        `lowest since boot ${kb(info.internalMinFree)}; SSH download ` +
+        (info.sshStackReserved ? `stack (${kb(info.sshStackSize)}) reserved` : `needs a ${kb(info.sshStackSize)} block`))
+  } catch {
+    // not available
+  }
 }
 
 function bindDevice() {

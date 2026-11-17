@@ -20,6 +20,15 @@ jobs:
       fail-fast: false
       matrix:
         env: [lolin_s2_mini, lolin_s2_mini_extled, esp32_s3_tiny]
+        flags: [""]
+        include:
+          # variant with the stack of the SSH download reserved at link time (pre-releases)
+          - env: lolin_s2_mini
+            flags: -D PRINTER_SSH_STATIC_STACK
+            variant: _static-stack
+          - env: lolin_s2_mini_extled
+            flags: -D PRINTER_SSH_STATIC_STACK
+            variant: _static-stack
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -36,7 +45,9 @@ jobs:
           key: pio-${{ matrix.env }}-${{ hashFiles('platformio.ini', 'safeboot/platformio.ini') }}
       - run: pip install --upgrade platformio
       - run: pio run -e ${{ matrix.env }}
+        env:
+          PLATFORMIO_BUILD_FLAGS: ${{ matrix.flags }}
       - uses: actions/upload-artifact@v7
         with:
-          name: firmware-${{ matrix.env }}
+          name: firmware-${{ matrix.env }}${{ matrix.variant }}
           path: .pio/build/${{ matrix.env }}/*.bin

@@ -12,7 +12,8 @@ const ROOT = new URL('..', import.meta.url).pathname
 const DATA = join(ROOT, '../assets/data')
 const TYPES = { '.html': 'text/html', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' }
 
-let database = await readFile(join(DATA, 'material_database.json'))
+// MOCK_DB=path serves another database, e.g. one copied from a printer
+let database = await readFile(process.env.MOCK_DB ?? join(DATA, 'material_database.json'))
 const config = { cloneSerial: false, beepAvailable: true, beepOnRW: false, writeTags: false, writeEmptyTags: true, PN532: true }
 const printer = { host: '', customPassword: false }
 let nextId = 1
@@ -56,6 +57,8 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/') return reply(200, await readFile(join(ROOT, 'dist-device/index.html')), 'text/html')
   if (url.pathname === '/material_database.json') return reply(200, database, 'application/json')
   if (url.pathname === '/api/printer') return reply(200, JSON.stringify({ ...printer, busy: false }), 'application/json')
+  if (url.pathname === '/api/system/info')
+    return reply(200, JSON.stringify({ chipModel: 'ESP32-S2', chipRevision: 0, chipCores: 1, cpuFreqMHz: 240, flashSize: 4194304, psramSize: 2097152, psramFree: 1980000, heapSize: 2300000, heapFree: 2100000, heapMinFree: 1900000, heapMaxAlloc: 1900000, internalFree: 98000, internalMaxAlloc: 31744, internalMinFree: 61000, sshStackSize: 24576, uptime: 123 }), 'application/json')
   if (url.pathname === '/boardname') return reply(200, 'lolin_s2_mini')
   if (url.pathname === '/appversion') return reply(200, 'v1.2.0')
   try {

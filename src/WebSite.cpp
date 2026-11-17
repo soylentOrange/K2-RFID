@@ -3,6 +3,7 @@
  * Copyright (C) 2025 Robert Wendlandt
  */
 
+#include <esp_heap_caps.h>
 #include <ArduinoJson.h>
 #include <AsyncJson.h>
 #include <Preferences.h>
@@ -333,6 +334,35 @@ void WebSite::_webSiteCallback() {
   _webServer->on("/boardname", HTTP_GET, [](AsyncWebServerRequest* request) {
               // LOGD(TAG, "Serve boardname");
               auto* response = request->beginResponse(200, "text/plain", __COMPILED_BUILD_BOARD__);
+              request->send(response);
+            })
+    .setFilter([](__unused AsyncWebServerRequest* request) {
+      return eventHandler.getNetworkState() != Mycila::ESPConnect::State::PORTAL_STARTED;
+    });
+
+  // serve chip and memory info (for diagnosing memory problems)
+  _webServer->on("/api/system/info", HTTP_GET, [](AsyncWebServerRequest* request) {
+              JsonDocument doc;
+              doc["chipModel"] = ESP.getChipModel();
+              doc["chipRevision"] = ESP.getChipRevision();
+              doc["chipCores"] = ESP.getChipCores();
+              doc["cpuFreqMHz"] = ESP.getCpuFreqMHz();
+              doc["flashSize"] = ESP.getFlashChipSize();
+              doc["psramSize"] = ESP.getPsramSize();
+              doc["psramFree"] = ESP.getFreePsram();
+              doc["heapSize"] = ESP.getHeapSize();
+              doc["heapFree"] = ESP.getFreeHeap();
+              doc["heapMinFree"] = ESP.getMinFreeHeap();
+              doc["heapMaxAlloc"] = ESP.getMaxAllocHeap();
+              doc["internalFree"] = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+              doc["internalMaxAlloc"] = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+              doc["internalMinFree"] = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+              doc["sshStackSize"] = PRINTER_SSH_STACK_SIZE;
+              doc["sshStackReserved"] = printerDb.hasReservedStack();
+              doc["uptime"] = millis() / 1000;
+              AsyncResponseStream* response = request->beginResponseStream("application/json");
+              response->addHeader("Cache-Control", "no-store");
+              serializeJson(doc, *response);
               request->send(response);
             })
     .setFilter([](__unused AsyncWebServerRequest* request) {
