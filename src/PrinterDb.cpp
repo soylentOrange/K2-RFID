@@ -43,18 +43,19 @@ static StaticTask_t sshTaskBuffer;
 #define PSRAM_MALLOC_THRESHOLD 32
 
 #if defined(MBEDTLS_PLATFORM_MEMORY) && !defined(MBEDTLS_PLATFORM_CALLOC_MACRO) && defined(CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC)
-extern "C" void* esp_mbedtls_mem_calloc(size_t n, size_t size);
-extern "C" void esp_mbedtls_mem_free(void* ptr);
+// what ESP-IDF's esp_mbedtls_mem_calloc() does with CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC
+// (its header esp_mem.h lacks extern "C", so it can't be referenced from C++)
+static void* internalCalloc(size_t n, size_t size) { return heap_caps_calloc(n, size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT); }
 static void* psramCalloc(size_t n, size_t size) {
   return heap_caps_calloc_prefer(n, size, 2, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 }
-static void psramFree(void* ptr) { heap_caps_free(ptr); }
+static void heapFree(void* ptr) { heap_caps_free(ptr); }
 static void mbedtlsUsePsram(bool psram) {
   // heap_caps_free() frees blocks of either heap, so switching while allocated is fine
   if (psram)
-    mbedtls_platform_set_calloc_free(psramCalloc, psramFree);
+    mbedtls_platform_set_calloc_free(psramCalloc, heapFree);
   else
-    mbedtls_platform_set_calloc_free(esp_mbedtls_mem_calloc, esp_mbedtls_mem_free);
+    mbedtls_platform_set_calloc_free(internalCalloc, heapFree);
 }
 #else
 #warning "mbedtls allocations can't be moved to PSRAM with this ESP-IDF configuration"
