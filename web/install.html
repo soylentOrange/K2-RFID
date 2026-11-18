@@ -38,12 +38,19 @@
           <h2><span>Install</span></h2>
           <ol class="steps">
             <li>Connect the board with a USB cable.</li>
-            <li id="step-boot">
-              LOLIN S2 Mini: hold the <b>0</b> button, press and release <b>RST</b>, then release <b>0</b>
-              (download mode).
+            <li class="s2-only">
+              Hold the <b>0</b> button, press and release <b>RST</b>, then release <b>0</b> (download mode).
             </li>
-            <li>Click <i>Install</i> and pick the serial port of the board.</li>
-            <li>When it's done, press <b>RST</b> and connect to the WiFi <b>K2RFID</b> to set up your WiFi.</li>
+            <li>Click <i>Install</i>, pick the serial port of the board and install.</li>
+            <li class="s2-only">
+              <b class="warning">Press the RST button on the board</b> when it's done: the S2 can't be reset over USB,
+              the reset in the installer has no effect.
+            </li>
+            <li>
+              WiFi: <span class="s2-only">click <i>Install</i> again and pick the port (it has a new name now), then</span>
+              choose <i>Connect to Wi-Fi</i> (from v1.4.2-beta on). Or connect to the WiFi <b>K2RFID</b> and set it up
+              there.
+            </li>
           </ol>
 
           <esp-web-install-button id="install">

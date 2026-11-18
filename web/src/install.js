@@ -23,7 +23,9 @@ function update() {
   $('install-info').textContent = build
     ? `${build.label} (${build.chipFamily}), ${release.tag}${build.staticStack ? ', static stack' : ''}`
     : 'No firmware for this combination.'
-  $('step-boot').hidden = build ? build.chipFamily !== 'ESP32-S2' : false
+  // the S2 (native USB only) needs the buttons for entering download mode and for the reset
+  const s2 = build ? build.chipFamily === 'ESP32-S2' : true
+  for (const el of document.querySelectorAll('.s2-only')) el.hidden = !s2
   if (release) $('release-link').href = release.url
 }
 
