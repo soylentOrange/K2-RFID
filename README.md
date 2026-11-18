@@ -106,12 +106,29 @@ This file is also the one containing custom materials you have added to your pri
 
 ### Settings
 
-The web app has three pages (`Main`, `Settings` and `Database`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates), reset the WiFi credentials and open the web log.
+The web app has four pages (`Main`, `Settings`, `Database` and `Firmware`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates), reset the WiFi credentials and open the web log.
 
 At the bottom, `Thingy Info` shows the board the firmware was built for, the firmware and web app versions, the chip (model, revision, flash size), the PSRAM and the free internal RAM with its largest free block (hover or long-press an entry for details). `Update Database` downloads the database via SSH, which needs a block of 24 KB of internal RAM (see "block"). The recommended `<board>_static-stack` firmware reserves this block right at boot (shown as `+24 KB SSH`), see [Flashing Firmware](#flashing-firmware). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
+</p>
+
+### Firmware Update
+
+The `Firmware` page (`Database >>`) updates the thingy over WiFi with a firmware from GitHub, no file download needed. It shows the installed version and the newest release, and preselects the board and variant (`_static-stack` or not) of the running firmware. Pick the version (the newest release, plus a newer pre-release if there is one) and click `Update Firmware`:
+
+1. the browser downloads `<board>.firmware.bin` of the release from the GitHub Pages site and checks that it's an image for the chip of the thingy,
+2. the thingy restarts into SafeBoot,
+3. the browser uploads the image to SafeBoot, which installs it and restarts into the new firmware,
+4. the page checks that the new version is running and reloads.
+
+WiFi credentials and the material database are kept, as with a manual update via SafeBoot. The browser does the download from GitHub (https), so neither the firmware nor SafeBoot need TLS, and the flash layout stays the same. It works from the app on the thingy (`http://k2rfid.local`) and from the app on GitHub Pages (Chromium browsers, see [Web App](#web-app-github-pages)). The phone or computer needs internet access and must not leave the WiFi of the thingy during the update. If SafeBoot can't be reached (e.g. it got another IP address), open the thingy in the browser and upload the `.firmware.bin` there by hand.
+
+Firmware older than this feature doesn't report its build variant, so check board and variant before updating from it (`/boardname` only tells the board, not whether an external LED is used).
+
+<p align="center">
+    <img src="assets/doc/Screenshot_FirmwareUpdate.jpeg" alt="screenshot firmware update" style="width:50%; height:auto;" >
 </p>
 
 ## Device Feedback
@@ -223,7 +240,7 @@ The easiest way: open **https://soylentorange.github.io/K2-RFID/install.html** i
 - LOLIN S2 Mini (ESP32-S2 with native USB): put the board into download mode first - hold the "0" button, press and release "RST", then release "0". After flashing, press "RST" to start the new firmware.
 - The newest release is offered, plus the newest pre-release if there is one that is newer. The images are copied from the release onto the GitHub Pages site when it's built (the browser can't download them from the release directly).
 
-The browser install is meant for the first installation (or to recover a board): like every factory image, it replaces the WiFi credentials and the material database. **Later updates go over WiFi via SafeBoot** (`Settings` > `SafeBoot`, then upload `<board>.firmware.bin` of the release), which keeps both.
+The browser install is meant for the first installation (or to recover a board): like every factory image, it replaces the WiFi credentials and the material database. **Later updates go over WiFi**, which keeps both: on the `Firmware` page of the web app (see [Firmware Update](#firmware-update)), or by hand via SafeBoot (`Settings` > `SafeBoot`, then upload `<board>.firmware.bin` of the release).
 
 <p align="center">
     <img src="assets/doc/Screenshot_Install.jpeg" alt="screenshot firmware installer" style="width:50%; height:auto;" >
@@ -258,7 +275,7 @@ GitHub Actions build every push and pull request:
 
 - `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts. It also builds `lolin_s2_mini` and `lolin_s2_mini_extled` with the build flag `PRINTER_SSH_STATIC_STACK`, which reserves the stack of the SSH download right after startup instead of allocating it per download.
 - `.github/workflows/release.yml` publishes a release. Add a `## vX.Y.Z` section to `CHANGELOG.md` and bump `APP_VERSION` in `platformio.ini`, then start the workflow under *Actions → Release → Run workflow* with the version (e.g. `v1.2.0`). It builds all boards, creates the tag and the release with the notes from `CHANGELOG.md`, and attaches `<board>.firmware.factory.bin` (for esptool) and `<board>.firmware.bin` (for OTA/SafeBoot updates). Every release also gets `<board>_static-stack` variants built with `PRINTER_SSH_STATIC_STACK` (the memory for the database download is reserved at boot). A version with a suffix (e.g. `v1.3.1-beta`) is published as pre-release.
-- `.github/workflows/pages.yml` builds the web app and, on `main` (or when started by hand), publishes it on GitHub Pages. `web/tools/fetch-firmware.mjs` adds the factory images of the newest release and of a newer pre-release with an ESP Web Tools manifest per board to `firmware/` on the site, for the installer. The release workflow starts the Pages workflow after publishing a release, so the installer always offers the newest firmware.
+- `.github/workflows/pages.yml` builds the web app and, on `main` (or when started by hand), publishes it on GitHub Pages. `web/tools/fetch-firmware.mjs` adds the factory images of the newest release and of a newer pre-release with an ESP Web Tools manifest per board to `firmware/` on the site, for the installer, and the app images (`<board>.firmware.bin`) for the firmware update over WiFi (`firmware/index.json` lists them). The release workflow starts the Pages workflow after publishing a release, so the installer always offers the newest firmware.
 - Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.
 
 ### Developing the Web App
@@ -267,14 +284,15 @@ The web app lives in [`web/`](web/) and is built with [Vite](https://vite.dev/) 
 
 | File | Purpose |
 | --- | --- |
-| `web/index.html` | markup of all views (main, settings, progress) |
+| `web/index.html` | markup of all views (main, settings, database, firmware, progress) |
 | `web/install.html`, `web/src/install.js` | firmware installer (GitHub Pages only, ESP Web Tools) |
+| `web/src/update.js` | firmware update over WiFi (download from GitHub Pages, upload to SafeBoot) |
 | `web/src/main.js` | UI logic and the websocket protocol of the thingy |
 | `web/src/device.js` | connection to the thingy (http + websocket, reconnects, heartbeat) |
 | `web/src/materials.js` | material database parsing |
 | `web/src/printer.js` | printer discovery and database download |
 | `web/src/style.css` | styles |
-| `web/tools/fetch-firmware.mjs` | copies the release images for the installer and writes the manifests |
+| `web/tools/fetch-firmware.mjs` | copies the release images for the installer and the firmware update, writes the manifests |
 
 One source, two builds:
 

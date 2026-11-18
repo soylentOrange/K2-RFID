@@ -134,6 +134,31 @@
           <p id="db-info" class="hint"></p>
         </section>
 
+        <!-- firmware update over WiFi (via SafeBoot) -->
+        <section id="view-firmware" class="view" hidden>
+          <h2><span>Installed Firmware</span></h2>
+          <dl class="info">
+            <dt>Version:</dt>
+            <dd id="fw-installed">Unknown</dd>
+            <dt>Newest:</dt>
+            <dd id="fw-newest">Unknown</dd>
+          </dl>
+
+          <h2><span>Firmware Update</span></h2>
+          <select id="fw-board" aria-label="Board"></select>
+          <select id="fw-release" aria-label="Firmware version"></select>
+          <label class="switch-row">
+            <span>Static stack (recommended)</span>
+            <input id="fw-static" type="checkbox" class="switch" checked />
+          </label>
+          <button id="fw-update" disabled>Update Firmware</button>
+          <p id="fw-info" class="hint"></p>
+          <p class="hint optional-2">
+            Downloads the firmware from GitHub, restarts the thingy into SafeBoot and installs it there.
+            WiFi settings and the material database are kept.
+          </p>
+        </section>
+
         <!-- progress / result of a long running operation -->
         <section id="view-result" class="view centered" hidden>
           <div id="result-icon" class="result-icon"><div class="spinner"></div></div>

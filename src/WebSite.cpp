@@ -23,6 +23,8 @@ extern const uint8_t thingy_html_end[] asm("_binary__pio_embed_website_html_gz_e
 
 // constants from build process
 extern const char* __COMPILED_BUILD_BOARD__;
+extern const char* __COMPILED_BUILD_NAME__;
+extern const char* __COMPILED_APP_VERSION__;
 
 void WebSite::begin(Scheduler* scheduler) {
   // Task handling
@@ -360,6 +362,14 @@ void WebSite::_webSiteCallback() {
               doc["sshStackSize"] = PRINTER_SSH_STACK_SIZE;
               doc["sshStackReserved"] = printerDb.hasReservedStack();
               doc["uptime"] = millis() / 1000;
+              // for the firmware update in the web app: which release asset matches this build
+              doc["version"] = __COMPILED_APP_VERSION__;
+              doc["buildName"] = __COMPILED_BUILD_NAME__;
+#ifdef PRINTER_SSH_STATIC_STACK
+              doc["staticStack"] = true;
+#else
+              doc["staticStack"] = false;
+#endif
               AsyncResponseStream* response = request->beginResponseStream("application/json");
               response->addHeader("Cache-Control", "no-store");
               serializeJson(doc, *response);

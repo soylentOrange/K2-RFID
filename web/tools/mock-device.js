@@ -1,6 +1,8 @@
 // Minimal stand-in for the thingy, for developing the web app without hardware.
 //   npm run build:device && npm run mock   -> http://localhost:8080/
 //   npm run dev                            -> http://localhost:5173/?device=localhost:8080
+// "SafeBoot" (Settings) and "Update Firmware" simulate the restart into SafeBoot and the
+// update; MOCK_UPDATE_VERSION sets the version reported after an update.
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { gunzipSync } from 'node:zlib'
@@ -17,11 +19,33 @@ let database = await readFile(process.env.MOCK_DB ?? join(DATA, 'material_databa
 const config = { cloneSerial: false, beepAvailable: true, beepOnRW: false, writeTags: false, writeEmptyTags: true, PN532: true }
 const printer = { host: '', customPassword: false }
 let nextId = 1
+// 'app', 'down' (restarting) or 'safeboot'
+let mode = 'app'
+let version = '1.4.0'
+function restartInto(next) {
+  mode = 'down'
+  for (const ws of wss.clients) ws.terminate()
+  setTimeout(() => (mode = next), 3000)
+}
 
 const server = createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
   const url = new URL(req.url, 'http://x')
   const reply = (status, body, type = 'text/plain') => res.writeHead(status, { 'Content-Type': type }).end(body)
+  if (mode === 'down') return req.socket.destroy()
+  if (mode === 'safeboot') {
+    // like SafeBoot: no CORS headers
+    if (req.method === 'GET' && url.pathname === '/sbversion') return reply(200, 'v3.2.2-mod')
+    if (req.method === 'POST' && url.pathname === '/') {
+      let size = 0
+      for await (const chunk of req) size += chunk.length
+      console.log(`SafeBoot: received ${size} bytes (size=${url.searchParams.get('size')})`)
+      version = process.env.MOCK_UPDATE_VERSION ?? version
+      setTimeout(() => restartInto('app'), 1000)
+      return reply(200, 'Update Success! Rebooting...')
+    }
+    return reply(404, '')
+  }
+  res.setHeader('Access-Control-Allow-Origin', '*')
 
   if (req.method === 'POST') {
     const chunks = []
@@ -51,6 +75,7 @@ const server = createServer(async (req, res) => {
       }, 1500)
       return reply(202, 'Fetching database...')
     }
+    if (url.pathname === '/api/system/safeboot') setTimeout(() => restartInto('safeboot'), 1000)
     if (url.pathname.startsWith('/api/system/')) return reply(200, `Mock: ${url.pathname} done`)
     return reply(404, '')
   }
@@ -58,9 +83,9 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/material_database.json') return reply(200, database, 'application/json')
   if (url.pathname === '/api/printer') return reply(200, JSON.stringify({ ...printer, busy: false }), 'application/json')
   if (url.pathname === '/api/system/info')
-    return reply(200, JSON.stringify({ chipModel: 'ESP32-S2', chipRevision: 0, chipCores: 1, cpuFreqMHz: 240, flashSize: 4194304, psramSize: 2097152, psramFree: 1980000, heapSize: 2300000, heapFree: 2100000, heapMinFree: 1900000, heapMaxAlloc: 1900000, internalFree: 98000, internalMaxAlloc: 31744, internalMinFree: 61000, sshStackSize: 24576, uptime: 123 }), 'application/json')
+    return reply(200, JSON.stringify({ chipModel: 'ESP32-S2', chipRevision: 0, chipCores: 1, cpuFreqMHz: 240, flashSize: 4194304, psramSize: 2097152, psramFree: 1980000, heapSize: 2300000, heapFree: 2100000, heapMinFree: 1900000, heapMaxAlloc: 1900000, internalFree: 98000, internalMaxAlloc: 31744, internalMinFree: 61000, sshStackSize: 24576, sshStackReserved: true, uptime: 123, version, buildName: 'lolin_s2_mini_extled', staticStack: true }), 'application/json')
   if (url.pathname === '/boardname') return reply(200, 'lolin_s2_mini')
-  if (url.pathname === '/appversion') return reply(200, 'v1.2.0')
+  if (url.pathname === '/appversion') return reply(200, `v${version}`)
   try {
     return reply(200, await readFile(join(DATA, url.pathname)), TYPES[extname(url.pathname)] ?? 'application/octet-stream')
   } catch {

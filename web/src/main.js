@@ -8,6 +8,7 @@ import { findPrinter, downloadPrinterDb } from './printer.js'
 import { load, save } from './storage.js'
 import { toast } from './toast.js'
 import { successIcon, errorIcon, tagIcon, spoolIcon } from './icons.js'
+import { loadReleases, boardOf, compareVersions, isPrerelease, updateFirmware } from './update.js'
 
 const $ = (id) => document.getElementById(id)
 
@@ -36,9 +37,9 @@ let spool = { ...DEFAULT_SPOOL, ...load('spool', {}) }
 // views
 // ---------------------------------------------------------------------------
 
-// the views are pages in a row: main <-> settings <-> database
-const PAGES = ['main', 'settings', 'database']
-const PAGE_TITLES = { main: 'Main', settings: 'Settings', database: 'Database' }
+// the views are pages in a row: main <-> settings <-> database <-> firmware
+const PAGES = ['main', 'settings', 'database', 'firmware']
+const PAGE_TITLES = { main: 'Main', settings: 'Settings', database: 'Database', firmware: 'Firmware' }
 let currentPage = 'main'
 
 function showView(name) {
@@ -48,6 +49,7 @@ function showView(name) {
 
   currentPage = name
   if (name === 'settings' && device.connected) refreshSystemInfo()
+  if (name === 'firmware') loadFirmware()
   const index = PAGES.indexOf(name)
   for (const [id, target] of [['nav-back', PAGES[index - 1]], ['nav-next', PAGES[index + 1]]]) {
     const button = $(id)
@@ -92,6 +94,7 @@ function updateStatus() {
 function setInputsEnabled(enabled) {
   for (const el of document.querySelectorAll('[data-needs-connection]')) el.disabled = !enabled
   if (!state.beepAvailable) $('beep').disabled = true
+  renderFirmware()
 }
 
 // ---------------------------------------------------------------------------
@@ -377,6 +380,90 @@ const handlers = {
 // ---------------------------------------------------------------------------
 // wiring
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// firmware update (see update.js)
+// ---------------------------------------------------------------------------
+
+const firmware = {
+  releases: undefined, // from GitHub Pages, undefined until loaded
+  error: '',
+  info: undefined, // /api/system/info of the thingy
+  boardName: '', // /boardname (older firmware has no build name in the info)
+  appVersion: '', // /appversion (older firmware has no version in the info)
+}
+
+function installedVersion() {
+  return firmware.info?.version ?? firmware.appVersion.replace(/^v/, '')
+}
+
+function selectedFirmware() {
+  const release = firmware.releases?.find((r) => r.tag === $('fw-release').value)
+  const build = release?.builds.find((b) => b.app && b.board === $('fw-board').value && b.staticStack === $('fw-static').checked)
+  return { release, build }
+}
+
+async function loadFirmware() {
+  if (firmware.releases) return renderFirmware()
+  $('fw-info').textContent = 'Looking for firmware...'
+  try {
+    firmware.releases = await loadReleases()
+    firmware.error = ''
+  } catch (error) {
+    firmware.error = `No firmware available (${error.message}).`
+    return renderFirmware()
+  }
+
+  // choices: boards of all releases, the releases (newest first)
+  const boards = new Map()
+  for (const r of firmware.releases) for (const b of r.builds) if (b.app) boards.set(b.board, b.label)
+  fillSelect($('fw-board'), [...boards])
+  fillSelect($('fw-release'), [...firmware.releases]
+    .sort((a, b) => compareVersions(b.version, a.version) ?? 0)
+    .map((r) => [r.tag, `${r.tag}${r.prerelease ? ' (pre-release)' : ''}`]))
+  presetFirmware()
+}
+
+// preselect the board and variant of the running firmware, and the release to update to
+// (the newest release; a newer pre-release only if a pre-release is installed)
+function presetFirmware() {
+  if (!firmware.releases?.length) return
+  const board = boardOf(firmware.info, firmware.boardName)
+  if (board && [...$('fw-board').options].some((o) => o.value === board)) $('fw-board').value = board
+  const staticStack = firmware.info?.staticStack ?? firmware.info?.sshStackReserved
+  if (staticStack !== undefined) $('fw-static').checked = staticStack
+  const stable = firmware.releases.find((r) => !r.prerelease)
+  const beta = firmware.releases.find((r) => r.prerelease)
+  $('fw-release').value = (isPrerelease(installedVersion()) && beta ? beta : stable ?? beta).tag
+  renderFirmware()
+}
+
+function renderFirmware() {
+  const installed = installedVersion()
+  $('fw-installed').textContent = installed || 'Unknown'
+  const { release, build } = selectedFirmware()
+  const newest = firmware.releases?.find((r) => !r.prerelease) ?? firmware.releases?.[0]
+  $('fw-newest').textContent = newest
+    ? `${newest.version}${compareVersions(newest.version, installed) === 0 ? ' (installed)' : ''}`
+    : 'Unknown'
+  $('fw-update').disabled = !device.connected || !build
+  if (firmware.error) $('fw-info').textContent = firmware.error
+  else if (!firmware.releases) return
+  else if (!build) $('fw-info').textContent = 'No firmware for this combination.'
+  else {
+    const order = compareVersions(release.version, installed)
+    $('fw-info').textContent = `${build.label}${build.staticStack ? ', static stack' : ''}, ${release.tag}` +
+      (order === 0 ? ' (installed)' : order < 0 ? ' (older than the installed one)' : '')
+  }
+}
+
+function startFirmwareUpdate() {
+  const { release, build } = selectedFirmware()
+  if (!release || !build) return
+  runWithProgress(`Updating to ${release.tag}...`, async (progress) => {
+    const info = await updateFirmware(device, release, build, progress)
+    return `Updated to ${info.version ?? release.version}.`
+  }, { returnTo: null }).then(() => setTimeout(() => window.location.reload(), 5000))
+}
 
 function bindUi() {
   // log of the thingy (hex dumps of the tags read, ...)
@@ -448,6 +535,9 @@ function bindUi() {
       )
   }
 
+  $('fw-update').onclick = startFirmwareUpdate
+  for (const id of ['fw-board', 'fw-release', 'fw-static']) $(id).onchange = renderFirmware
+
   // GitHub Pages: choose the device to talk to
   $('device-form').onsubmit = (e) => {
     e.preventDefault()
@@ -465,8 +555,16 @@ function connect(host) {
     $('device-direct-link').textContent = `http://${host}`
   }
   device.connect(host)
-  device.text('/boardname').then((t) => ($('info-board').textContent = t), () => {})
-  device.text('/appversion').then((t) => ($('info-build').textContent = t), () => {})
+  device.text('/boardname').then((t) => {
+    $('info-board').textContent = t
+    firmware.boardName = t
+    presetFirmware()
+  }, () => {})
+  device.text('/appversion').then((t) => {
+    $('info-build').textContent = t
+    firmware.appVersion = t
+    renderFirmware()
+  }, () => {})
   refreshSystemInfo()
 }
 
@@ -476,6 +574,10 @@ async function refreshSystemInfo() {
     const response = await device.fetch('/api/system/info', { cache: 'no-store' })
     if (!response.ok) return
     const info = await response.json()
+    if (!firmware.info) {
+      firmware.info = info
+      presetFirmware()
+    }
     const kb = (bytes) => `${Math.round(bytes / 1024)} KB`
     const mb = (bytes) => `${+(bytes / 1048576).toFixed(1)} MB`
     const set = (id, text, details) => {
