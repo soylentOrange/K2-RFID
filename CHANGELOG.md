@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- Every page of the web app fits on one screen again, in every browser. The layout no longer depends on fixed window heights (which didn't match the real height of the content in every browser and font, e.g. the `Settings` page of the GitHub Pages app with its `Device` section, or the firmware installer): the page measures itself and hides less important texts / uses the compact layout only as far as needed. The color picker on the main page takes the free height.
+
 ## v1.5.1-beta
 
 ### Fixes

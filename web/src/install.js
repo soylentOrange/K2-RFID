@@ -4,6 +4,7 @@
 // tools/fetch-firmware.mjs when the Pages site is built.
 import 'esp-web-tools/dist/install-button.js'
 import './style.css'
+import { fitToScreen } from './fit.js'
 
 const $ = (id) => document.getElementById(id)
 const params = new URLSearchParams(window.location.search)
@@ -54,6 +55,7 @@ async function init() {
   update()
 }
 
+fitToScreen(document.querySelector('.app'))
 init()
 
 // The thingy logs via the web log (WebSerial in the web app), not over USB, so the
