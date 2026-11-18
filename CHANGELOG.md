@@ -4,7 +4,7 @@
 
 ### New
 
-- WiFi diagnostics in the web log: the signal (RSSI, channel, TX power) and free internal RAM every 5 minutes, every disconnect with its reason, and how long it took to reconnect. The web log also goes to the USB serial port, to watch it while the WiFi is gone.
+- WiFi diagnostics in the web log: the signal (RSSI, channel, TX power) and free internal RAM every 5 minutes, every disconnect with its reason, how long it took to reconnect, and the network state changes (e.g. connect timeout -> captive portal). The web log also goes to the USB serial port, from the start of the firmware on, to watch it while the WiFi is gone.
 
 ### Fixes
 

@@ -53,6 +53,18 @@ void setup() {
   serialLogger->setLevel(ARDUHAL_LOG_LEVEL_DEBUG);
 #endif
 
+#if defined(MYCILA_WEBSERIAL_SUPPORT_APP)
+  // the web log, from the start also to USB serial: shows what happens while the WiFi is gone
+  // (e.g. `screen /dev/cu.usbmodem* 115200`); nothing is sent while no terminal is open.
+  // The web page (WebSerial) is added when the web site starts.
+  #ifndef MYCILA_LOGGER_SUPPORT_APP
+  Serial.begin(MONITOR_SPEED);
+  #endif
+  webLogger = new Mycila::Logger();
+  webLogger->setLevel(ARDUHAL_LOG_LEVEL_INFO);
+  webLogger->forwardTo(&Serial);
+#endif
+
   // Add LED-Task to Scheduler
   led.begin(&scheduler);
 

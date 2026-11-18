@@ -78,12 +78,8 @@ void WebSite::_webSiteCallback() {
 #ifdef MYCILA_WEBSERIAL_SUPPORT_APP
   webSerial.begin(_webServer, "/weblog", _scheduler);
   webSerial.setBuffer(100);
-  webLogger = new Mycila::Logger();
-  webLogger->setLevel(ARDUHAL_LOG_LEVEL_INFO);
+  // the logger is created in setup() (logging to USB serial from the start)
   webLogger->forwardTo(&webSerial);
-  // also to USB serial, to see what happens while the WiFi is gone (e.g. `screen /dev/cu.usbmodem* 115200`);
-  // nothing is sent while no terminal is open
-  webLogger->forwardTo(&Serial);
 #endif
 
   // create websock handler
