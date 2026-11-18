@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>K2 RFID Tag Programmer - Install Firmware</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/icon_96.png" sizes="96x96" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="header">
+        <a href="./" class="logo-link" aria-label="K2 RFID Tag Programmer">
+          <img src="/logo_thingy.svg" alt="K2 RFID Tag Programmer" class="logo" />
+        </a>
+        <p class="status">Install Firmware</p>
+      </header>
+
+      <main class="card install">
+        <section class="view">
+          <h2><span>Board</span></h2>
+          <select id="board" aria-label="Board"></select>
+
+          <h2><span>Firmware</span></h2>
+          <select id="release" aria-label="Firmware version"></select>
+          <label class="switch-row">
+            <span>Static stack (recommended)</span>
+            <input id="static-stack" type="checkbox" class="switch" checked />
+          </label>
+          <p class="hint">
+            Reserves the memory for <i>Update Database</i> at boot, so the download can't fail with
+            "Not enough memory".
+          </p>
+
+          <h2><span>Install</span></h2>
+          <ol class="steps">
+            <li>Connect the board with a USB cable.</li>
+            <li id="step-boot">
+              LOLIN S2 Mini: hold the <b>0</b> button, press and release <b>RST</b>, then release <b>0</b>
+              (download mode).
+            </li>
+            <li>Click <i>Install</i> and pick the serial port of the board.</li>
+            <li>When it's done, press <b>RST</b> and connect to the WiFi <b>K2RFID</b> to set up your WiFi.</li>
+          </ol>
+
+          <esp-web-install-button id="install">
+            <button slot="activate" id="install-button" disabled>Install</button>
+            <p slot="unsupported" class="warning">
+              Your browser can't access serial ports. Use Chrome or Edge on a desktop computer.
+            </p>
+            <p slot="not-allowed" class="warning">Installing needs a secure (https) connection.</p>
+          </esp-web-install-button>
+          <p id="install-info" class="hint"></p>
+          <p class="hint">
+            The factory image contains everything (bootloader, SafeBoot, firmware, file system) and replaces the
+            WiFi settings and the material database on the board. It's meant for the first installation; later
+            updates go over WiFi via SafeBoot (<i>Settings</i> &gt; <i>SafeBoot</i>) with the
+            <code>.firmware.bin</code> of the <a id="release-link" href="https://github.com/soylentOrange/K2-RFID/releases">release</a>.
+          </p>
+        </section>
+
+        <footer class="nav">
+          <hr />
+          <a href="./" class="hint">Back to the web app</a>
+        </footer>
+      </main>
+    </div>
+    <script type="module" src="/src/install.js"></script>
+  </body>
+</html>

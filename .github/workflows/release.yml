@@ -79,6 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     env:
       VERSION: ${{ inputs.version }}
       GH_TOKEN: ${{ github.token }}
@@ -104,3 +105,5 @@ jobs:
             --title "$VERSION" \
             --notes-file notes.md \
             $([[ "$VERSION" == *-* ]] && echo --prerelease)
+      - name: Update the firmware installer on GitHub Pages
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.event.repository.default_branch }}"

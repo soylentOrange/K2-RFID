@@ -1,0 +1,90 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copies the factory images of the newest release (and of a newer pre-release, if any)
+// into the GitHub Pages site and writes an ESP Web Tools manifest for each of them.
+// ESP Web Tools fetches the images from the browser, and GitHub release downloads
+// can't be fetched cross-origin, so the images have to be served from the Pages site.
+//
+// Usage: node tools/fetch-firmware.mjs [outDir]   (default: dist/firmware)
+// Env:   GITHUB_REPOSITORY (owner/repo, default soylentOrange/K2-RFID), GH_TOKEN or GITHUB_TOKEN (optional)
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
+const repo = process.env.GITHUB_REPOSITORY || 'soylentOrange/K2-RFID'
+const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+const outDir = process.argv[2] || 'dist/firmware'
+
+// release asset name (without .firmware.factory.bin and _static-stack) -> board
+const BOARDS = {
+  lolin_s2_mini: { label: 'LOLIN S2 Mini', chipFamily: 'ESP32-S2' },
+  lolin_s2_mini_external_WS2812b: { label: 'LOLIN S2 Mini + external WS2812B LED', chipFamily: 'ESP32-S2' },
+  esp32_s3_tiny: { label: 'Waveshare ESP32-S3-Tiny', chipFamily: 'ESP32-S3' },
+}
+const SUFFIX = '.firmware.factory.bin'
+const STATIC = '_static-stack'
+
+async function api(path) {
+  const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'k2rfid-pages-build' }
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(`https://api.github.com/repos/${repo}${path}`, { headers })
+  if (!res.ok) throw new Error(`GitHub API ${path}: ${res.status} ${res.statusText}`)
+  return res.json()
+}
+
+async function download(url, file) {
+  const res = await fetch(url, { headers: { 'User-Agent': 'k2rfid-pages-build' } })
+  if (!res.ok) throw new Error(`Download ${url}: ${res.status} ${res.statusText}`)
+  await writeFile(file, Buffer.from(await res.arrayBuffer()))
+}
+
+async function publish(release) {
+  const tag = release.tag_name
+  const version = tag.replace(/^v/, '')
+  const dir = join(outDir, tag)
+  await mkdir(dir, { recursive: true })
+  const builds = []
+  for (const asset of release.assets) {
+    if (!asset.name.endsWith(SUFFIX)) continue
+    let id = asset.name.slice(0, -SUFFIX.length)
+    const staticStack = id.endsWith(STATIC)
+    const boardId = staticStack ? id.slice(0, -STATIC.length) : id
+    const board = BOARDS[boardId]
+    if (!board) {
+      console.warn(`${tag}: skipping unknown board ${asset.name}`)
+      continue
+    }
+    console.log(`${tag}: ${asset.name}`)
+    await download(asset.browser_download_url, join(dir, asset.name))
+    const manifest = {
+      name: `K2-RFID (${board.label}${staticStack ? ', static stack' : ''})`,
+      version,
+      // the factory image also overwrites the settings, so offering to erase first is harmless
+      new_install_prompt_erase: true,
+      // the firmware doesn't speak Improv, don't wait for it after flashing
+      new_install_improv_wait_time: 0,
+      // merged image (bootloader, partitions, SafeBoot, app, file system), written at 0x0
+      builds: [{ chipFamily: board.chipFamily, parts: [{ path: asset.name, offset: 0 }] }],
+    }
+    const manifestName = `${id}.manifest.json`
+    await writeFile(join(dir, manifestName), JSON.stringify(manifest, null, 2))
+    builds.push({ board: boardId, label: board.label, chipFamily: board.chipFamily, staticStack, manifest: `${tag}/${manifestName}` })
+  }
+  return {
+    tag,
+    version,
+    prerelease: release.prerelease,
+    published: release.published_at,
+    url: release.html_url,
+    builds,
+  }
+}
+
+const releases = (await api('/releases?per_page=30')).filter((r) => !r.draft)
+const stable = releases.find((r) => !r.prerelease)
+// releases are listed newest first: a pre-release before the stable one is newer
+const beta = releases.find((r) => r.prerelease && (!stable || r.published_at > stable.published_at))
+
+const index = { repo, releases: [] }
+for (const release of [stable, beta].filter(Boolean)) index.releases.push(await publish(release))
+await mkdir(outDir, { recursive: true })
+await writeFile(join(outDir, 'index.json'), JSON.stringify(index, null, 2))
+console.log(`Wrote ${join(outDir, 'index.json')}: ${index.releases.map((r) => r.tag).join(', ') || 'no releases'}`)

@@ -26,6 +26,8 @@ export default defineConfig(({ mode }) => {
       copyPublicDir: !device,
       target: 'es2022',
       reportCompressedSize: false,
+      // pages: also the firmware installer (ESP Web Tools needs Web Serial, i.e. https)
+      rolldownOptions: device ? {} : { input: { main: 'index.html', install: 'install.html' } },
     },
     server: { host: true },
   }
