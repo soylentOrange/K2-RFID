@@ -6,6 +6,7 @@
 
 - `Update Database`: the small allocations of the SSH download (libssh, mbedtls key exchange) go to the PSRAM too. Before, they used the internal RAM (the lowest free internal RAM was down to 6 KB), which WiFi needs. The web log shows the memory before and after the download, including the lowest free internal RAM since boot.
 - Every page of the web app fits on one screen again, in every browser. The layout no longer depends on fixed window heights (which didn't match the real height of the content in every browser and font, e.g. the `Settings` page of the GitHub Pages app with its `Device` section, or the firmware installer): the page measures itself and hides less important texts / uses the compact layout only as far as needed. The color picker on the main page takes the free height.
+- `Settings` and `Database` pages: free height is spread between the sections instead of collecting at the bottom. On low screens the GitHub Pages app hides the `Device` heading instead of `Annoyance`, so the beeper switch no longer sticks to the address field.
 
 ### Installation
 

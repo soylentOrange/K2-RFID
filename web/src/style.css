@@ -89,6 +89,7 @@ h2 span {
 }
 
 .view > h2:first-child,
+.view > .group:first-child > h2:first-child,
 #device-settings > h2:first-child {
   margin-top: 8px;
 }
@@ -444,6 +445,11 @@ input[type="color"]::-moz-color-swatch {
   }
 }
 
+/* pages with sections (.group): spread the free height around them */
+.view.spread {
+  justify-content: space-around;
+}
+
 /* steps for fitting a page on the screen (set by fit.js until the page fits):
    hide less important parts and use a compact layout */
 .hide-1 .optional-1,
@@ -541,7 +547,7 @@ input[type="color"]::-moz-color-swatch {
   display: block;
 }
 
-#view-settings > a.hint {
+#other-app-link {
   display: block;
 }
 
