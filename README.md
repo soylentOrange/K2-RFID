@@ -199,6 +199,8 @@ On boards with an onboard mono-color LED:
 
 Hit the `Web Log` button in the settings (or open k2rfid.local/weblog) and you'll see a logging window. For every tag being read it will show a hex and ascii dump of the data on the tag.
 
+The log also shows the WiFi: the signal every 5 minutes, and every disconnect with its reason. If the station stays disconnected for a minute, the thingy pushes a reconnect. The same log goes to the USB serial port (115200 baud, e.g. `screen /dev/cu.usbmodem* 115200` on a Mac), so you can watch it while the WiFi is gone.
+
 <p align="center">
     <img src="assets/doc/screenshot_weblog.jpeg" alt="screenshot weblog" style="width:85%; height:auto;" >
 </p>

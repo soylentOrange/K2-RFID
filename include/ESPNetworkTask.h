@@ -27,4 +27,11 @@ class ESPNetwork {
     bool _lowTxPower = false;
     bool _txPowerListener = false;
     void _applyTxPower();
+    // WiFi diagnostics and watchdog: log disconnects (with reason) and the signal, and push a
+    // reconnect when the station stays disconnected
+    Task* _wifiWatchTask = nullptr;
+    void _wifiWatchCallback();
+    volatile uint32_t _disconnectedSince = 0; // millis(), 0: connected (or not in station mode)
+    volatile uint8_t _lastDisconnectReason = 0;
+    uint32_t _lastStatusLog = 0;
 };

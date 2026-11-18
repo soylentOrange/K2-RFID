@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.5.4-beta
+
+### New
+
+- WiFi diagnostics in the web log: the signal (RSSI, channel, TX power) and free internal RAM every 5 minutes, every disconnect with its reason, and how long it took to reconnect. The web log also goes to the USB serial port, to watch it while the WiFi is gone.
+
+### Fixes
+
+- WiFi watchdog: if the station stays disconnected for a minute, the thingy pushes a reconnect (every minute until it's back).
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.5.3-beta
 
 ### Fixes
