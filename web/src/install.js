@@ -55,3 +55,24 @@ async function init() {
 }
 
 init()
+
+// The thingy logs via the web log (WebSerial in the web app), not over USB, so the
+// "Logs & Console" entry of the ESP Web Tools dialog would only show an empty console.
+// ESP Web Tools has no option for it: hide the entry whenever the dialog renders it.
+function hideLogsEntry(dialog) {
+  const hide = () => {
+    for (const item of dialog.shadowRoot?.querySelectorAll('ew-list-item') ?? []) {
+      if (item.textContent.includes('Logs & Console')) item.style.display = 'none'
+    }
+  }
+  hide()
+  new MutationObserver(hide).observe(dialog.shadowRoot, { childList: true, subtree: true })
+}
+
+new MutationObserver((mutations) => {
+  for (const m of mutations) {
+    for (const node of m.addedNodes) {
+      if (node.localName === 'ewt-install-dialog') node.updateComplete.then(() => hideLogsEntry(node))
+    }
+  }
+}).observe(document.body, { childList: true })
