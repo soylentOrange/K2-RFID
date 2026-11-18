@@ -272,15 +272,6 @@ What happens during a build:
 - For the factory image (`firmware.factory.bin`), `safeboot/tools/factory.py` also builds the SafeBoot project in `safeboot/`. Its website is minified with a global `html-minifier-terser` if you have one, otherwise with the one installed in `web/node_modules`.
 - `tools/version.py` derives the version from the git branch/tag. In detached HEAD state (e.g. in CI), set the environment variable `REF_NAME` to the branch or tag name.
 
-#### Continuous Integration
-
-GitHub Actions build every push and pull request:
-
-- `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts. It also builds `lolin_s2_mini` and `lolin_s2_mini_extled` with the build flag `PRINTER_SSH_STATIC_STACK`, which reserves the stack of the SSH download right after startup instead of allocating it per download.
-- `.github/workflows/release.yml` publishes a release. Add a `## vX.Y.Z` section to `CHANGELOG.md` and bump `APP_VERSION` in `platformio.ini`, then start the workflow under *Actions → Release → Run workflow* with the version (e.g. `v1.2.0`). It builds all boards, creates the tag and the release with the notes from `CHANGELOG.md`, and attaches `<board>.firmware.factory.bin` (for esptool) and `<board>.firmware.bin` (for OTA/SafeBoot updates). Every release also gets `<board>_static-stack` variants built with `PRINTER_SSH_STATIC_STACK` (the memory for the database download is reserved at boot). A version with a suffix (e.g. `v1.3.1-beta`) is published as pre-release.
-- `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages. `web/tools/fetch-firmware.mjs` adds the factory images of the newest release and of a newer pre-release with an ESP Web Tools manifest per board to `firmware/` on the site, for the installer, and the app images (`<board>.firmware.bin`) for the firmware update over WiFi (`firmware/index.json` lists them). The release workflow starts the Pages workflow after publishing a release, so the installer always offers the newest firmware.
-- Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.
-
 ### Developing the Web App
 
 The web app lives in [`web/`](web/) and is built with [Vite](https://vite.dev/) from plain JavaScript modules - no framework:
