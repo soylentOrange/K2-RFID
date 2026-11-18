@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copies the factory images of the newest release (and of a newer pre-release, if any)
 // into the GitHub Pages site and writes an ESP Web Tools manifest for each of them.
-// ESP Web Tools fetches the images from the browser, and GitHub release downloads
-// can't be fetched cross-origin, so the images have to be served from the Pages site.
+// Also copies the app images (<board>.firmware.bin) for the firmware update over WiFi
+// in the web app (via SafeBoot).
+// ESP Web Tools and the web app fetch the images from the browser, and GitHub release
+// downloads can't be fetched cross-origin, so the images have to be served from the Pages site.
 //
 // Usage: node tools/fetch-firmware.mjs [outDir]   (default: dist/firmware)
 // Env:   GITHUB_REPOSITORY (owner/repo, default soylentOrange/K2-RFID), GH_TOKEN or GITHUB_TOKEN (optional)
@@ -20,6 +22,7 @@ const BOARDS = {
   esp32_s3_tiny: { label: 'Waveshare ESP32-S3-Tiny', chipFamily: 'ESP32-S3' },
 }
 const SUFFIX = '.firmware.factory.bin'
+const APP_SUFFIX = '.firmware.bin'
 const STATIC = '_static-stack'
 
 async function api(path) {
@@ -67,7 +70,16 @@ async function publish(release) {
     }
     const manifestName = `${id}.manifest.json`
     await writeFile(join(dir, manifestName), JSON.stringify(manifest, null, 2))
-    builds.push({ board: boardId, label: board.label, chipFamily: board.chipFamily, staticStack, manifest: `${tag}/${manifestName}` })
+    const build = { board: boardId, label: board.label, chipFamily: board.chipFamily, staticStack, manifest: `${tag}/${manifestName}` }
+    // app image for updates over WiFi (SafeBoot), keeps WiFi settings and material database
+    const app = release.assets.find((a) => a.name === `${id}${APP_SUFFIX}`)
+    if (app) {
+      console.log(`${tag}: ${app.name}`)
+      await download(app.browser_download_url, join(dir, app.name))
+      build.app = `${tag}/${app.name}`
+      build.appSize = app.size
+    }
+    builds.push(build)
   }
   return {
     tag,

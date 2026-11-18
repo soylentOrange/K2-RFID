@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.5.0-beta
+
+**Pre-release for trying the firmware update over WiFi from GitHub.** Includes everything from v1.4.1-beta and v1.4.2-beta (firmware installer, WiFi setup via Improv).
+
+### New
+
+- Firmware update from GitHub on the new `Firmware` page of the web app (`Database >>`): pick the version and click `Update Firmware`. The browser downloads `<board>.firmware.bin` from the GitHub Pages site, restarts the thingy into SafeBoot and uploads the image there; afterwards it checks that the new version is running. WiFi credentials and the material database are kept. Board and variant (`_static-stack`) of the running firmware are preselected, the newest release is offered plus a newer pre-release. The browser does the https download, so neither the firmware nor SafeBoot need TLS and the flash layout stays the same.
+- `/api/system/info` also reports the firmware version, the build (`buildName`) and whether it's a `_static-stack` build.
+- The GitHub Pages site also hosts the app images (`<board>.firmware.bin`) of the newest release and pre-release.
+
+### Installation
+
+Firmware before this version has no `Firmware` page, so update once by hand via SafeBoot/OTA with `<board>_static-stack.firmware.bin` (WiFi credentials and the material database are kept). Later updates can be done from the web app. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.4.2-beta
 
 **Pre-release for trying the WiFi setup from the firmware installer.**
