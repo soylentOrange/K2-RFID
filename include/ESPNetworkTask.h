@@ -14,6 +14,9 @@ class ESPNetwork {
     void end();
     void clearConfiguration();
     Mycila::ESPConnect* getESPConnect();
+    // reduced WiFi transmit power (for boards that lose the WiFi on a weak power supply)
+    bool getLowTxPower() const { return _lowTxPower; }
+    void setLowTxPower(bool low);
 
   private:
     Task* _espConnectTask = nullptr;
@@ -21,4 +24,7 @@ class ESPNetwork {
     Scheduler* _scheduler = nullptr;
     AsyncWebServer* _webServer;
     Mycila::ESPConnect _espConnect;
+    bool _lowTxPower = false;
+    bool _txPowerListener = false;
+    void _applyTxPower();
 };

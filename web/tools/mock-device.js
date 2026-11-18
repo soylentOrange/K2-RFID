@@ -16,7 +16,7 @@ const TYPES = { '.html': 'text/html', '.svg': 'image/svg+xml', '.png': 'image/pn
 
 // MOCK_DB=path serves another database, e.g. one copied from a printer
 let database = await readFile(process.env.MOCK_DB ?? join(DATA, 'material_database.json'))
-const config = { cloneSerial: false, beepAvailable: true, beepOnRW: false, writeTags: false, writeEmptyTags: true, PN532: true }
+const config = { cloneSerial: false, beepAvailable: true, beepOnRW: false, lowTxPower: false, writeTags: false, writeEmptyTags: true, PN532: true }
 const printer = { host: '', customPassword: false }
 let nextId = 1
 // 'app', 'down' (restarting) or 'safeboot'
@@ -109,7 +109,7 @@ wss.on('connection', (ws) => {
       config.writeEmptyTags = msg.writeEmptyTags
       broadcast({ type: 'arm_state', origin: id, writeTags: config.writeTags, writeEmptyTags: config.writeEmptyTags, spooldata: msg.spooldata })
     } else if (msg.type === 'update_config') {
-      Object.assign(config, { beepOnRW: msg.beepOnRW, cloneSerial: msg.cloneSerial })
+      Object.assign(config, { beepOnRW: msg.beepOnRW, cloneSerial: msg.cloneSerial, lowTxPower: msg.lowTxPower ?? config.lowTxPower })
       broadcast({ type: 'update_config', origin: id, ...config })
     }
   })

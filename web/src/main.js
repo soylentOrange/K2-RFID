@@ -26,6 +26,7 @@ const state = {
   writeEmptyTags: true,
   beepOnRW: false,
   beepAvailable: true,
+  lowTxPower: false,
   cloneSerial: false,
   readerAvailable: true,
 }
@@ -181,7 +182,7 @@ function disarm() {
 }
 
 function sendConfig() {
-  device.send({ type: 'update_config', beepOnRW: state.beepOnRW, cloneSerial: state.cloneSerial })
+  device.send({ type: 'update_config', beepOnRW: state.beepOnRW, cloneSerial: state.cloneSerial, lowTxPower: state.lowTxPower })
 }
 
 async function loadDbFromThingy({ silent = false } = {}) {
@@ -309,6 +310,9 @@ function onConfig(msg) {
   $('beep').checked = state.beepOnRW
   $('beep').disabled = !state.beepAvailable
   $('clone').checked = state.cloneSerial
+  // older firmware doesn't know the setting
+  if (msg.lowTxPower !== undefined) state.lowTxPower = msg.lowTxPower
+  $('low-tx').checked = state.lowTxPower
 }
 
 function onArmState(msg, { initial = false } = {}) {
@@ -496,6 +500,10 @@ function bindUi() {
   }
   $('clone').onchange = (e) => {
     state.cloneSerial = e.target.checked
+    sendConfig()
+  }
+  $('low-tx').onchange = (e) => {
+    state.lowTxPower = e.target.checked
     sendConfig()
   }
   $('write-empty').onchange = (e) => {

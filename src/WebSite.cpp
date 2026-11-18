@@ -97,6 +97,7 @@ void WebSite::_webSiteCallback() {
       jsonMsg["id"] = client->id();
       jsonMsg["host"] = espNetwork.getESPConnect()->getIPAddress().toString().c_str();
       jsonMsg["cloneSerial"] = _cloneSerial;
+      jsonMsg["lowTxPower"] = espNetwork.getLowTxPower();
 #ifdef USE_BEEPER
       jsonMsg["beepAvailable"] = true;
       jsonMsg["beepOnRW"] = _beepOnRW;
@@ -199,6 +200,8 @@ void WebSite::_webSiteCallback() {
               _beepOnRW = jsonRXMsg["beepOnRW"].as<const bool>();
               rfid.enableBeep(_beepOnRW);
               _cloneSerial = jsonRXMsg["cloneSerial"].as<const bool>();
+              if (jsonRXMsg["lowTxPower"].is<bool>() && jsonRXMsg["lowTxPower"].as<bool>() != espNetwork.getLowTxPower())
+                espNetwork.setLowTxPower(jsonRXMsg["lowTxPower"].as<bool>());
 
               // save persistent options in preferences
               Preferences preferences;
@@ -218,6 +221,7 @@ void WebSite::_webSiteCallback() {
               jsonMsg["beepAvailable"] = false;
 #endif
               jsonMsg["cloneSerial"] = _cloneSerial;
+              jsonMsg["lowTxPower"] = espNetwork.getLowTxPower();
               AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
               serializeJson(jsonMsg, buffer->get(), buffer->length());
               _ws->textAll(buffer);

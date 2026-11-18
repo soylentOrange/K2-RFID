@@ -25,6 +25,19 @@ void ESPNetwork::begin(Scheduler* scheduler) {
   bool ap = preferences.isKey("ap") ? preferences.getBool("ap", false) : false;
   preferences.end();
 
+  preferences.begin("k2rfid", true);
+  _lowTxPower = preferences.getBool("lowtx", false);
+  preferences.end();
+
+  // the transmit power is reset whenever the WiFi (re)starts: apply it on every start
+  if (!_txPowerListener) {
+    _txPowerListener = true;
+    WiFi.onEvent([this](arduino_event_id_t event, __unused arduino_event_info_t info) {
+      if (event == ARDUINO_EVENT_WIFI_STA_START || event == ARDUINO_EVENT_WIFI_AP_START)
+        _applyTxPower();
+    });
+  }
+
   if (ssid.empty() || ap) {
     LOGI(TAG, "Trying to start captive portal in the background...");
   } else {
@@ -51,6 +64,23 @@ void ESPNetwork::end() {
   _espConnectTask->disable();
   _espConnect.end();
   LOGD(TAG, "...done!");
+}
+
+void ESPNetwork::setLowTxPower(bool low) {
+  _lowTxPower = low;
+  Preferences preferences;
+  preferences.begin("k2rfid", false);
+  preferences.putBool("lowtx", low);
+  preferences.end();
+  _applyTxPower();
+}
+
+void ESPNetwork::_applyTxPower() {
+  if (WiFi.getMode() == WIFI_MODE_NULL)
+    return;
+  const wifi_power_t power = _lowTxPower ? WIFI_LOW_TX_POWER : WIFI_POWER_19_5dBm;
+  WiFi.setTxPower(power);
+  LOGI(TAG, "WiFi transmit power: %.1f dBm", WiFi.getTxPower() / 4.0f);
 }
 
 Mycila::ESPConnect* ESPNetwork::getESPConnect() {
