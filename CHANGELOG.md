@@ -2,7 +2,7 @@
 
 ## v1.5.0-beta
 
-**Pre-release for trying the firmware update over WiFi from GitHub.** Includes the firmware installer of [v1.4.1-beta](https://github.com/soylentOrange/K2-RFID/releases/tag/v1.4.1-beta).
+**Pre-release for trying the firmware update over WiFi from GitHub.** Includes everything from v1.4.1-beta and v1.4.2-beta (firmware installer, WiFi setup via Improv).
 
 ### New
 
@@ -13,6 +13,19 @@
 ### Installation
 
 Firmware before this version has no `Firmware` page, so update once by hand via SafeBoot/OTA with `<board>_static-stack.firmware.bin` (WiFi credentials and the material database are kept). Later updates can be done from the web app. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
+## v1.4.2-beta
+
+**Pre-release for trying the WiFi setup from the firmware installer.**
+
+### New
+
+- WiFi setup over USB: the firmware speaks [Improv Serial](https://www.improv-wifi.com/serial/), so the [firmware installer](https://soylentorange.github.io/K2-RFID/install.html) can send the WiFi credentials (`Connect to Wi-Fi`, with a list of the WiFi networks nearby). The thingy tests them while the captive portal keeps running, saves them and restarts in your WiFi. Wrong credentials are reported and nothing is saved. If the thingy is already in a WiFi, the new credentials are saved and used after the restart (the captive portal opens again if they don't work).
+- The installer tells more clearly that the LOLIN S2 Mini needs a press on its RST button after flashing (the S2 can't be reset over USB) and how to get to the WiFi setup afterwards: click `Install` again and pick the port of the running firmware.
+
+### Installation
+
+Updating via SafeBoot/OTA with `<board>_static-stack.firmware.bin` is enough. To try the WiFi setup, flash a board via https://soylentorange.github.io/K2-RFID/install.html?release=v1.4.2-beta. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.4.1-beta
 

@@ -62,8 +62,9 @@ async function publish(release) {
       version,
       // the factory image also overwrites the settings, so offering to erase first is harmless
       new_install_prompt_erase: true,
-      // the firmware doesn't speak Improv, don't wait for it after flashing
-      new_install_improv_wait_time: 0,
+      // WiFi setup via Improv Serial right after flashing. The S2 has to be reset by
+      // hand (native USB), so the installer can't reach it then: don't wait for it.
+      new_install_improv_wait_time: board.chipFamily === 'ESP32-S2' ? 0 : 10,
       // merged image (bootloader, partitions, SafeBoot, app, file system), written at 0x0
       builds: [{ chipFamily: board.chipFamily, parts: [{ path: asset.name, offset: 0 }] }],
     }
