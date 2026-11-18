@@ -106,7 +106,6 @@
             <dd class="optional-3" id="info-heap">Unknown</dd>
           </dl>
           <a id="other-app-link" class="hint" hidden></a>
-          <a id="install-link" class="hint" href="install.html">Install the firmware via USB (ESP Web Tools)</a>
         </section>
 
         <!-- material database view -->
@@ -136,15 +135,17 @@
 
         <!-- firmware update over WiFi (via SafeBoot) -->
         <section id="view-firmware" class="view" hidden>
-          <h2><span>Installed Firmware</span></h2>
+          <h2><span>Firmware Versions</span></h2>
           <dl class="info">
-            <dt>Version:</dt>
+            <dt>Installed:</dt>
             <dd id="fw-installed">Unknown</dd>
-            <dt>Newest:</dt>
+            <dt>Release:</dt>
             <dd id="fw-newest">Unknown</dd>
+            <dt id="fw-beta-label" hidden>Pre-Release:</dt>
+            <dd id="fw-beta" hidden></dd>
           </dl>
 
-          <h2><span>Firmware Update</span></h2>
+          <h2><span>OTA Update (WiFi)</span></h2>
           <select id="fw-board" aria-label="Board"></select>
           <select id="fw-release" aria-label="Firmware version"></select>
           <label class="switch-row">
@@ -156,6 +157,13 @@
           <p class="hint optional-2">
             Downloads the firmware from GitHub, restarts the thingy into SafeBoot and installs it there.
             WiFi settings and the material database are kept.
+          </p>
+
+          <h2><span>USB Install (ESP Web Tools)</span></h2>
+          <button id="fw-install" type="button">Open Installer</button>
+          <p class="hint optional-1">
+            Flashes the complete factory image via USB (Chrome or Edge on a computer). For new boards or
+            to recover one; replaces the WiFi settings and the material database.
           </p>
         </section>
 

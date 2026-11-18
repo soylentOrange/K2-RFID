@@ -116,7 +116,7 @@ At the bottom, `Thingy Info` shows the board the firmware was built for, the fir
 
 ### Firmware Update
 
-The `Firmware` page (`Database >>`) updates the thingy over WiFi with a firmware from GitHub, no file download needed. It shows the installed version and the newest release, and preselects the board and variant (`_static-stack` or not) of the running firmware. Pick the version (the newest release, plus a newer pre-release if there is one) and click `Update Firmware`:
+The `Firmware` page (`Database >>`) updates the thingy over WiFi with a firmware from GitHub, no file download needed. It shows the installed version, the newest release and a newer pre-release (if there is one, marked `installed` when it's the one running), and preselects the board and variant (`_static-stack` or not) of the running firmware. Under `OTA Update (WiFi)`, pick the version (the newest release, plus a newer pre-release if there is one) and click `Update Firmware`:
 
 1. the browser downloads `<board>.firmware.bin` of the release from the GitHub Pages site and checks that it's an image for the chip of the thingy,
 2. the thingy restarts into SafeBoot,
@@ -124,6 +124,8 @@ The `Firmware` page (`Database >>`) updates the thingy over WiFi with a firmware
 4. the page checks that the new version is running and reloads.
 
 WiFi credentials and the material database are kept, as with a manual update via SafeBoot. The browser does the download from GitHub (https), so neither the firmware nor SafeBoot need TLS, and the flash layout stays the same. It works from the app on the thingy (`http://k2rfid.local`) and from the app on GitHub Pages (Chromium browsers, see [Web App](#web-app-github-pages)). The phone or computer needs internet access and must not leave the WiFi of the thingy during the update. If SafeBoot can't be reached (e.g. it got another IP address), open the thingy in the browser and upload the `.firmware.bin` there by hand.
+
+Below, `USB Install (ESP Web Tools)` opens the [firmware installer](#in-the-browser-esp-web-tools) for a new board or to recover one (it replaces the WiFi settings and the material database).
 
 Firmware older than this feature doesn't report its build variant, so check board and variant before updating from it (`/boardname` only tells the board, not whether an external LED is used).
 
@@ -235,7 +237,7 @@ I found an old RGB LED-strip in my pile of junk. cutting one of the LEDs from th
 
 #### In the browser (ESP Web Tools)
 
-The easiest way: open **https://soylentorange.github.io/K2-RFID/install.html** in Chrome or Edge on a desktop computer (the page needs [Web Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API), Firefox and Safari don't have it), pick your board and the firmware version, connect the board via USB and click `Install`. The page uses [ESP Web Tools](https://esphome.github.io/esp-web-tools/) and flashes the same factory image as esptool below (bootloader, partition table, SafeBoot, firmware and file system at 0x0), so no software needs to be installed. The `_static-stack` variant (see below) is preselected. The settings page of the web app links to the installer, too.
+The easiest way: open **https://soylentorange.github.io/K2-RFID/install.html** in Chrome or Edge on a desktop computer (the page needs [Web Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API), Firefox and Safari don't have it), pick your board and the firmware version, connect the board via USB and click `Install`. The page uses [ESP Web Tools](https://esphome.github.io/esp-web-tools/) and flashes the same factory image as esptool below (bootloader, partition table, SafeBoot, firmware and file system at 0x0), so no software needs to be installed. The `_static-stack` variant (see below) is preselected. The `Firmware` page of the web app opens the installer, too (`Open Installer`, with the board of the thingy preselected).
 
 - LOLIN S2 Mini (ESP32-S2 with native USB): put the board into download mode first - hold the "0" button, press and release "RST", then release "0". **After flashing, press the "RST" button on the board** to start the new firmware. The reset in the installer has no effect on the S2: it has no USB-serial chip that could pull its reset line, and a software (watchdog) reset would bring it back into download mode after entering it with the "0" button.
 - WiFi setup over USB (from v1.4.2-beta on): the firmware speaks [Improv Serial](https://www.improv-wifi.com/serial/), so the installer can send your WiFi credentials. On the ESP32-S3 the installer offers `Connect to Wi-Fi` right after flashing. On the S2, press "RST", click `Install` again and pick the port of the running firmware (it has a different name than the one in download mode), then choose `Connect to Wi-Fi`. The thingy tests the credentials, saves them and restarts in your WiFi; the installer shows a link to it. Setting up the WiFi via the access point `K2RFID` (captive portal) still works as before.
