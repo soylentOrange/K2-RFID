@@ -1,6 +1,6 @@
 # K2-RFID
  
-Web app controlled and esp32-powered K2/CFS RFID programming thingy based on [DnG-Crafts/K2-RFID](https://github.com/DnG-Crafts/K2-RFID).
+Web app controlled and esp32-powered K2/CFS RFID programming thingy.
 
 ## Why do I need it?
 
