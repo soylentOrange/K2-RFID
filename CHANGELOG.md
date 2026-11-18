@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.1-beta
+
+**Pre-release for trying the firmware installer in the browser.**
+
+### New
+
+- Firmware installer on GitHub Pages: https://soylentorange.github.io/K2-RFID/install.html flashes the factory image with [ESP Web Tools](https://esphome.github.io/esp-web-tools/) right from Chrome or Edge, no esptool needed. Pick the board, the version (newest release or a newer pre-release) and the variant (`_static-stack` preselected), connect the board via USB and click `Install`. LOLIN S2 Mini: hold "0", press and release "RST", release "0" before installing, press "RST" afterwards.
+- The settings page of the web app links to the installer.
+- After publishing a release, the release workflow rebuilds the GitHub Pages site, which copies the factory images of the new release for the installer.
+
+The installer is meant for the first installation: like every factory image it replaces the WiFi credentials and the material database. Updates still go over WiFi via SafeBoot with `<board>.firmware.bin`.
+
+### Installation
+
+The firmware is the same as in v1.4.0 apart from the link to the installer. Updating via SafeBoot/OTA with `<board>_static-stack.firmware.bin` is enough; to try the installer, flash a board via https://soylentorange.github.io/K2-RFID/install.html?release=v1.4.1-beta. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.4.0
 
 Includes everything from [v1.3.1-beta](#v131-beta) (memory diagnostics, the `_static-stack` variant and the web log fixes).

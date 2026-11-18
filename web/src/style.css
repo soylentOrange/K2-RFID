@@ -522,3 +522,36 @@ input[type="color"]::-moz-color-swatch {
     margin: 2px 0 4px;
   }
 }
+
+/* firmware installer */
+.install select {
+  width: 100%;
+}
+
+.steps {
+  font-size: 14px;
+  text-align: left;
+  margin: 0 0 4px;
+  padding-left: 20px;
+}
+
+.steps li {
+  margin-bottom: 4px;
+}
+
+.warning {
+  color: var(--err);
+  font-size: 14px;
+}
+
+.install .nav a {
+  display: block;
+}
+
+#view-settings > a.hint {
+  display: block;
+}
+
+.card.install {
+  flex-grow: 0;
+}

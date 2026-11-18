@@ -524,6 +524,8 @@ function init() {
     link.href = `${__PAGES_URL__}?device=${encodeURIComponent(window.location.host)}`
     link.textContent = 'Open the web app on GitHub Pages'
     link.hidden = false
+    // the installer needs Web Serial (https), so it only exists on GitHub Pages
+    $('install-link').href = `${__PAGES_URL__}install.html`
     connect('')
   } else {
     $('device-settings').hidden = false

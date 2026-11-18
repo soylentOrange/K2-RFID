@@ -216,7 +216,22 @@ I found an old RGB LED-strip in my pile of junk. cutting one of the LEDs from th
 
 ### Flashing Firmware
 
-The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool write-flash 0x0 ADJUST_TO_YOUR_PATH/lolin_s2_mini.firmware.factory.bin` (esptool versions before v5 use `esptool.py write_flash` instead). 
+#### In the browser (ESP Web Tools)
+
+The easiest way: open **https://soylentorange.github.io/K2-RFID/install.html** in Chrome or Edge on a desktop computer (the page needs [Web Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API), Firefox and Safari don't have it), pick your board and the firmware version, connect the board via USB and click `Install`. The page uses [ESP Web Tools](https://esphome.github.io/esp-web-tools/) and flashes the same factory image as esptool below (bootloader, partition table, SafeBoot, firmware and file system at 0x0), so no software needs to be installed. The `_static-stack` variant (see below) is preselected. The settings page of the web app links to the installer, too.
+
+- LOLIN S2 Mini (ESP32-S2 with native USB): put the board into download mode first - hold the "0" button, press and release "RST", then release "0". After flashing, press "RST" to start the new firmware.
+- The newest release is offered, plus the newest pre-release if there is one that is newer. The images are copied from the release onto the GitHub Pages site when it's built (the browser can't download them from the release directly).
+
+The browser install is meant for the first installation (or to recover a board): like every factory image, it replaces the WiFi credentials and the material database. **Later updates go over WiFi via SafeBoot** (`Settings` > `SafeBoot`, then upload `<board>.firmware.bin` of the release), which keeps both.
+
+<p align="center">
+    <img src="assets/doc/Screenshot_Install.jpeg" alt="screenshot firmware installer" style="width:50%; height:auto;" >
+</p>
+
+#### With esptool
+
+You can also use [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool write-flash 0x0 ADJUST_TO_YOUR_PATH/lolin_s2_mini.firmware.factory.bin` (esptool versions before v5 use `esptool.py write_flash` instead). 
 
 **Recommended: the `_static-stack` variant.** Every release has two firmware files per board, e.g. `lolin_s2_mini_static-stack.firmware.factory.bin` and `lolin_s2_mini.firmware.factory.bin`. Prefer the `_static-stack` one: it reserves the 24 KB of internal RAM that `Update Database` needs for the SSH download right at boot. With the other variant, the download can fail with "Not enough memory to start the download" once the thingy has been running for a while and its memory is fragmented. The same applies to updates via SafeBoot/OTA (`<board>_static-stack.firmware.bin`).
 
@@ -243,7 +258,7 @@ GitHub Actions build every push and pull request:
 
 - `.github/workflows/firmware.yml` builds the firmware (including the factory image) for `lolin_s2_mini`, `lolin_s2_mini_extled` and `esp32_s3_tiny` and provides the binaries as artifacts. It also builds `lolin_s2_mini` and `lolin_s2_mini_extled` with the build flag `PRINTER_SSH_STATIC_STACK`, which reserves the stack of the SSH download right after startup instead of allocating it per download.
 - `.github/workflows/release.yml` publishes a release. Add a `## vX.Y.Z` section to `CHANGELOG.md` and bump `APP_VERSION` in `platformio.ini`, then start the workflow under *Actions → Release → Run workflow* with the version (e.g. `v1.2.0`). It builds all boards, creates the tag and the release with the notes from `CHANGELOG.md`, and attaches `<board>.firmware.factory.bin` (for esptool) and `<board>.firmware.bin` (for OTA/SafeBoot updates). Every release also gets `<board>_static-stack` variants built with `PRINTER_SSH_STATIC_STACK` (the memory for the database download is reserved at boot). A version with a suffix (e.g. `v1.3.1-beta`) is published as pre-release.
-- `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages.
+- `.github/workflows/pages.yml` builds the web app and, on `main`, publishes it on GitHub Pages. `web/tools/fetch-firmware.mjs` adds the factory images of the newest release and of a newer pre-release with an ESP Web Tools manifest per board to `firmware/` on the site, for the installer. The release workflow starts the Pages workflow after publishing a release, so the installer always offers the newest firmware.
 - Dependabot (`.github/dependabot.yml`) proposes updates for the npm packages and GitHub Actions monthly. PlatformIO libraries (`lib_deps` in `platformio.ini`) are pinned and need to be updated by hand.
 
 ### Developing the Web App
@@ -253,11 +268,13 @@ The web app lives in [`web/`](web/) and is built with [Vite](https://vite.dev/) 
 | File | Purpose |
 | --- | --- |
 | `web/index.html` | markup of all views (main, settings, progress) |
+| `web/install.html`, `web/src/install.js` | firmware installer (GitHub Pages only, ESP Web Tools) |
 | `web/src/main.js` | UI logic and the websocket protocol of the thingy |
 | `web/src/device.js` | connection to the thingy (http + websocket, reconnects, heartbeat) |
 | `web/src/materials.js` | material database parsing |
 | `web/src/printer.js` | printer discovery and database download |
 | `web/src/style.css` | styles |
+| `web/tools/fetch-firmware.mjs` | copies the release images for the installer and writes the manifests |
 
 One source, two builds:
 

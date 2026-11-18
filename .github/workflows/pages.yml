@@ -1,5 +1,8 @@
 # Build the web app and publish it on GitHub Pages
 # (Settings > Pages > Source: "GitHub Actions")
+# The site also hosts the firmware installer (install.html, ESP Web Tools) with the
+# factory images of the newest release and pre-release (web/tools/fetch-firmware.mjs).
+# The release workflow starts this workflow after publishing a release.
 name: Web App (GitHub Pages)
 
 on:
@@ -32,11 +35,16 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run build
+      - name: Add firmware for the installer
+        run: node tools/fetch-firmware.mjs dist/firmware
+        env:
+          GH_TOKEN: ${{ github.token }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist
 
   deploy:
+    # the github-pages environment only accepts deployments from main
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
