@@ -87,6 +87,26 @@ async function download(build) {
   return image
 }
 
+// fetch() with a short timeout, for polling a thingy that is restarting
+const pollFor = (device) => (path, options = {}) =>
+  device.fetch(path, { cache: 'no-store', signal: AbortSignal.timeout(POLL_TIMEOUT), ...options })
+
+// restarts the thingy into SafeBoot and resolves when SafeBoot answers
+export async function restartIntoSafeBoot(device) {
+  const sameOrigin = !device.host
+  const poll = pollFor(device)
+  await device.post('/api/system/safeboot')
+  device.disconnect()
+
+  // the firmware goes down first, then SafeBoot comes up (it doesn't send CORS headers, so from
+  // GitHub Pages it's only possible to see that something answers)
+  await waitFor(() => poll('/api/system/info').then(() => false, () => true), 20000, 'The thingy did not restart into SafeBoot')
+  await waitFor(async () => {
+    const response = await poll('/sbversion', { mode: sameOrigin ? 'same-origin' : 'no-cors' })
+    return !sameOrigin || response.ok
+  }, 60000, `SafeBoot is not reachable. Open ${device.host ? `http://${device.host}/` : 'the thingy'} in the browser.`)
+}
+
 // runs the whole update, progress(text) reports the steps; resolves with the system info of
 // the new firmware. device: the Device of main.js (same origin or a host on the LAN)
 export async function updateFirmware(device, release, build, progress) {
@@ -95,18 +115,8 @@ export async function updateFirmware(device, release, build, progress) {
   const sameOrigin = !device.host
 
   progress('Restarting into SafeBoot...')
-  await device.post('/api/system/safeboot')
-  device.disconnect()
-
-  // the firmware goes down first, then SafeBoot comes up (it doesn't send CORS headers, so from
-  // GitHub Pages it's only possible to see that something answers)
-  const poll = (path, options = {}) =>
-    device.fetch(path, { cache: 'no-store', signal: AbortSignal.timeout(POLL_TIMEOUT), ...options })
-  await waitFor(() => poll('/api/system/info').then(() => false, () => true), 20000, 'The thingy did not restart into SafeBoot')
-  await waitFor(async () => {
-    const response = await poll('/sbversion', { mode: sameOrigin ? 'same-origin' : 'no-cors' })
-    return !sameOrigin || response.ok
-  }, 60000, 'SafeBoot is not reachable. Open the thingy in the browser and upload the firmware there.')
+  await restartIntoSafeBoot(device)
+  const poll = pollFor(device)
 
   progress(`Installing ${release.tag}...\n\nDon't switch off the thingy.`)
   const form = new FormData()

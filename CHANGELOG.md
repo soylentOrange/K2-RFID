@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.1-beta
+
+### Fixes
+
+- `SafeBoot` in the settings waits until SafeBoot is up and then opens its page. From the GitHub Pages app it now opens the thingy's address (e.g. `http://k2rfid.local/`) instead of reloading the Pages app, so you don't have to type the address yourself.
+
+### Installation
+
+Update from v1.5.0-beta on the `Firmware` page of the web app, or via SafeBoot/OTA with `<board>_static-stack.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.5.0-beta
 
 **Pre-release for trying the firmware update over WiFi from GitHub.** Includes everything from v1.4.1-beta and v1.4.2-beta (firmware installer, WiFi setup via Improv).

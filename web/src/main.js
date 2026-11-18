@@ -8,7 +8,7 @@ import { findPrinter, downloadPrinterDb } from './printer.js'
 import { load, save } from './storage.js'
 import { toast } from './toast.js'
 import { successIcon, errorIcon, tagIcon, spoolIcon } from './icons.js'
-import { loadReleases, boardOf, compareVersions, isPrerelease, updateFirmware } from './update.js'
+import { loadReleases, boardOf, compareVersions, isPrerelease, updateFirmware, restartIntoSafeBoot } from './update.js'
 
 const $ = (id) => document.getElementById(id)
 
@@ -528,6 +528,14 @@ function bindUi() {
   }
 
   // restart / clear wifi / safeboot - then reload, which shows whatever the thingy serves next
+  // SafeBoot: wait until it answers, then open its page (on GitHub Pages: the thingy's address)
+  $('safeboot').onclick = () =>
+    runWithProgress('Restarting into SafeBoot...', async () => {
+      await restartIntoSafeBoot(device)
+      setTimeout(() => window.location.assign(device.url('/')), 1500)
+      return 'SafeBoot is ready, opening it...'
+    }, { returnTo: null }).then((ok) => ok || setTimeout(() => window.location.reload(), 7500))
+
   for (const button of document.querySelectorAll('[data-action]')) {
     button.onclick = () =>
       runWithProgress('Processing...', () => device.post(button.dataset.action), { returnTo: null }).then(() =>
