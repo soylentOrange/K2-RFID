@@ -20,6 +20,7 @@ SPIClass rfidSpi(HSPI);
 RFID rfid(rfidSpi);
 LED led;
 PrinterDb printerDb;
+ImprovSerial improvSerial;
 
 // Allow logging for K2RFID-app via serial
 #if defined(MYCILA_LOGGER_SUPPORT_APP)
@@ -72,6 +73,9 @@ void setup() {
 
   // Add RFID to Scheduler
   rfid.begin(&scheduler);
+
+  // WiFi setup via USB (Improv Serial, used by the firmware installer)
+  improvSerial.begin(&scheduler);
 }
 
 void loop() {
