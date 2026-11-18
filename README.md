@@ -108,7 +108,7 @@ This file is also the one containing custom materials you have added to your pri
 
 The web app has three pages (`Main`, `Settings` and `Database`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates), reset the WiFi credentials and open the web log.
 
-At the bottom, `Thingy Info` shows the board the firmware was built for, the firmware and web app versions, the chip (model, revision, flash size), the PSRAM and the free internal RAM with its largest free block (hover or long-press an entry for details). `Update Database` downloads the database via SSH, which needs a block of 24 KB of internal RAM (see "block"). If it fails with "Not enough memory to start the download", flash `<board>_static-stack.firmware.bin` from the release, which reserves this block right at boot (shown as `+24 KB SSH`). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
+At the bottom, `Thingy Info` shows the board the firmware was built for, the firmware and web app versions, the chip (model, revision, flash size), the PSRAM and the free internal RAM with its largest free block (hover or long-press an entry for details). `Update Database` downloads the database via SSH, which needs a block of 24 KB of internal RAM (see "block"). The recommended `<board>_static-stack` firmware reserves this block right at boot (shown as `+24 KB SSH`), see [Flashing Firmware](#flashing-firmware). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
 
 <p align="center">
     <img src="assets/doc/Screenshot_Settings.jpeg" alt="screenshot settings" style="width:50%; height:auto;" >
@@ -217,6 +217,8 @@ I found an old RGB LED-strip in my pile of junk. cutting one of the LEDs from th
 ### Flashing Firmware
 
 The easiest way to get the firmware on the board is using [esptool.py](https://github.com/espressif/esptool). After [installing](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html#installation) esptool.py and downloading the factory firmware image matching your setup from the [releases-section](https://github.com/soylentOrange/K2-RFID/releases), upload it to the board (using the usb port of your board) with: `esptool write-flash 0x0 ADJUST_TO_YOUR_PATH/lolin_s2_mini.firmware.factory.bin` (esptool versions before v5 use `esptool.py write_flash` instead). 
+
+**Recommended: the `_static-stack` variant.** Every release has two firmware files per board, e.g. `lolin_s2_mini_static-stack.firmware.factory.bin` and `lolin_s2_mini.firmware.factory.bin`. Prefer the `_static-stack` one: it reserves the 24 KB of internal RAM that `Update Database` needs for the SSH download right at boot. With the other variant, the download can fail with "Not enough memory to start the download" once the thingy has been running for a while and its memory is fragmented. The same applies to updates via SafeBoot/OTA (`<board>_static-stack.firmware.bin`).
 
 Note: When uploading to a factory fresh board, you might need to enable uploads by pressing both buttons, release the "0"-button first, then the "RST"-button (this sequence will enable the USB-CDC). 
 
