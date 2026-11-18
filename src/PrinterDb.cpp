@@ -9,6 +9,7 @@
 #include <thingy.h>
 
 #include <libssh/libssh.h>
+#include <mbedtls/platform.h>
 
 #define TAG "PrinterDb"
 
@@ -20,9 +21,10 @@ static const char* FETCH_COMMAND = "gzip -c " PRINTER_DB_PATH;
 
 // heap state, for diagnosing memory problems on boards with/without PSRAM
 static std::string memoryInfo() {
-  char info[160];
-  snprintf(info, sizeof(info), "free heap %u KB, largest block %u KB, PSRAM %u KB (%u KB free)",
+  char info[192];
+  snprintf(info, sizeof(info), "free heap %u KB, largest block %u KB, lowest since boot %u KB, PSRAM %u KB (%u KB free)",
            static_cast<unsigned>(ESP.getFreeHeap() / 1024), static_cast<unsigned>(ESP.getMaxAllocHeap() / 1024),
+           static_cast<unsigned>(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024),
            static_cast<unsigned>(ESP.getPsramSize() / 1024), static_cast<unsigned>(ESP.getFreePsram() / 1024));
   return info;
 }
@@ -34,12 +36,47 @@ static std::string memoryInfo() {
 // Boards without PSRAM get a task with an internal stack per download that writes the file itself.
 static StaticTask_t sshTaskBuffer;
 
+// During the download, the many small allocations of libssh and mbedtls (key exchange) go to
+// the PSRAM too. By default, malloc() keeps blocks up to CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL
+// bytes internal and mbedtls allocates internal memory only, which would take the internal RAM
+// that WiFi needs (the lowest free internal RAM was down to 6 KB after a download).
+#define PSRAM_MALLOC_THRESHOLD 32
+
+#if defined(MBEDTLS_PLATFORM_MEMORY) && !defined(MBEDTLS_PLATFORM_CALLOC_MACRO) && defined(CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC)
+extern "C" void* esp_mbedtls_mem_calloc(size_t n, size_t size);
+extern "C" void esp_mbedtls_mem_free(void* ptr);
+static void* psramCalloc(size_t n, size_t size) {
+  return heap_caps_calloc_prefer(n, size, 2, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+}
+static void psramFree(void* ptr) { heap_caps_free(ptr); }
+static void mbedtlsUsePsram(bool psram) {
+  // heap_caps_free() frees blocks of either heap, so switching while allocated is fine
+  if (psram)
+    mbedtls_platform_set_calloc_free(psramCalloc, psramFree);
+  else
+    mbedtls_platform_set_calloc_free(esp_mbedtls_mem_calloc, esp_mbedtls_mem_free);
+}
+#else
+#warning "mbedtls allocations can't be moved to PSRAM with this ESP-IDF configuration"
+static void mbedtlsUsePsram(bool) {}
+#endif
+
+static void allocateInPsram(bool psram) {
+#ifdef CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL
+  heap_caps_malloc_extmem_enable(psram ? PSRAM_MALLOC_THRESHOLD : CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL);
+#endif
+  mbedtlsUsePsram(psram);
+}
+
 void PrinterDb::_psramFetchTask(void* arg) {
   PrinterDb* self = static_cast<PrinterDb*>(arg);
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     std::string message;
+    allocateInPsram(true);
     self->_success = self->_fetchViaSSH(message);
+    allocateInPsram(false);
+    LOGI(TAG, "SSH download done (%s)", memoryInfo().c_str());
     self->_message = message;
     self->_state = State::DOWNLOADED;
   }

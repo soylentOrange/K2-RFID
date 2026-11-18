@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.3-beta
+
+### Fixes
+
+- `Update Database`: the small allocations of the SSH download (libssh, mbedtls key exchange) go to the PSRAM too. Before, they used the internal RAM (the lowest free internal RAM was down to 6 KB), which WiFi needs. The web log shows the memory before and after the download, including the lowest free internal RAM since boot.
+
+### Installation
+
+Update via the `Firmware` page (the switch `Static stack` of the GitHub Pages app must be off until this release is on `main`) or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.5.2-beta
 
 ### New
