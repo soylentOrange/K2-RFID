@@ -106,7 +106,7 @@ This file is also the one containing custom materials you have added to your pri
 
 ### Settings
 
-The web app has four pages (`Main`, `Settings`, `Database` and `Firmware`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates), reset the WiFi credentials and open the web log.
+The web app has four pages (`Main`, `Settings`, `Database` and `Firmware`), each of them fits on one screen without scrolling - on small screens the layout gets more compact and less important texts are hidden. The `Settings` page holds the switches for the beeper, for writing only empty tags and for cloning the serial number, and the buttons to restart the thingy, enter SafeBoot (for firmware updates by hand; the page waits until SafeBoot is up and then opens it, also from the GitHub Pages app), reset the WiFi credentials and open the web log.
 
 At the bottom, `Thingy Info` shows the board the firmware was built for, the firmware and web app versions, the chip (model, revision, flash size), the PSRAM and the free internal RAM with its largest free block (hover or long-press an entry for details). `Update Database` downloads the database via SSH, which needs a block of 24 KB of internal RAM (see "block"). The recommended `<board>_static-stack` firmware reserves this block right at boot (shown as `+24 KB SSH`), see [Flashing Firmware](#flashing-firmware). The same data is available as JSON at `http://k2rfid.local/api/system/info`.
 

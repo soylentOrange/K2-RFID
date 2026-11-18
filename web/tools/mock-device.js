@@ -35,6 +35,7 @@ const server = createServer(async (req, res) => {
   if (mode === 'safeboot') {
     // like SafeBoot: no CORS headers
     if (req.method === 'GET' && url.pathname === '/sbversion') return reply(200, 'v3.2.2-mod')
+    if (req.method === 'GET' && url.pathname === '/') return reply(200, '<h1>Mock SafeBoot</h1>', 'text/html')
     if (req.method === 'POST' && url.pathname === '/') {
       let size = 0
       for await (const chunk of req) size += chunk.length
