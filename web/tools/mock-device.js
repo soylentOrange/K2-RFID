@@ -21,7 +21,7 @@ const printer = { host: '', customPassword: false }
 let nextId = 1
 // 'app', 'down' (restarting) or 'safeboot'
 let mode = 'app'
-let version = '1.4.0'
+let version = process.env.MOCK_VERSION ?? '1.4.0'
 function restartInto(next) {
   mode = 'down'
   for (const ws of wss.clients) ws.terminate()

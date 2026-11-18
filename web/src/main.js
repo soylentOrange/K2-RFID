@@ -441,10 +441,13 @@ function renderFirmware() {
   const installed = installedVersion()
   $('fw-installed').textContent = installed || 'Unknown'
   const { release, build } = selectedFirmware()
-  const newest = firmware.releases?.find((r) => !r.prerelease) ?? firmware.releases?.[0]
-  $('fw-newest').textContent = newest
-    ? `${newest.version}${compareVersions(newest.version, installed) === 0 ? ' (installed)' : ''}`
-    : 'Unknown'
+  // newest release and, if there is one, a newer pre-release
+  const mark = (r) => `${r.version}${compareVersions(r.version, installed) === 0 ? ' (installed)' : ''}`
+  const stable = firmware.releases?.find((r) => !r.prerelease)
+  const beta = firmware.releases?.find((r) => r.prerelease)
+  $('fw-newest').textContent = stable ? mark(stable) : firmware.releases ? 'none' : 'Unknown'
+  $('fw-beta-label').hidden = $('fw-beta').hidden = !beta
+  if (beta) $('fw-beta').textContent = mark(beta)
   $('fw-update').disabled = !device.connected || !build
   if (firmware.error) $('fw-info').textContent = firmware.error
   else if (!firmware.releases) return
@@ -544,6 +547,12 @@ function bindUi() {
   }
 
   $('fw-update').onclick = startFirmwareUpdate
+  // the installer needs Web Serial (https), so it only exists on GitHub Pages; preselect the board
+  $('fw-install').onclick = () => {
+    const board = $('fw-board').value || boardOf(firmware.info, firmware.boardName)
+    const url = `${__DEVICE_BUILD__ ? __PAGES_URL__ : './'}install.html${board ? `?board=${encodeURIComponent(board)}` : ''}`
+    window.open(url, '_blank', 'noopener')
+  }
   for (const id of ['fw-board', 'fw-release', 'fw-static']) $(id).onchange = renderFirmware
 
   // GitHub Pages: choose the device to talk to
@@ -634,8 +643,6 @@ function init() {
     link.href = `${__PAGES_URL__}?device=${encodeURIComponent(window.location.host)}`
     link.textContent = 'Open the web app on GitHub Pages'
     link.hidden = false
-    // the installer needs Web Serial (https), so it only exists on GitHub Pages
-    $('install-link').href = `${__PAGES_URL__}install.html`
     connect('')
   } else {
     $('device-settings').hidden = false

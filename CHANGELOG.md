@@ -5,6 +5,11 @@
 ### Fixes
 
 - `SafeBoot` in the settings waits until SafeBoot is up and then opens its page. From the GitHub Pages app it now opens the thingy's address (e.g. `http://k2rfid.local/`) instead of reloading the Pages app, so you don't have to type the address yourself.
+- The `Firmware` page shows the newest pre-release next to the newest release (before, only the release was shown as "Newest", even with a newer pre-release installed).
+
+### Changed
+
+- The link to the firmware installer (ESP Web Tools) moved from the settings to the `Firmware` page, as a button in its own section `USB Install (ESP Web Tools)` (with the board of the thingy preselected). The WiFi update there is now titled `OTA Update (WiFi)`.
 
 ### Installation
 
