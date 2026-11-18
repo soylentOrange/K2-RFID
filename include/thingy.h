@@ -11,6 +11,7 @@
 #include <ESPNetworkTask.h>
 #include <EventHandler.h>
 #include <FS.h>
+#include <ImprovSerial.h>
 #include <LED.h>
 #include <LittleFS.h>
 #include <MycilaESPConnect.h>
@@ -29,6 +30,7 @@ extern WebSite webSite;
 extern RFID rfid;
 extern LED led;
 extern PrinterDb printerDb;
+extern ImprovSerial improvSerial;
 
 // Allow serial logging for App
 #ifdef MYCILA_LOGGER_SUPPORT_APP
