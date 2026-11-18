@@ -6,13 +6,17 @@
 
 - `Low WiFi TX power` in the settings lowers the WiFi transmit power from 19.5 dBm to 8.5 dBm. For boards that drop out of the WiFi after a few minutes while the RFID reader keeps working: the LOLIN S2 Mini does that on weak power supplies (e.g. a computer's USB port). Applied right away and kept across restarts.
 
+### Changed
+
+- The SSH download of `Update Database` (its 24 KB stack and the download buffer) runs in the PSRAM now. The `_static-stack` variant reserved these 24 KB in the internal RAM, which left WiFi too little memory (9 to 18 KB free): the thingy dropped off the network after a few minutes while the RFID reader kept working. There's only one firmware per board again, the `_static-stack` builds and the switch on the `Firmware` page and in the installer are gone. `Thingy Info` shows "SSH download runs in PSRAM" (hover the RAM entry).
+
 ### Fixes
 
 - Firmware installer: `Connect to Wi-Fi` (Improv) is offered for the LOLIN S2 Mini too, and the useless `Logs & Console` entry is hidden (the thingy logs via the web log).
 
 ### Installation
 
-Updating via the `Firmware` page or SafeBoot/OTA with `<board>_static-stack.firmware.bin` is enough (WiFi credentials and the material database are kept). Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+Updating via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept), also coming from a `_static-stack` build. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.5.1-beta
 

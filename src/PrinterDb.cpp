@@ -27,36 +27,38 @@ static std::string memoryInfo() {
   return info;
 }
 
-#ifdef PRINTER_SSH_STATIC_STACK
-// Variant: the stack of the download task is reserved at startup (in internal RAM, while the heap
-// isn't fragmented yet), so starting a download never fails for lack of a big enough block. Costs
-// PRINTER_SSH_STACK_SIZE bytes for good. The task is created once and waits for a notification.
-// (A static array doesn't fit: DRAM .bss of the ESP32-S2 build is too small for it.)
+// The download task (libssh is blocking and needs a big stack) is created once at startup.
+// Its stack and the download buffer live in PSRAM, so the scarce internal RAM stays free for
+// WiFi and the web server. A task with its stack in PSRAM must not access the flash (the cache
+// is off while flash is written), so the file is written by the scheduler (see _finish()).
+// Boards without PSRAM get a task with an internal stack per download that writes the file itself.
 static StaticTask_t sshTaskBuffer;
 
-void PrinterDb::_staticFetchTask(void* arg) {
+void PrinterDb::_psramFetchTask(void* arg) {
   PrinterDb* self = static_cast<PrinterDb*>(arg);
   while (true) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     std::string message;
     self->_success = self->_fetchViaSSH(message);
     self->_message = message;
-    self->_state = State::DONE;
+    self->_state = State::DOWNLOADED;
   }
 }
-#endif
 
 void PrinterDb::begin(Scheduler* scheduler) {
   _scheduler = scheduler;
 
-#ifdef PRINTER_SSH_STATIC_STACK
-  // ESP-IDF's FreeRTOS takes the stack size in bytes
-  StackType_t* stack = static_cast<StackType_t*>(heap_caps_malloc(PRINTER_SSH_STACK_SIZE, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
-  if (stack != nullptr)
-    _staticTask = xTaskCreateStatic(_staticFetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, stack, &sshTaskBuffer);
-  if (_staticTask == nullptr)
-    LOGE(TAG, "Can't reserve the stack for the SSH download (%s)", memoryInfo().c_str());
-#endif
+  if (ESP.getPsramSize() > 0) {
+    // ESP-IDF's FreeRTOS takes the stack size in bytes
+    StackType_t* stack = static_cast<StackType_t*>(heap_caps_malloc(PRINTER_SSH_STACK_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+    if (stack != nullptr) {
+      _psramTask = xTaskCreateStatic(_psramFetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, stack, &sshTaskBuffer);
+      if (_psramTask == nullptr)
+        heap_caps_free(stack);
+    }
+    if (_psramTask == nullptr)
+      LOGE(TAG, "Can't create the SSH download task in PSRAM (%s)", memoryInfo().c_str());
+  }
 
   Preferences preferences;
   preferences.begin("k2rfid", true);
@@ -93,18 +95,30 @@ bool PrinterDb::fetch(ResultCallback callback) {
   if (!_state.compare_exchange_strong(expected, State::RUNNING))
     return false;
 
+  // outside of the download task (its stack may be in PSRAM, which must not touch the flash)
+  if (!_sshInitialized) {
+    libssh_begin();
+    _sshInitialized = true;
+  }
+
   _callback = callback;
   _fetchHost = _host;
   _fetchPassword = _password;
 
-#ifdef PRINTER_SSH_STATIC_STACK
-  if (_staticTask != nullptr) {
-    xTaskNotifyGive(_staticTask);
+  if (_psramTask != nullptr) {
+    _download = static_cast<uint8_t*>(heap_caps_malloc(DB_MAX_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+    if (_download == nullptr) {
+      _success = false;
+      _message = "Not enough memory for the download (" + memoryInfo() + ")";
+      _state = State::DONE;
+      return true;
+    }
+    _downloadSize = 0;
+    xTaskNotifyGive(_psramTask);
     return true;
   }
-#endif
 
-  // libssh is blocking and needs a big stack - give it a task of its own
+  // no PSRAM: a task with an internal stack for this download
   if (xTaskCreate(_fetchTask, "printerDb", PRINTER_SSH_STACK_SIZE, this, 1, nullptr) != pdPASS) {
     _success = false;
     _message = "Not enough memory to start the download (" + memoryInfo() + ", needs " + std::to_string(PRINTER_SSH_STACK_SIZE / 1024) + " KB in one block)";
@@ -118,11 +132,22 @@ void PrinterDb::_fetchTask(void* arg) {
   std::string message;
   self->_success = self->_fetchViaSSH(message);
   self->_message = message;
-  self->_state = State::DONE;
+  self->_state = State::DOWNLOADED;
   vTaskDelete(nullptr);
 }
 
 void PrinterDb::_monitorCallback() {
+  if (_state == State::DOWNLOADED) {
+    if (_success)
+      _success = _finish(_message);
+    else if (LittleFS.exists(DB_TEMP_FILE))
+      LittleFS.remove(DB_TEMP_FILE);
+    if (_download != nullptr) {
+      heap_caps_free(_download);
+      _download = nullptr;
+    }
+    _state = State::DONE;
+  }
   if (_state != State::DONE)
     return;
 
@@ -154,16 +179,14 @@ static bool authenticate(ssh_session session, const char* password) {
   return rc == SSH_AUTH_SUCCESS;
 }
 
+// runs in the download task: get the gzipped database into _download (PSRAM) or, without
+// PSRAM, into DB_TEMP_FILE
 bool PrinterDb::_fetchViaSSH(std::string& message) {
-  if (!_sshInitialized) {
-    libssh_begin();
-    _sshInitialized = true;
-  }
-
   LOGI(TAG, "Fetching material database from %s via SSH (%s)...", _fetchHost.c_str(), memoryInfo().c_str());
   bool success = false;
   ssh_channel channel = nullptr;
   File file;
+  const bool toBuffer = _download != nullptr;
 
   ssh_session session = ssh_new();
   if (session == nullptr) {
@@ -177,6 +200,9 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
   ssh_options_set(session, SSH_OPTIONS_PORT, &port);
   ssh_options_set(session, SSH_OPTIONS_USER, "root");
   ssh_options_set(session, SSH_OPTIONS_TIMEOUT, &timeout);
+  // no ssh_config files: nothing to read from the file system in the download task
+  bool processConfig = false;
+  ssh_options_set(session, SSH_OPTIONS_PROCESS_CONFIG, &processConfig);
 
   do {
     if (ssh_connect(session) != SSH_OK) {
@@ -196,13 +222,15 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
       break;
     }
 
-    file = LittleFS.open(DB_TEMP_FILE, "w");
-    if (!file) {
-      message = "Can't write to the file system";
-      break;
+    if (!toBuffer) {
+      file = LittleFS.open(DB_TEMP_FILE, "w");
+      if (!file) {
+        message = "Can't write to the file system";
+        break;
+      }
     }
 
-    // stream the gzipped database into the file
+    // stream the gzipped database into the buffer / file
     uint8_t buffer[512];
     size_t total = 0;
     std::string readError;
@@ -218,17 +246,21 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
         readError = std::string("SSH error: ") + ssh_get_error(session);
         break;
       }
-      total += n;
-      if (total > DB_MAX_SIZE) {
+      if (total + n > DB_MAX_SIZE) {
         readError = "database is larger than " + std::to_string(DB_MAX_SIZE / 1024) + " KB";
         break;
       }
-      if (file.write(buffer, n) != static_cast<size_t>(n)) {
+      if (toBuffer) {
+        memcpy(_download + total, buffer, n);
+      } else if (file.write(buffer, n) != static_cast<size_t>(n)) {
         readError = "can't write to the file system (full?)";
         break;
       }
+      total += n;
     }
-    file.close();
+    if (file)
+      file.close();
+    _downloadSize = total;
 
     uint32_t exitCode = 0;
     ssh_channel_send_eof(channel);
@@ -242,11 +274,38 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
       message = "The printer has no material database at " PRINTER_DB_PATH;
       break;
     }
+    success = true;
+  } while (false);
+
+  if (channel != nullptr) {
+    ssh_channel_close(channel);
+    ssh_channel_free(channel);
+  }
+  ssh_disconnect(session);
+  ssh_free(session);
+  return success;
+}
+
+// runs in the scheduler (internal stack, may access the flash): store the downloaded database
+bool PrinterDb::_finish(std::string& message) {
+  bool success = false;
+  do {
+    if (_download != nullptr) {
+      File file = LittleFS.open(DB_TEMP_FILE, "w");
+      const bool written = file && file.write(_download, _downloadSize) == _downloadSize;
+      if (file)
+        file.close();
+      if (!written) {
+        message = "Can't write to the file system (full?)";
+        break;
+      }
+    }
 
     // check gzip magic, then replace the current database
-    file = LittleFS.open(DB_TEMP_FILE, "r");
+    File file = LittleFS.open(DB_TEMP_FILE, "r");
     bool isGzip = file && file.read() == 0x1f && file.read() == 0x8b;
-    file.close();
+    if (file)
+      file.close();
     if (!isGzip) {
       message = "Unexpected data received from the printer";
       break;
@@ -257,17 +316,11 @@ bool PrinterDb::_fetchViaSSH(std::string& message) {
       break;
     }
 
-    message = std::string("Fetched material database from ") + _fetchHost + " (" + std::to_string(total) + " bytes)";
+    message = std::string("Fetched material database from ") + _fetchHost + " (" + std::to_string(_downloadSize) + " bytes)";
     success = true;
   } while (false);
 
   if (LittleFS.exists(DB_TEMP_FILE))
     LittleFS.remove(DB_TEMP_FILE);
-  if (channel != nullptr) {
-    ssh_channel_close(channel);
-    ssh_channel_free(channel);
-  }
-  ssh_disconnect(session);
-  ssh_free(session);
   return success;
 }

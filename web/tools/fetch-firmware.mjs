@@ -15,7 +15,7 @@ const repo = process.env.GITHUB_REPOSITORY || 'soylentOrange/K2-RFID'
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
 const outDir = process.argv[2] || 'dist/firmware'
 
-// release asset name (without .firmware.factory.bin and _static-stack) -> board
+// release asset name (without .firmware.factory.bin) -> board
 const BOARDS = {
   lolin_s2_mini: { label: 'LOLIN S2 Mini', chipFamily: 'ESP32-S2' },
   lolin_s2_mini_external_WS2812b: { label: 'LOLIN S2 Mini + external WS2812B LED', chipFamily: 'ESP32-S2' },
@@ -47,9 +47,11 @@ async function publish(release) {
   const builds = []
   for (const asset of release.assets) {
     if (!asset.name.endsWith(SUFFIX)) continue
-    let id = asset.name.slice(0, -SUFFIX.length)
-    const staticStack = id.endsWith(STATIC)
-    const boardId = staticStack ? id.slice(0, -STATIC.length) : id
+    const id = asset.name.slice(0, -SUFFIX.length)
+    // older releases also have a "_static-stack" variant per board; since v1.5.2 the SSH
+    // download runs in PSRAM and the plain build is the right one for everybody
+    if (id.endsWith(STATIC)) continue
+    const boardId = id
     const board = BOARDS[boardId]
     if (!board) {
       console.warn(`${tag}: skipping unknown board ${asset.name}`)
@@ -58,7 +60,7 @@ async function publish(release) {
     console.log(`${tag}: ${asset.name}`)
     await download(asset.browser_download_url, join(dir, asset.name))
     const manifest = {
-      name: `K2-RFID (${board.label}${staticStack ? ', static stack' : ''})`,
+      name: `K2-RFID (${board.label})`,
       version,
       // the factory image also overwrites the settings, so offering to erase first is harmless
       new_install_prompt_erase: true,
@@ -72,7 +74,7 @@ async function publish(release) {
     }
     const manifestName = `${id}.manifest.json`
     await writeFile(join(dir, manifestName), JSON.stringify(manifest, null, 2))
-    const build = { board: boardId, label: board.label, chipFamily: board.chipFamily, staticStack, manifest: `${tag}/${manifestName}` }
+    const build = { board: boardId, label: board.label, chipFamily: board.chipFamily, manifest: `${tag}/${manifestName}` }
     // app image for updates over WiFi (SafeBoot), keeps WiFi settings and material database
     const app = release.assets.find((a) => a.name === `${id}${APP_SUFFIX}`)
     if (app) {
