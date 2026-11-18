@@ -200,12 +200,15 @@ form.row button {
   margin: 0;
 }
 
+/* takes the free height of the main page (at least 50px, at most 80% of the card width) */
 .color-picker {
   display: block;
+  flex: 1 1 0;
   aspect-ratio: 1;
-  width: 80%;
-  min-width: 50px;
-  max-width: max(50px, calc(100dvh - 560px));
+  width: auto;
+  min-height: 50px;
+  max-height: min(320px, 50vw);
+  align-self: center;
   margin: auto auto 0;
 }
 
@@ -441,86 +444,76 @@ input[type="color"]::-moz-color-swatch {
   }
 }
 
-/* progressively hide less important parts on small screens */
-@media (max-height: 760px) {
-  .optional-1 {
-    display: none;
-  }
+/* steps for fitting a page on the screen (set by fit.js until the page fits):
+   hide less important parts and use a compact layout */
+.hide-1 .optional-1,
+.hide-2 .optional-2,
+.hide-3 .optional-3 {
+  display: none;
 }
 
-@media (max-height: 700px) {
-  .optional-2 {
-    display: none;
-  }
+.compact .logo {
+  height: 54px;
+  width: 180px;
+  margin-top: 6px;
 }
 
-@media (max-height: 660px) {
-  .optional-3 {
-    display: none;
-  }
+.compact .status {
+  margin-bottom: 6px;
 }
 
-/* compact layout for low screens, so that every page fits without scrolling */
-@media (max-height: 680px) {
-  .logo {
-    height: 54px;
-    width: 180px;
-    margin-top: 6px;
-  }
+.compact .card {
+  padding: 12px 20px;
+  margin-bottom: 8px;
+}
 
-  .status {
-    margin-bottom: 6px;
-  }
+.compact h2 {
+  margin: 10px auto;
+}
 
-  .card {
-    padding: 12px 20px;
-    margin-bottom: 8px;
-  }
+.compact hr {
+  margin: 6px auto 4px;
+}
 
-  h2 {
-    margin: 10px auto;
-  }
+.compact button,
+.compact .row.tight button {
+  padding: 6px;
+  margin-top: 6px;
+}
 
-  hr {
-    margin: 6px auto 4px;
-  }
+.compact .row:not(.tight) button {
+  margin: 6px 0 8px;
+}
 
-  button,
-  .row.tight button {
-    padding: 6px;
-    margin-top: 6px;
-  }
+.compact .value-text {
+  margin: 6px auto;
+}
 
-  .row button {
-    margin: 6px 0 8px;
-  }
+.compact .switch-row {
+  margin-bottom: 4px;
+}
 
-  .value-text {
-    margin: 6px auto;
-  }
+.compact select,
+.compact input[type="text"] {
+  margin: 4px 0;
+}
 
-  .switch-row {
-    margin-bottom: 4px;
-  }
+.compact #printer-password {
+  margin-top: 6px;
+  padding: 5px;
+}
 
-  select,
-  input[type="text"] {
-    margin: 4px 0;
-  }
+.compact .form-row input[type="text"],
+.compact form.row input[type="text"] {
+  padding: 5px;
+}
 
-  #printer-password {
-    margin-top: 6px;
-    padding: 5px;
-  }
+.compact .hint {
+  margin: 2px 0 4px;
+}
 
-  .form-row input[type="text"],
-  form.row input[type="text"] {
-    padding: 5px;
-  }
-
-  .hint {
-    margin: 2px 0 4px;
-  }
+.compact .steps li {
+  margin-bottom: 2px;
 }
 
 /* firmware installer */

@@ -7,6 +7,7 @@ import { MaterialDb, PRESETS, gzip } from './materials.js'
 import { findPrinter, downloadPrinterDb } from './printer.js'
 import { load, save } from './storage.js'
 import { toast } from './toast.js'
+import { fitToScreen } from './fit.js'
 import { successIcon, errorIcon, tagIcon, spoolIcon } from './icons.js'
 import { loadReleases, boardOf, compareVersions, isPrerelease, updateFirmware, restartIntoSafeBoot } from './update.js'
 
@@ -642,6 +643,7 @@ function init() {
   bindDevice()
   renderSpool()
   showView('main')
+  fitToScreen(document.querySelector('.app'))
 
   if (__DEVICE_BUILD__) {
     // offer the https app (works without opening the device's address)
