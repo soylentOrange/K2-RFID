@@ -654,9 +654,6 @@ function init() {
     connect('')
   } else {
     $('device-settings').hidden = false
-    // on low screens hide the Device heading instead of the Annoyance heading, so that
-    // the beeper switch doesn't stick to the address field
-    document.querySelector('h2.annoyance').classList.remove('optional-1')
     const fromUrl = new URLSearchParams(window.location.search).get('device')
     const host = fromUrl || load('host', DEFAULT_HOST)
     if (fromUrl) save('host', fromUrl)
