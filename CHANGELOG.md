@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.6-beta
+
+### Fixes
+
+- Built with Arduino core 3.3.12 again (PlatformIO platform pinned to `55.03.312-1` instead of `stable`). Since v1.5.1-beta the firmware was built with 3.3.13, which `stable` pointed to from 2026-11-17 on; the LOLIN S2 Mini has been dropping out of the WiFi since then (reason `MISSING_ACKS`, even with a strong signal), most likely because of that.
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.5.5-beta
 
 ### New
