@@ -34,4 +34,9 @@ class ESPNetwork {
     volatile uint32_t _disconnectedSince = 0; // millis(), 0: connected (or not in station mode)
     volatile uint8_t _lastDisconnectReason = 0;
     uint32_t _lastStatusLog = 0;
+    // mesh networks: switch to a clearly stronger access point of the same network (the WiFi
+    // driver only picks the strongest when it connects and doesn't roam by itself)
+    uint32_t _lastRoamCheck = 0;
+    bool _roamScan = false;
+    void _roamCheck(uint32_t now);
 };

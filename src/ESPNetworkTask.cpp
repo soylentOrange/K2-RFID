@@ -42,12 +42,15 @@ void ESPNetwork::begin(Scheduler* scheduler) {
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
           if (_disconnectedSince == 0) {
             _disconnectedSince = millis() | 1;
-            LOGW(TAG, "WiFi disconnected: reason %u (%s), RSSI %d dBm", info.wifi_sta_disconnected.reason,
-                 WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(info.wifi_sta_disconnected.reason)), info.wifi_sta_disconnected.rssi);
+            const uint8_t* b = info.wifi_sta_disconnected.bssid;
+            LOGW(TAG, "WiFi disconnected: reason %u (%s), RSSI %d dBm, access point %02X:%02X:%02X:%02X:%02X:%02X", info.wifi_sta_disconnected.reason,
+                 WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(info.wifi_sta_disconnected.reason)), info.wifi_sta_disconnected.rssi,
+                 b[0], b[1], b[2], b[3], b[4], b[5]);
           }
           _lastDisconnectReason = info.wifi_sta_disconnected.reason;
           break;
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+          LOGI(TAG, "WiFi connected: access point %s, channel %d, RSSI %d dBm", WiFi.BSSIDstr().c_str(), WiFi.channel(), WiFi.RSSI());
           if (_disconnectedSince != 0)
             LOGI(TAG, "WiFi reconnected after %lu s", static_cast<unsigned long>((millis() - _disconnectedSince) / 1000));
           _disconnectedSince = 0;
@@ -126,9 +129,10 @@ void ESPNetwork::_wifiWatchCallback() {
     // the signal every 5 minutes, to see in the log how it was before a disconnect
     if (_lastStatusLog == 0 || now - _lastStatusLog >= 5 * 60 * 1000) {
       _lastStatusLog = now;
-      LOGI(TAG, "WiFi: RSSI %d dBm, channel %d, TX power %.1f dBm, free internal RAM %u KB", WiFi.RSSI(), WiFi.channel(),
-           WiFi.getTxPower() / 4.0f, static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024));
+      LOGI(TAG, "WiFi: access point %s, channel %d, RSSI %d dBm, TX power %.1f dBm, free internal RAM %u KB", WiFi.BSSIDstr().c_str(),
+           WiFi.channel(), WiFi.RSSI(), WiFi.getTxPower() / 4.0f, static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024));
     }
+    _roamCheck(now);
     return;
   }
   // disconnected for a minute (the WiFi driver didn't manage to reconnect by itself): push it
@@ -138,6 +142,54 @@ void ESPNetwork::_wifiWatchCallback() {
          _lastDisconnectReason);
     WiFi.reconnect();
   }
+}
+
+#define ROAM_WEAK_RSSI    -70              // look for a better access point below this signal
+#define ROAM_MIN_GAIN     8                // switch only if the other one is this much stronger (dB)
+#define ROAM_INTERVAL     (2 * 60 * 1000)  // at most one scan per interval (a scan pauses the WiFi briefly)
+
+void ESPNetwork::_roamCheck(uint32_t now) {
+  if (!_roamScan) {
+    if (WiFi.RSSI() >= ROAM_WEAK_RSSI || (_lastRoamCheck != 0 && now - _lastRoamCheck < ROAM_INTERVAL))
+      return;
+    if (WiFi.scanComplete() != WIFI_SCAN_FAILED)
+      return; // another scan (e.g. Improv) is running or its results are pending
+    _lastRoamCheck = now;
+    _roamScan = WiFi.scanNetworks(true) == WIFI_SCAN_RUNNING;
+    return;
+  }
+
+  const int16_t n = WiFi.scanComplete();
+  if (n == WIFI_SCAN_RUNNING)
+    return;
+  _roamScan = false;
+  if (n < 0)
+    return;
+
+  const String ssid = WiFi.SSID();
+  const String current = WiFi.BSSIDstr();
+  const int32_t rssi = WiFi.RSSI();
+  int best = -1;
+  for (int16_t i = 0; i < n; i++) {
+    if (WiFi.SSID(i) != ssid || WiFi.BSSIDstr(i) == current)
+      continue;
+    if (best < 0 || WiFi.RSSI(i) > WiFi.RSSI(best))
+      best = i;
+  }
+  if (best >= 0 && WiFi.RSSI(best) >= rssi + ROAM_MIN_GAIN) {
+    LOGI(TAG, "WiFi: access point %s (channel %ld, %ld dBm) is stronger than %s (%ld dBm): switching...", WiFi.BSSIDstr(best).c_str(),
+         static_cast<long>(WiFi.channel(best)), static_cast<long>(WiFi.RSSI(best)), current.c_str(), static_cast<long>(rssi));
+    WiFi.scanDelete();
+    // reconnecting scans all channels and picks the strongest access point
+    WiFi.reconnect();
+    return;
+  }
+  if (best >= 0)
+    LOGI(TAG, "WiFi: weak signal (%ld dBm), best other access point %s has %ld dBm: staying", static_cast<long>(rssi),
+         WiFi.BSSIDstr(best).c_str(), static_cast<long>(WiFi.RSSI(best)));
+  else
+    LOGI(TAG, "WiFi: weak signal (%ld dBm), no other access point of this network found", static_cast<long>(rssi));
+  WiFi.scanDelete();
 }
 
 void ESPNetwork::_espConnectCallback() {

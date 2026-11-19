@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.5.5-beta
+
+### New
+
+- Mesh WiFi (several access points with the same network name, e.g. FRITZ!Box Mesh): with a weak signal (below -70 dBm), the thingy looks for another access point of the same network every 2 minutes and switches over if it's at least 8 dB stronger. The WiFi driver only picks the strongest access point when it connects, and never switches by itself.
+- The web log names the access point (BSSID) and channel on connect, disconnect and in the signal line every 5 minutes.
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.5.4-beta
 
 ### New
