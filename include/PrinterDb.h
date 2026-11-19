@@ -30,20 +30,18 @@ class PrinterDb {
     // start fetching in the background; false when busy or no printer configured
     bool fetch(ResultCallback callback);
     bool isBusy() const { return _state != State::IDLE; }
-#ifdef PRINTER_SSH_STATIC_STACK
-    bool hasReservedStack() const { return _staticTask != nullptr; }
-#else
-    bool hasReservedStack() const { return false; }
-#endif
+    // the download task (stack and buffer) lives in PSRAM
+    bool usesPsram() const { return _psramTask != nullptr; }
 
   private:
-    enum class State : uint8_t { IDLE, RUNNING, DONE };
+    enum class State : uint8_t { IDLE, RUNNING, DOWNLOADED, DONE };
     static void _fetchTask(void* arg);
-#ifdef PRINTER_SSH_STATIC_STACK
-    static void _staticFetchTask(void* arg);
-    TaskHandle_t _staticTask = nullptr;
-#endif
+    static void _psramFetchTask(void* arg);
+    TaskHandle_t _psramTask = nullptr;
+    uint8_t* _download = nullptr; // download buffer in PSRAM (nullptr: download into the file)
+    size_t _downloadSize = 0;
     bool _fetchViaSSH(std::string& message);
+    bool _finish(std::string& message);
     void _monitorCallback();
 
     Scheduler* _scheduler = nullptr;

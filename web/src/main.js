@@ -27,6 +27,7 @@ const state = {
   writeEmptyTags: true,
   beepOnRW: false,
   beepAvailable: true,
+  lowTxPower: false,
   cloneSerial: false,
   readerAvailable: true,
 }
@@ -182,7 +183,7 @@ function disarm() {
 }
 
 function sendConfig() {
-  device.send({ type: 'update_config', beepOnRW: state.beepOnRW, cloneSerial: state.cloneSerial })
+  device.send({ type: 'update_config', beepOnRW: state.beepOnRW, cloneSerial: state.cloneSerial, lowTxPower: state.lowTxPower })
 }
 
 async function loadDbFromThingy({ silent = false } = {}) {
@@ -310,6 +311,9 @@ function onConfig(msg) {
   $('beep').checked = state.beepOnRW
   $('beep').disabled = !state.beepAvailable
   $('clone').checked = state.cloneSerial
+  // older firmware doesn't know the setting
+  if (msg.lowTxPower !== undefined) state.lowTxPower = msg.lowTxPower
+  $('low-tx').checked = state.lowTxPower
 }
 
 function onArmState(msg, { initial = false } = {}) {
@@ -399,7 +403,7 @@ function installedVersion() {
 
 function selectedFirmware() {
   const release = firmware.releases?.find((r) => r.tag === $('fw-release').value)
-  const build = release?.builds.find((b) => b.app && b.board === $('fw-board').value && b.staticStack === $('fw-static').checked)
+  const build = release?.builds.find((b) => b.app && !b.staticStack && b.board === $('fw-board').value)
   return { release, build }
 }
 
@@ -424,14 +428,12 @@ async function loadFirmware() {
   presetFirmware()
 }
 
-// preselect the board and variant of the running firmware, and the release to update to
+// preselect the board of the running firmware, and the release to update to
 // (the newest release; a newer pre-release only if a pre-release is installed)
 function presetFirmware() {
   if (!firmware.releases?.length) return
   const board = boardOf(firmware.info, firmware.boardName)
   if (board && [...$('fw-board').options].some((o) => o.value === board)) $('fw-board').value = board
-  const staticStack = firmware.info?.staticStack ?? firmware.info?.sshStackReserved
-  if (staticStack !== undefined) $('fw-static').checked = staticStack
   const stable = firmware.releases.find((r) => !r.prerelease)
   const beta = firmware.releases.find((r) => r.prerelease)
   $('fw-release').value = (isPrerelease(installedVersion()) && beta ? beta : stable ?? beta).tag
@@ -455,7 +457,7 @@ function renderFirmware() {
   else if (!build) $('fw-info').textContent = 'No firmware for this combination.'
   else {
     const order = compareVersions(release.version, installed)
-    $('fw-info').textContent = `${build.label}${build.staticStack ? ', static stack' : ''}, ${release.tag}` +
+    $('fw-info').textContent = `${build.label}, ${release.tag}` +
       (order === 0 ? ' (installed)' : order < 0 ? ' (older than the installed one)' : '')
   }
 }
@@ -497,6 +499,10 @@ function bindUi() {
   }
   $('clone').onchange = (e) => {
     state.cloneSerial = e.target.checked
+    sendConfig()
+  }
+  $('low-tx').onchange = (e) => {
+    state.lowTxPower = e.target.checked
     sendConfig()
   }
   $('write-empty').onchange = (e) => {
@@ -554,7 +560,7 @@ function bindUi() {
     const url = `${__DEVICE_BUILD__ ? __PAGES_URL__ : './'}install.html${board ? `?board=${encodeURIComponent(board)}` : ''}`
     window.open(url, '_blank', 'noopener')
   }
-  for (const id of ['fw-board', 'fw-release', 'fw-static']) $(id).onchange = renderFirmware
+  for (const id of ['fw-board', 'fw-release']) $(id).onchange = renderFirmware
 
   // GitHub Pages: choose the device to talk to
   $('device-form').onsubmit = (e) => {
@@ -606,10 +612,10 @@ async function refreshSystemInfo() {
       `${info.chipModel} rev ${info.chipRevision}, ${info.chipCores} core(s), ${info.cpuFreqMHz} MHz, ${mb(info.flashSize)} flash`)
     set('info-psram', info.psramSize ? `${mb(info.psramSize)}, ${mb(info.psramFree)} free` : 'none',
       info.psramSize ? `${mb(info.psramSize)} PSRAM, ${kb(info.psramFree)} free` : 'no PSRAM')
-    set('info-heap', `${kb(info.internalFree)} free, block ${kb(info.internalMaxAlloc)}${info.sshStackReserved ? ` (+${kb(info.sshStackSize)} SSH)` : ''}`,
+    set('info-heap', `${kb(info.internalFree)} free, block ${kb(info.internalMaxAlloc)}`,
       `internal RAM: ${kb(info.internalFree)} free, largest block ${kb(info.internalMaxAlloc)}, ` +
         `lowest since boot ${kb(info.internalMinFree)}; SSH download ` +
-        (info.sshStackReserved ? `stack (${kb(info.sshStackSize)}) reserved` : `needs a ${kb(info.sshStackSize)} block`))
+        (info.sshPsram ? `runs in PSRAM` : info.sshStackReserved ? `stack (${kb(info.sshStackSize)}) reserved` : `needs a ${kb(info.sshStackSize)} block`))
   } catch {
     // not available
   }

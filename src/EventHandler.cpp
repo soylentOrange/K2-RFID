@@ -13,7 +13,8 @@ void EventHandler::begin(Scheduler* scheduler) {
   _scheduler = scheduler;
 
   // Register Callback to espConnect
-  _espNetwork->getESPConnect()->listen([&](__unused Mycila::ESPConnect::State previous, Mycila::ESPConnect::State state) {
+  _espNetwork->getESPConnect()->listen([&](Mycila::ESPConnect::State previous, Mycila::ESPConnect::State state) {
+    LOGI(TAG, "Network: %s -> %s", _espNetwork->getESPConnect()->getStateName(previous), _espNetwork->getESPConnect()->getStateName(state));
     _networkStateCallback(state);
   });
 

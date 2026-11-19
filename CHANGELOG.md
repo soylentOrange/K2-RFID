@@ -1,11 +1,70 @@
 # Changelog
 
-## Unreleased
+## v1.5.6-beta
 
 ### Fixes
 
+- Built with Arduino core 3.3.12 again (PlatformIO platform pinned to `55.03.312-1` instead of `stable`). Since v1.5.1-beta the firmware was built with 3.3.13, which `stable` pointed to from 2026-11-17 on. Builds no longer change the core unnoticed. (The `MISSING_ACKS` disconnects seen while testing came from `Low WiFi TX power`: with 8.5 dBm the access point missed the thingy's frames even at -34 dBm signal.)
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
+## v1.5.5-beta
+
+### New
+
+- Mesh WiFi (several access points with the same network name, e.g. FRITZ!Box Mesh): with a weak signal (below -70 dBm), the thingy looks for another access point of the same network every 2 minutes and switches over if it's at least 8 dB stronger. The WiFi driver only picks the strongest access point when it connects, and never switches by itself.
+- A saved access point (BSSID, saved by older versions of the WiFi setup) is removed at startup: it tied the thingy and SafeBoot to that one access point of a mesh.
+- The web log names the access point (BSSID) and channel on connect, disconnect and in the signal line every 5 minutes.
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
+## v1.5.4-beta
+
+### New
+
+- WiFi diagnostics in the web log: the signal (RSSI, channel, TX power) and free internal RAM every 5 minutes, every disconnect with its reason, how long it took to reconnect, and the network state changes (e.g. connect timeout -> captive portal). The web log also goes to the USB serial port, from the start of the firmware on, to watch it while the WiFi is gone.
+
+### Fixes
+
+- WiFi watchdog: if the station stays disconnected for a minute, the thingy pushes a reconnect (every minute until it's back).
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
+## v1.5.3-beta
+
+### Fixes
+
+- `Update Database`: the small allocations of the SSH download (libssh, mbedtls key exchange) go to the PSRAM too. Before, they used the internal RAM (the lowest free internal RAM was down to 6 KB), which WiFi needs. The web log shows the memory before and after the download, including the lowest free internal RAM since boot.
 - Every page of the web app fits on one screen again, in every browser. The layout no longer depends on fixed window heights (which didn't match the real height of the content in every browser and font, e.g. the `Settings` page of the GitHub Pages app with its `Device` section, or the firmware installer): the page measures itself and hides less important texts / uses the compact layout only as far as needed. The color picker on the main page takes the free height.
 - `Settings` and `Database` pages: free height is spread between the sections instead of collecting at the bottom. On low screens the GitHub Pages app hides the `Device` heading instead of `Annoyance`, so the beeper switch no longer sticks to the address field.
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
+## v1.5.2-beta
+
+### New
+
+- `Low WiFi TX power` in the settings lowers the WiFi transmit power from 19.5 dBm to 8.5 dBm. For boards that drop out of the WiFi after a few minutes while the RFID reader keeps working: the LOLIN S2 Mini does that on weak power supplies (e.g. a computer's USB port). Applied right away and kept across restarts.
+
+### Changed
+
+- The SSH download of `Update Database` (its 24 KB stack and the download buffer) runs in the PSRAM now. The `_static-stack` variant reserved these 24 KB in the internal RAM, which left WiFi too little memory (9 to 18 KB free): the thingy dropped off the network after a few minutes while the RFID reader kept working. There's only one firmware per board again, the `_static-stack` builds and the switch on the `Firmware` page and in the installer are gone. `Thingy Info` shows "SSH download runs in PSRAM" (hover the RAM entry).
+
+### Fixes
+
+- Firmware installer: `Connect to Wi-Fi` (Improv) is offered for the LOLIN S2 Mini too, and the useless `Logs & Console` entry is hidden (the thingy logs via the web log).
+
+### Installation
+
+Updating via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin` is enough (WiFi credentials and the material database are kept), also coming from a `_static-stack` build. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
 
 ## v1.5.1-beta
 

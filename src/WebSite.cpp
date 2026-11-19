@@ -78,8 +78,7 @@ void WebSite::_webSiteCallback() {
 #ifdef MYCILA_WEBSERIAL_SUPPORT_APP
   webSerial.begin(_webServer, "/weblog", _scheduler);
   webSerial.setBuffer(100);
-  webLogger = new Mycila::Logger();
-  webLogger->setLevel(ARDUHAL_LOG_LEVEL_INFO);
+  // the logger is created in setup() (logging to USB serial from the start)
   webLogger->forwardTo(&webSerial);
 #endif
 
@@ -97,6 +96,7 @@ void WebSite::_webSiteCallback() {
       jsonMsg["id"] = client->id();
       jsonMsg["host"] = espNetwork.getESPConnect()->getIPAddress().toString().c_str();
       jsonMsg["cloneSerial"] = _cloneSerial;
+      jsonMsg["lowTxPower"] = espNetwork.getLowTxPower();
 #ifdef USE_BEEPER
       jsonMsg["beepAvailable"] = true;
       jsonMsg["beepOnRW"] = _beepOnRW;
@@ -199,6 +199,8 @@ void WebSite::_webSiteCallback() {
               _beepOnRW = jsonRXMsg["beepOnRW"].as<const bool>();
               rfid.enableBeep(_beepOnRW);
               _cloneSerial = jsonRXMsg["cloneSerial"].as<const bool>();
+              if (jsonRXMsg["lowTxPower"].is<bool>() && jsonRXMsg["lowTxPower"].as<bool>() != espNetwork.getLowTxPower())
+                espNetwork.setLowTxPower(jsonRXMsg["lowTxPower"].as<bool>());
 
               // save persistent options in preferences
               Preferences preferences;
@@ -218,6 +220,7 @@ void WebSite::_webSiteCallback() {
               jsonMsg["beepAvailable"] = false;
 #endif
               jsonMsg["cloneSerial"] = _cloneSerial;
+              jsonMsg["lowTxPower"] = espNetwork.getLowTxPower();
               AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
               serializeJson(jsonMsg, buffer->get(), buffer->length());
               _ws->textAll(buffer);
@@ -360,16 +363,12 @@ void WebSite::_webSiteCallback() {
               doc["internalMaxAlloc"] = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
               doc["internalMinFree"] = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
               doc["sshStackSize"] = PRINTER_SSH_STACK_SIZE;
-              doc["sshStackReserved"] = printerDb.hasReservedStack();
+              // the SSH download (stack and buffer) runs in PSRAM, not in the internal RAM
+              doc["sshPsram"] = printerDb.usesPsram();
               doc["uptime"] = millis() / 1000;
               // for the firmware update in the web app: which release asset matches this build
               doc["version"] = __COMPILED_APP_VERSION__;
               doc["buildName"] = __COMPILED_BUILD_NAME__;
-#ifdef PRINTER_SSH_STATIC_STACK
-              doc["staticStack"] = true;
-#else
-              doc["staticStack"] = false;
-#endif
               AsyncResponseStream* response = request->beginResponseStream("application/json");
               response->addHeader("Cache-Control", "no-store");
               serializeJson(doc, *response);

@@ -12,7 +12,7 @@ let releases = []
 
 function selectedBuild() {
   const release = releases.find((r) => r.tag === $('release').value)
-  return release?.builds.find((b) => b.board === $('board').value && b.staticStack === $('static-stack').checked)
+  return release?.builds.find((b) => !b.staticStack && b.board === $('board').value)
 }
 
 function update() {
@@ -22,7 +22,7 @@ function update() {
   if (build) $('install').setAttribute('manifest', `firmware/${build.manifest}`)
   else $('install').removeAttribute('manifest')
   $('install-info').textContent = build
-    ? `${build.label} (${build.chipFamily}), ${release.tag}${build.staticStack ? ', static stack' : ''}`
+    ? `${build.label} (${build.chipFamily}), ${release.tag}`
     : 'No firmware for this combination.'
   // the S2 (native USB only) needs the buttons for entering download mode and for the reset
   const s2 = build ? build.chipFamily === 'ESP32-S2' : true
@@ -51,7 +51,7 @@ async function init() {
   if (params.get('board') && boards.has(params.get('board'))) $('board').value = params.get('board')
   if (releases.some((r) => r.tag === params.get('release'))) $('release').value = params.get('release')
 
-  for (const id of ['board', 'release', 'static-stack']) $(id).addEventListener('change', update)
+  for (const id of ['board', 'release']) $(id).addEventListener('change', update)
   update()
 }
 
