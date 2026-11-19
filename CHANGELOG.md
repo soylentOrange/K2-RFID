@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.6.0
+
+Includes everything from the pre-releases [v1.4.1-beta](https://github.com/soylentOrange/K2-RFID/releases/tag/v1.4.1-beta) to [v1.5.7-beta](https://github.com/soylentOrange/K2-RFID/releases/tag/v1.5.7-beta). The highlights since [v1.4.0](https://github.com/soylentOrange/K2-RFID/releases/tag/v1.4.0):
+
+### New
+
+- Firmware installer in the browser: https://soylentorange.github.io/K2-RFID/install.html flashes a board right from Chrome or Edge with [ESP Web Tools](https://esphome.github.io/esp-web-tools/), no esptool needed. It offers the newest release, plus a newer pre-release if there is one. LOLIN S2 Mini: hold "0", press and release "RST", release "0" before installing, **press "RST" after flashing**.
+- WiFi setup over USB: the firmware speaks [Improv Serial](https://www.improv-wifi.com/serial/), so the installer can send the WiFi credentials (`Connect to Wi-Fi`). The captive portal (access point `K2RFID`) still works as before.
+- Firmware update from GitHub over WiFi on the new `Firmware` page of the web app (`Database >>`): pick the version and click `Update Firmware`. The browser downloads `<board>.firmware.bin` from the GitHub Pages site, restarts the thingy into SafeBoot and uploads the image there; WiFi credentials and the material database are kept. `USB Install (ESP Web Tools)` on the same page opens the installer with the board preselected.
+- `Low WiFi TX power` under `Programmer Settings` lowers the WiFi transmit power from 19.5 dBm to 8.5 dBm, for boards that drop out of the WiFi on a weak power supply (e.g. a computer's USB port). **Only switch it on if you need it:** with 8.5 dBm the access point may not hear the thingy anymore, even at a strong signal. If the web log shows disconnects with reason `MISSING_ACKS`, switch it off again.
+- Mesh WiFi (several access points with the same network name): with a weak signal (below -70 dBm) the thingy switches to a clearly stronger access point of the same network. A saved access point (BSSID) from older WiFi setups is removed at startup.
+- WiFi diagnostics in the web log: signal, channel, TX power and free internal RAM every 5 minutes, every disconnect with its reason and how long the reconnect took. The web log also goes to the USB serial port (115200 baud), from boot on.
+- `Thingy Info` on the `Settings` page also shows the board and the firmware and web app versions; `/api/system/info` reports the firmware version and build (`buildName`).
+
+### Changes
+
+- The SSH download of `Update Database` (stack, buffer and the memory libssh and mbedtls use) runs in the PSRAM, so the internal RAM stays free for WiFi. The `_static-stack` firmware variant is gone: it left WiFi too little internal RAM (9 to 18 KB), so the thingy dropped off the network after a few minutes while the RFID reader kept working. There's one firmware per board again.
+- `Settings` page: the beeper switch moved into `Programmer Settings`, the `Annoyance` section is gone. Every page of the web app fits on one screen in every browser (the page measures itself instead of relying on fixed window heights).
+- Built with Arduino core 3.3.12 (PlatformIO platform pinned to `55.03.312-1`), so builds no longer change the core unnoticed.
+
+### Fixes
+
+- A tag that couldn't be read no longer beeps and flashes like a successfully read tag. The programmer reads it again (up to three times) and only then signals an error: error beep, LED blinking red, and a `Reading tag failed` toast in the web app (`Unknown tag data` for tags without valid spool data). The web log names the failed block and the PN532 status code.
+- WiFi watchdog: if the station stays disconnected for a minute, the thingy pushes a reconnect.
+- `SafeBoot` in the settings waits until SafeBoot is up and opens its page, also from the GitHub Pages app.
+
+### Installation
+
+- From v1.5.0-beta or later: update on the `Firmware` page of the web app.
+- From v1.4.0 or older (also `_static-stack` builds): update once by hand via SafeBoot/OTA with `<board>.firmware.bin` (`Settings` > `SafeBoot`), WiFi credentials and the material database are kept. Later updates can be done from the `Firmware` page.
+- New board: flash it with the [installer](https://soylentorange.github.io/K2-RFID/install.html) or with esptool and `<board>.firmware.factory.bin` (this replaces WiFi credentials and the material database).
+
+Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.5.7-beta
 
 ### Fixes
