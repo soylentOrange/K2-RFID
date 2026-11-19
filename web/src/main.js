@@ -377,6 +377,14 @@ const handlers = {
       },
     })
   },
+  read_error(msg) {
+    toast(
+      msg.invalid_data
+        ? `Unknown tag data\nuid: ${String(msg.uid).toUpperCase()}\n(not a valid spool tag)`
+        : `Reading tag failed\nuid: ${String(msg.uid).toUpperCase()}\n(hold the tag still and try again)`,
+      { icon: errorIcon, duration: 5000 },
+    )
+  },
   write_spool(msg) {
     toast(`Writing Spool\n${msg.result ? 'Successful' : 'Failed'}`, { icon: msg.result ? successIcon : errorIcon })
   },

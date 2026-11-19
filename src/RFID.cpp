@@ -36,6 +36,7 @@ void RFID::end() {
     _rfidWriteTask->disable();
   }
   _tagReadCallback = nullptr;
+  _tagReadErrorCallback = nullptr;
   _tagWriteCallback = nullptr;
   LOGD(TAG, "...done!");
 }
@@ -96,24 +97,54 @@ void RFID::_doBeep(uint32_t freq) {
 void RFID::_rfidReadCallback() {
   try { // check if some tag is present
     CFSTag tag(&_nfc);
+    // a tag was found, so start counting missed cycles from scratch
+    _retryCounter = RETRIES;
 
     // new tag is foud
     if (_lastTag != tag) {
       _lastTag = tag;
       _tagInProximity = true;
       _newTagInProximity = true;
-      if (tag._encrypted) {
-        LOGI(TAG, "encrypted tag (%s) found...", static_cast<std::string>(tag.getUid()).c_str());
-      } else {
-        LOGI(TAG, "un-encrypted tag (%s) found...", static_cast<std::string>(tag.getUid()).c_str());
+      std::string uid = static_cast<std::string>(tag.getUid());
+      // a tag that couldn't be read in the last cycle is just read again
+      bool retryingRead = (_readError > 0) && (_failedReadUid == uid);
+      if (!retryingRead) {
+        _readError = 0;
+        _failedReadUid.clear();
+        if (tag._encrypted) {
+          LOGI(TAG, "encrypted tag (%s) found...", uid.c_str());
+        } else {
+          LOGI(TAG, "un-encrypted tag (%s) found...", uid.c_str());
+        }
       }
 
       // read spooldata from tag
       bool readOk = tag.readSpoolData(&_nfc);
-      std::string uid = static_cast<std::string>(tag.getUid());
       // a tag where a previous write attempt failed (possibly leaving partial
       // data on it) is written again, even when overwriting isn't enabled
       bool retryFailedWrite = !_failedWriteUid.empty() && (_failedWriteUid == uid);
+      // is the tag going to be written regardless of its content?
+      bool writeAnyway = _writeEnabled && (_overwriteEnabled || retryFailedWrite);
+
+      if (!readOk && !writeAnyway) {
+        if (tag.hadReadError() && (++_readError <= READ_RETRIES)) {
+          // the reader couldn't read the tag (e.g. because it was just entering
+          // or leaving the reader's field): forget the tag, so it'll be
+          // selected, authenticated and read again in the next cycle
+          LOGW(TAG, "reading tag (%s) failed (attempt %u), retrying...", uid.c_str(), _readError);
+          _failedReadUid = uid;
+          _lastTag = CFSTag();
+          _tagInProximity = false;
+          _newTagInProximity = false;
+          return;
+        }
+        // give up; keep the tag as last tag, so it is read again only after it
+        // was removed and presented again
+        _signalReadError(uid, !tag.hadReadError());
+        return;
+      }
+      _readError = 0;
+      _failedReadUid.clear();
 
       if (!readOk) {
         LOGW(TAG, "tag data corrupted or reader error...");
@@ -123,12 +154,12 @@ void RFID::_rfidReadCallback() {
         LOGD(TAG, "tag is not empty...");
       }
 
-      if (_writeEnabled && ((readOk && tag.isEmpty()) || _overwriteEnabled || retryFailedWrite)) {
+      if (_writeEnabled && ((readOk && tag.isEmpty()) || writeAnyway)) {
         // write tag
         _writeTag(tag, readOk && tag.isEmpty());
       } else {
         // Only signal when writing isn't enabled
-        if (!_writeEnabled || !readOk) {
+        if (!_writeEnabled) {
           led.setMode(LED::LEDMode::TAG_READ);
           _doBeep();
         }
@@ -148,9 +179,30 @@ void RFID::_rfidReadCallback() {
         LOGI(TAG, "tag (%s) is gone...\n", static_cast<std::string>(_lastTag.getUid()).c_str());
         _lastTag = CFSTag();
       }
+      // the tag was removed while it was still being read again
+      if (_readError > 0) {
+        _signalReadError(_failedReadUid, false);
+      }
       _tagInProximity = false;
       _newTagInProximity = false;
     }
+  }
+}
+
+// signal a tag that couldn't be read
+void RFID::_signalReadError(const std::string& uid, bool invalidData) {
+  if (invalidData) {
+    LOGW(TAG, "tag (%s) doesn't hold valid spooldata", uid.c_str());
+  } else {
+    LOGW(TAG, "reading tag (%s) failed, hold the tag still on the reader and present it again", uid.c_str());
+  }
+  _readError = 0;
+  _failedReadUid.clear();
+  led.setMode(LED::LEDMode::TAG_ERROR);
+  _doBeep(3000);
+  // invoke event callback
+  if (_tagReadErrorCallback != nullptr) {
+    _tagReadErrorCallback(uid, invalidData);
   }
 }
 

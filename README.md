@@ -71,6 +71,10 @@ By default, only empty tags are written. When you want to re-program tags, disab
 
 After writing, the programmer re-authenticates with the tag's (new) key, reads the data back and compares it with what should have been written. Only when this check passes, the success beep sounds and the LED signals a written tag. If a write fails (e.g. because the tag was just entering or leaving the reader's field), the programmer silently retries while the tag stays on the reader. A tag where a write attempt failed is written again even if `Write only empty tags` is active, since a partially written tag isn't empty anymore. After repeated failures, an error is signalled (error beep / LED); remove the tag and present it again to retry.
 
+### Read Errors
+
+If a tag can't be read (e.g. because it was just entering or leaving the reader's field), the programmer silently reads it again, up to three times. Only if that doesn't help, or if the tag doesn't hold valid spool data, an error is signalled: the error beep sounds, the LED blinks red (or rapidly) for a moment, and the web app shows a `Reading tag failed` (or `Unknown tag data`) toast. Hold the tag still on the reader and present it again. A tag that couldn't be read is never written while `Write only empty tags` is active. The web log names the failed block and the PN532 status code (e.g. `0x01`: the tag didn't answer in time).
+
 ### Future Materials
 
 The programmer comes with the material database of a K2 Plus (101 materials, as of November 2026, without any custom presets). It is part of the file system image, so it's only installed when flashing a factory image, not with an OTA update of the firmware. You can update the list on the `Database` page (`Settings >>`, then `Database >>`) in two ways:
@@ -137,7 +141,7 @@ Firmware older than this feature doesn't report its build variant, so check boar
 
 ## Device Feedback
 
-I've added a most annyoing beeper to the programmer. You can switch it off in the settings.
+I've added a most annyoing beeper to the programmer. You can switch it off in the settings. A short beep means a tag was read, a higher beep that a tag was written, and the highest beep signals an error (tag couldn't be read or written).
 
 ### LED
 
@@ -158,6 +162,9 @@ On boards with an onboard RGB-LED or with an external WS2812b, different colors 
 
 - Tag read:
   - flashing blue
+
+- Tag couldn't be read:
+  - rapidly blinking bright red for 1.5 s
 
 - Armed to write tags:
   - breathing green
@@ -185,6 +192,9 @@ On boards with an onboard mono-color LED:
 
 - Tag read:
   - flashing
+
+- Tag couldn't be read:
+  - blinking rapidly (bright) for 1.5 s
 
 * Armed to write tags:
   * breathing

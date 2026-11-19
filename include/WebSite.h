@@ -34,6 +34,7 @@ class WebSite {
     bool _cloneSerial = false;
     SpooldataCallback _spooldataCallback = nullptr;
     void _tagReadCallback(CFSTag tag);
+    void _tagReadErrorCallback(const std::string& uid, bool invalidData);
     void _tagWriteCallback(bool success);
     static void _denyUpload(AsyncWebServerRequest* request, __unused String filename, __unused size_t index, __unused uint8_t* data, __unused size_t len, __unused bool final) { // don't accept file uploads
       request->send(400);

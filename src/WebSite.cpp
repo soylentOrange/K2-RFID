@@ -405,6 +405,7 @@ void WebSite::_webSiteCallback() {
   // register event handlers to reader
   LOGD(TAG, "register event handlers to reader");
   rfid.listenTagRead([&](CFSTag tag) { _tagReadCallback(tag); });
+  rfid.listenTagReadError([&](const std::string& uid, bool invalidData) { _tagReadErrorCallback(uid, invalidData); });
   rfid.listenTagWrite([&](bool success) { _tagWriteCallback(success); });
 
   // set up a task to cleanup orphan websock-clients
@@ -452,6 +453,19 @@ void WebSite::_tagReadCallback(CFSTag tag) {
     if (_ws->count()) {
       _ws->textAll(buffer);
     }
+  }
+}
+
+// Handle tag that couldn't be read event
+void WebSite::_tagReadErrorCallback(const std::string& uid, bool invalidData) {
+  JsonDocument jsonMsg;
+  jsonMsg["type"] = "read_error";
+  jsonMsg["uid"] = uid.c_str();
+  jsonMsg["invalid_data"] = invalidData;
+  AsyncWebSocketMessageBuffer* buffer = new AsyncWebSocketMessageBuffer(measureJson(jsonMsg));
+  serializeJson(jsonMsg, buffer->get(), buffer->length());
+  if (_ws->count()) {
+    _ws->textAll(buffer);
   }
 }
 

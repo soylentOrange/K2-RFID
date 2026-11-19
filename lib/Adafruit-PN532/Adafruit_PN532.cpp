@@ -955,6 +955,7 @@ uint8_t Adafruit_PN532::mifareclassic_ReadDataBlock(uint8_t blockNumber,
 #ifdef MIFAREDEBUG
     PN532DEBUGPRINT.println(F("Failed to receive ACK for read command"));
 #endif
+    _lastReadStatus = 0xFF;
     return 0;
   }
 
@@ -963,6 +964,7 @@ uint8_t Adafruit_PN532::mifareclassic_ReadDataBlock(uint8_t blockNumber,
 
   /* If byte 8 isn't 0x00 we probably have an error */
   if (pn532_packetbuffer[7] != 0x00) {
+    _lastReadStatus = pn532_packetbuffer[7];
 #ifdef MIFAREDEBUG
     PN532DEBUGPRINT.println(F("Unexpected response"));
     Adafruit_PN532::PrintHexChar(pn532_packetbuffer, 26);

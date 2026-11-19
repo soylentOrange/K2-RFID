@@ -180,6 +180,10 @@ class Adafruit_PN532 {
                                             uint32_t blockNumber,
                                             uint8_t keyNumber, uint8_t* keyData);
     uint8_t mifareclassic_ReadDataBlock(uint8_t blockNumber, uint8_t* data);
+    // status of the last failed mifareclassic_ReadDataBlock: the PN532 error
+    // code (e.g. 0x01 = card didn't answer in time), or 0xFF if the PN532 itself
+    // didn't acknowledge the command
+    uint8_t getLastReadStatus() { return _lastReadStatus; }
     uint8_t mifareclassic_WriteDataBlock(uint8_t blockNumber, uint8_t* data);
     uint8_t mifareclassic_FormatNDEF(void);
     uint8_t mifareclassic_WriteNDEFURI(uint8_t sectorNumber,
@@ -205,6 +209,7 @@ class Adafruit_PN532 {
     int8_t _uidLen;      // uid len
     int8_t _key[6];      // Mifare Classic key
     int8_t _inListedTag; // Tg number of inlisted tag.
+    uint8_t _lastReadStatus = 0;
 
     // Low level communication functions that handle both SPI and I2C.
     void readdata(uint8_t* buff, uint8_t n);

@@ -26,6 +26,7 @@ class LED {
       ARMED_REWRITING,
       TAG_WRITTEN,
       TAG_REWRITTEN,
+      TAG_ERROR, // a tag couldn't be read (blinks for a moment, then back to the previous mode)
       ERROR
     };
 
@@ -46,6 +47,7 @@ class LED {
     uint8_t _ledState = 0;
     void _ledInitCallback();
     LEDMode _mode = LEDMode::WAITING_WIFI;
+    LEDMode _tagErrorReturnMode = LEDMode::WAITING_READ;
 #ifdef COLOR_CORR_SCALE
     CRGB _colorAdjustment = CRGB::computeAdjustment(COLOR_CORR_SCALE, CRGB(COLOR_CORR_R, COLOR_CORR_G, COLOR_CORR_B), CRGB(UncorrectedTemperature));
     static void _adjustLed(CRGB* led, const CRGB& adjustment) {

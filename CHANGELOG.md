@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.5.7-beta
+
+### Fixes
+
+- A tag that couldn't be read (`RFID reader error`) no longer beeps and flashes like a successfully read tag. The programmer now reads it again (up to three times, e.g. when the tag was just entering or leaving the reader's field) and only then signals an error: error beep, LED blinking red for a moment, and a `Reading tag failed` toast in the web app. Tags without valid spool data are reported as `Unknown tag data`. Before, a failed read was never retried until the tag was removed and presented again.
+- The web log names the block that couldn't be read and the PN532 status code.
+
+### Installation
+
+Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boards: `lolin_s2_mini`, `lolin_s2_mini_external_WS2812b`, `esp32_s3_tiny`.
+
 ## v1.5.6-beta
 
 ### Fixes
