@@ -5,6 +5,7 @@
 ### New
 
 - Mesh WiFi (several access points with the same network name, e.g. FRITZ!Box Mesh): with a weak signal (below -70 dBm), the thingy looks for another access point of the same network every 2 minutes and switches over if it's at least 8 dB stronger. The WiFi driver only picks the strongest access point when it connects, and never switches by itself.
+- A saved access point (BSSID, saved by older versions of the WiFi setup) is removed at startup: it tied the thingy and SafeBoot to that one access point of a mesh.
 - The web log names the access point (BSSID) and channel on connect, disconnect and in the signal line every 5 minutes.
 
 ### Installation

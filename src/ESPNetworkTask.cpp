@@ -26,6 +26,16 @@ void ESPNetwork::begin(Scheduler* scheduler) {
   bool ap = preferences.isKey("ap") ? preferences.getBool("ap", false) : false;
   preferences.end();
 
+  // A saved access point (BSSID) ties the thingy - and SafeBoot, which uses the same settings -
+  // to that one access point: in a mesh it could never use another one. Current ESPConnect
+  // versions and Improv don't save it anymore, older ones did: remove it.
+  preferences.begin("espconnect", false);
+  if (preferences.isKey("bssid") && preferences.getString("bssid").length()) {
+    LOGW(TAG, "Removing the saved access point %s, so that any access point of %s can be used", preferences.getString("bssid").c_str(), ssid.c_str());
+    preferences.remove("bssid");
+  }
+  preferences.end();
+
   preferences.begin("k2rfid", true);
   _lowTxPower = preferences.getBool("lowtx", false);
   preferences.end();
