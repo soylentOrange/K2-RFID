@@ -28,6 +28,10 @@ Update via the `Firmware` page or SafeBoot/OTA with `<board>.firmware.bin`. Boar
 
 - WiFi diagnostics in the web log: the signal (RSSI, channel, TX power) and free internal RAM every 5 minutes, every disconnect with its reason, how long it took to reconnect, and the network state changes (e.g. connect timeout -> captive portal). The web log also goes to the USB serial port, from the start of the firmware on, to watch it while the WiFi is gone.
 
+### Changes
+
+- Web app, `Settings` page: the beeper switch moved into `Programmer Settings`, the `Annoyance` section is gone. This frees space, so `Low WiFi TX power` also fits in a browser window with address bar.
+
 ### Fixes
 
 - WiFi watchdog: if the station stays disconnected for a minute, the thingy pushes a reconnect (every minute until it's back).
