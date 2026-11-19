@@ -133,7 +133,7 @@ WiFi credentials and the material database are kept, as with a manual update via
 
 Below, `USB Install (ESP Web Tools)` opens the [firmware installer](#in-the-browser-esp-web-tools) for a new board or to recover one (it replaces the WiFi settings and the material database).
 
-Firmware older than this feature doesn't report its build variant, so check board and variant before updating from it (`/boardname` only tells the board, not whether an external LED is used).
+Firmware older than v1.5.0-beta (e.g. v1.4.0) doesn't report its build variant, so check board and variant before updating from it (`/boardname` only tells the board, not whether an external LED is used).
 
 <p align="center">
     <img src="assets/doc/Screenshot_FirmwareUpdate.jpeg" alt="screenshot firmware update" style="width:50%; height:auto;" >
