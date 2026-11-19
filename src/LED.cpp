@@ -64,6 +64,23 @@ void LED::setMode(LEDMode mode) {
     _ledTask = nullptr;
   }
 
+  // remember the steady mode to return to after signalling a tag error
+  if (mode == LEDMode::TAG_ERROR) {
+    switch (_mode) {
+      case LEDMode::TAG_READ:
+        _tagErrorReturnMode = LEDMode::WAITING_READ;
+        break;
+      case LEDMode::TAG_WRITTEN:
+        _tagErrorReturnMode = LEDMode::ARMED_WRITING;
+        break;
+      case LEDMode::TAG_REWRITTEN:
+        _tagErrorReturnMode = LEDMode::ARMED_REWRITING;
+        break;
+      default:
+        _tagErrorReturnMode = _mode;
+    }
+  }
+
   // set the new mode
   _mode = mode;
   switch (_mode) {
@@ -249,6 +266,43 @@ void LED::setMode(LEDMode mode) {
 
       // Start the task to reset to previous state
       resetTask->enableDelayed(250);
+    } break;
+    case LEDMode::TAG_ERROR: {
+      // schedule a task for returning to the previous mode
+      // (unless the mode was changed meanwhile)
+      Task* resetTask = new Task(TASK_IMMEDIATE, TASK_ONCE, [&] {
+        if (_mode == LEDMode::TAG_ERROR)
+          setMode(_tagErrorReturnMode); }, _scheduler, false, NULL, NULL, true);
+
+      if (!_isRGB) {
+        ledcWrite(_ledPin, LED_BRIGHT_FULL);
+      } else {
+        _ledState = 0;
+        rgbLedWrite(_ledPin, 0, 0, 0);
+      }
+      // Set LED to fast blinking / fast blinking bright red
+      _ledTask = new Task(80, TASK_FOREVER, [&] {
+        if (!_isRGB) {
+          if (ledcRead(_ledPin) == LED_BRIGHT_FULL) {
+            ledcWrite(_ledPin, LED_BRIGHT_OFF);
+          } else {
+            ledcWrite(_ledPin, LED_BRIGHT_FULL);
+          }
+        } else {
+          CRGB led_color(CRGB::HTMLColorCode::Black);
+          if (!_ledState) {
+            led_color = CRGB(CHSV(HUE_RED, DEFAULT_SAT, LED_BRIGHT_FULL));
+            _adjustLed(&led_color, _colorAdjustment);
+            _ledState = 1;
+          } else {
+            _ledState = 0;
+          }
+          rgbLedWrite(_ledPin, led_color.red, led_color.green, led_color.blue);
+        } }, _scheduler, false, NULL, NULL, true);
+      _ledTask->enable();
+
+      // Start the task to return to the previous mode
+      resetTask->enableDelayed(1500);
     } break;
     default: // switch it off
       if (!_isRGB) {

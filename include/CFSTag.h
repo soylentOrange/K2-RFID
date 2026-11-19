@@ -79,6 +79,7 @@ struct CFSTag {
       _spooldata = rhs._spooldata;
       _validMaterial = rhs._validMaterial;
       _empty = rhs._empty;
+      _readError = rhs._readError;
     }
 
     // assignment operator
@@ -90,6 +91,7 @@ struct CFSTag {
         _spooldata = rhs._spooldata;
         _validMaterial = rhs._validMaterial;
         _empty = rhs._empty;
+        _readError = rhs._readError;
       }
       return *this;
     }
@@ -131,6 +133,12 @@ struct CFSTag {
       return _empty;
     }
 
+    // did the last readSpoolData fail because the reader couldn't read the
+    // tag (worth a retry), rather than because of the data on it
+    bool hadReadError() {
+      return _readError;
+    }
+
     // Default key
     static constexpr MIFARE_Key std_key = {{255, 255, 255, 255, 255, 255}};
     static constexpr AES128_Key u_key = {{113, 51, 98, 117, 94, 116, 49, 110, 113, 102, 90, 40, 112, 102, 36, 49}};
@@ -143,6 +151,7 @@ struct CFSTag {
     bool _encrypted = false;
     bool _validMaterial = false;
     bool _empty = true;
+    bool _readError = false;
     SpoolData _spooldata = SpoolData();
 
     // decrypt a triple block of MIFARE data

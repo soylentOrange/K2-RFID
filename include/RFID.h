@@ -14,6 +14,7 @@
 
 #define RETRIES 3
 #define WRITE_RETRIES 10
+#define READ_RETRIES 3
 
 class RFID {
 
@@ -28,6 +29,9 @@ class RFID {
     SpoolData getSpooldata() { return _spooldata; }
     typedef std::function<void(CFSTag tag)> TagReadCallback;
     void listenTagRead(TagReadCallback callback) { _tagReadCallback = callback; }
+    // a tag couldn't be read (invalidData: it was read, but doesn't hold valid spooldata)
+    typedef std::function<void(const std::string& uid, bool invalidData)> TagReadErrorCallback;
+    void listenTagReadError(TagReadErrorCallback callback) { _tagReadErrorCallback = callback; }
     typedef std::function<void(bool success)> TagWriteCallback;
     void listenTagWrite(TagWriteCallback callback) { _tagWriteCallback = callback; }
     void enableBeep(bool enable);
@@ -62,6 +66,10 @@ class RFID {
     SpoolData _spooldata = SpoolData();
     void _spooldataRxCallback(JsonDocument doc);
     TagReadCallback _tagReadCallback = nullptr;
+    TagReadErrorCallback _tagReadErrorCallback = nullptr;
+    uint32_t _readError = 0;
+    std::string _failedReadUid;
+    void _signalReadError(const std::string& uid, bool invalidData);
     TagWriteCallback _tagWriteCallback = nullptr;
     bool _writeEnabled = false;
     bool _overwriteEnabled = false;

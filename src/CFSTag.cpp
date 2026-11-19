@@ -72,15 +72,16 @@ static void dumpSpooldata(const CFSTag::MIFARE_tripleBlock& spooldata) {
 bool CFSTag::readSpoolData(Adafruit_PN532* nfc) {
   // read data from blocks 4 - 6
   MIFARE_tripleBlock encryptedData, plainData;
-  uint8_t result = 0;
-  for (size_t i = 0; i < 3; ++i)
-    result += nfc->mifareclassic_ReadDataBlock(i + 4, encryptedData.blockData[i]);
-
-  // return with error when reading didn't succeed
-  if (result != 3) {
-    LOGE(TAG, "RFID reader error");
-    _empty = false;
-    return false;
+  for (size_t i = 0; i < 3; ++i) {
+    // return with error when reading didn't succeed
+    // (after a failed read the tag has to be selected and authenticated again,
+    // so there's no point in reading the remaining blocks)
+    if (!nfc->mifareclassic_ReadDataBlock(i + 4, encryptedData.blockData[i])) {
+      LOGW(TAG, "reading block %u failed (PN532 status 0x%02x)", i + 4, nfc->getLastReadStatus());
+      _empty = false;
+      _readError = true;
+      return false;
+    }
   }
 
   // possibly decrypt data from blocks 4 - 6
@@ -115,6 +116,7 @@ bool CFSTag::readSpoolData(Adafruit_PN532* nfc) {
   try {
     _spooldata = SpoolData(spooldataStr);
   } catch (const std::exception& e) {
+    LOGE(TAG, "tag data isn't valid spooldata");
     _spooldata = SpoolData();
     dumpSpooldata(plainData);
     return false;
